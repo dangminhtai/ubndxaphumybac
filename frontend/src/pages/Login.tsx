@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { User, Lock as LockIcon, EyeOff, Eye } from 'lucide-react';
 
@@ -130,6 +130,12 @@ export default function Login() {
           <div className="bg-surface-container-low px-8 py-4 border-t border-surface-container text-center">
             <p className="font-body-md text-body-md text-on-surface-variant flex items-center justify-center gap-2">
               Hệ thống yêu cầu đăng nhập bằng tài khoản nội bộ.
+            </p>
+            <p className="font-body-md text-body-md text-on-surface-variant mt-unit">
+              Chưa có tài khoản?{' '}
+              <Link to="/register" className="text-primary font-medium hover:underline transition-all">
+                Đăng ký ngay
+              </Link>
             </p>
           </div>
         </div>
