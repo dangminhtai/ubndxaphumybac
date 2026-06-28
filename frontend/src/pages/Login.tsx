@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
 import { User, Lock as LockIcon, EyeOff, Eye } from 'lucide-react';
+import { login } from '../api/authApi';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -16,9 +16,9 @@ export default function Login() {
     setLoading(true);
     setError('');
     try {
-      const response = await axios.post('/api/auth/login', { username, password });
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      const response = await login({ username, password });
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
       navigate('/dashboard');
     } catch {
       setError('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { User, Lock as LockIcon, Building2, Briefcase, EyeOff, Eye } from 'lucide-react';
+import { register } from '../api/authApi';
 
 const DEPARTMENTS = [
   'UBND Cấp Xã',
@@ -56,15 +57,15 @@ export default function Register() {
 
     setLoading(true);
     try {
-      const response = await axios.post('/api/auth/register', {
+      const response = await register({
         username: form.username,
         password: form.password,
         fullName: form.fullName,
         department: form.department,
         role: form.role,
       });
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
       navigate('/dashboard');
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {

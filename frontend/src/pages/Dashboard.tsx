@@ -1,34 +1,23 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { Link } from 'react-router-dom';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import { Bar, Doughnut } from 'react-chartjs-2';
+import { getRecentReports, seedReports } from '../api/reportApi';
+import type { Report } from '../types/report';
+import type { User } from '../types/user';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
-interface Report {
-  _id: string;
-  title: string;
-  department: string;
-  sender: string;
-  status: string;
-  submittedAt: string;
-}
-
-interface UserData {
-  fullName?: string;
-  role?: string;
-}
-
 export default function Dashboard() {
   const [reports, setReports] = useState<Report[]>([]);
-  const user: UserData = JSON.parse(localStorage.getItem('user') || '{}') as UserData;
+  const user = JSON.parse(localStorage.getItem('user') || '{}') as Partial<User>;
 
   useEffect(() => {
     const fetchReports = async () => {
       try {
-        await axios.post('/api/reports/seed');
-        const res = await axios.get<Report[]>('/api/reports');
-        setReports(res.data);
+        await seedReports();
+        const data = await getRecentReports();
+        setReports(data);
       } catch (err) {
         console.error('Failed to fetch reports:', err);
       }
@@ -100,14 +89,14 @@ export default function Dashboard() {
         <div className="flex-1 overflow-y-auto py-stack-md">
           <ul className="flex flex-col gap-1 px-3">
             <li>
-              <a className="flex items-center gap-3 px-3 py-2.5 rounded-lg border-l-4 border-white bg-white/10 text-white font-semibold hover:bg-white/10 transition-colors duration-200" href="#">
+              <Link to="/dashboard" className="flex items-center gap-3 px-3 py-2.5 rounded-lg border-l-4 border-white bg-white/10 text-white font-semibold hover:bg-white/10 transition-colors duration-200">
                 Trang chủ
-              </a>
+              </Link>
             </li>
             <li>
-              <a className="flex items-center gap-3 px-3 py-2.5 rounded-lg border-l-4 border-transparent text-white/70 hover:text-white hover:bg-white/5 transition-colors duration-200" href="#">
+              <Link to="/weekly-report" className="flex items-center gap-3 px-3 py-2.5 rounded-lg border-l-4 border-transparent text-white/70 hover:text-white hover:bg-white/5 transition-colors duration-200">
                 Báo cáo Tuần
-              </a>
+              </Link>
             </li>
             <li>
               <a className="flex items-center gap-3 px-3 py-2.5 rounded-lg border-l-4 border-transparent text-white/70 hover:text-white hover:bg-white/5 transition-colors duration-200" href="#">

@@ -1,70 +1,53 @@
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
-import mongoose from 'mongoose';
 import authRoutes from './routes/auth';
 import reportRoutes from './routes/reports';
-
-dotenv.config();
+import { closeDatabase, connectDatabase, getDatabaseStatus } from './config/db';
+import { env } from './config/env';
+import { errorHandler } from './middleware/error.middleware';
 
 const app = express();
-const PORT = parseInt(process.env.PORT || '5001', 10);
 
 app.use(cors());
 app.use(express.json());
 
-// Connect to MongoDB — non-blocking, server starts regardless
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/report_system';
-mongoose.connect(MONGODB_URI, {
-  serverSelectionTimeoutMS: 5000,
-})
-  .then(() => console.log('✅ Connected to MongoDB'))
-  .catch((err: unknown) => {
-    console.warn('⚠️  MongoDB not available — API will return errors for DB operations.');
-    console.warn('   Start MongoDB and restart the server, or set MONGODB_URI in .env');
-    if (err instanceof Error) {
-      console.warn('   Error:', err.message);
-    }
-  });
+void connectDatabase();
 
-// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/reports', reportRoutes);
 
-app.get('/api/health', (_req: express.Request, res: express.Response) => {
-  const mongoStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
-  res.json({ status: 'ok', message: 'API is running', mongodb: mongoStatus });
+app.get('/api/health', (_req, res) => {
+  res.json({
+    status: 'ok',
+    message: 'API is running',
+    mongodb: getDatabaseStatus(),
+    port: env.port,
+  });
 });
 
-// Error handling middleware
-app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({ error: err.message || 'Internal Server Error' });
-});
+app.use(errorHandler);
 
-// Start server with EADDRINUSE handling
-const server = app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+const server = app.listen(env.port, () => {
+  console.log(`Server running on port ${env.port}`);
 });
 
 server.on('error', (err: NodeJS.ErrnoException) => {
   if (err.code === 'EADDRINUSE') {
-    console.error(`❌ Port ${PORT} is already in use.`);
-    console.error(`   Run: taskkill /F /PID $(netstat -ano | findstr :${PORT})`);
-    console.error(`   Or set a different PORT in .env`);
+    console.error(`Port ${env.port} is already in use.`);
+    console.error(`Set a different PORT in backend/.env, or stop the process using that port.`);
     process.exit(1);
   }
   throw err;
 });
 
-// Graceful shutdown — release port on SIGINT/SIGTERM
 function shutdown() {
-  console.log('\n🛑 Shutting down gracefully...');
+  console.log('\nShutting down gracefully...');
   server.close(() => {
-    mongoose.connection.close().then(() => {
+    closeDatabase().then(() => {
       process.exit(0);
     });
   });
 }
+
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
