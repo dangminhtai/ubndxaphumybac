@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import WeeklyReport from './pages/WeeklyReport';
+import MonthlyReport from './pages/MonthlyReport';
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/weekly-report" element={<WeeklyReport />} />
+        <Route path="/monthly-report" element={<MonthlyReport />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
