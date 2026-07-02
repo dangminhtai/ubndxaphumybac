@@ -1,15 +1,16 @@
 import { NavLink, Link } from 'react-router-dom';
 import {
   Archive,
-  BarChart3,
   Bell,
   CalendarDays,
-  FileCheck2,
+  ClipboardList,
   Home,
   LogOut,
   Search,
   Settings,
   Shield,
+  UserPen,
+  Users,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { User } from '../../types/user';
@@ -25,9 +26,12 @@ interface AppLayoutProps {
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Trang chủ', icon: Home },
-  { to: '/weekly-report', label: 'Báo cáo tuần', icon: BarChart3 },
-  { to: '/monthly-report', label: 'Báo cáo tháng', icon: CalendarDays },
-  { to: '#', label: 'Minh chứng', icon: FileCheck2 },
+  { to: '/employee-report', label: 'Nhập báo cáo', icon: UserPen, roles: ['admin', 'staff', 'department_lead'] },
+  { to: '/my-reports', label: 'Báo cáo của tôi', icon: ClipboardList, roles: ['staff', 'department_lead'] },
+  { to: '/monthly-report', label: 'Báo cáo tháng', icon: CalendarDays, roles: ['staff', 'department_lead'] },
+  { to: '/admin/periods', label: 'Kỳ báo cáo', icon: CalendarDays, roles: ['admin'] },
+  { to: '/admin/users', label: 'Tài khoản', icon: Users, roles: ['admin'] },
+  { to: '/monthly-summary', label: 'Tổng hợp tháng', icon: ClipboardList, roles: ['admin'] },
   { to: '#', label: 'Kho lưu trữ', icon: Archive },
   { to: '#', label: 'Thông báo', icon: Bell },
 ];
@@ -38,6 +42,12 @@ function readUser() {
 
 export default function AppLayout({ title, subtitle, children, actions, bottomBar, bottomStatus }: AppLayoutProps) {
   const user = readUser();
+  const visibleNavItems = NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(user.role || ''));
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  };
 
   return (
     <div className="min-h-screen bg-background text-on-surface font-body-md">
@@ -54,7 +64,7 @@ export default function AppLayout({ title, subtitle, children, actions, bottomBa
 
         <nav className="flex-1 overflow-y-auto px-3 py-stack-md">
           <ul className="flex flex-col gap-1">
-            {NAV_ITEMS.map((item) => {
+            {visibleNavItems.map((item) => {
               const Icon = item.icon;
               const commonClass =
                 'flex items-center gap-3 rounded-lg border-l-4 px-3 py-2.5 text-sm font-medium transition-colors';
@@ -104,6 +114,7 @@ export default function AppLayout({ title, subtitle, children, actions, bottomBa
           </a>
           <Link
             to="/login"
+            onClick={handleLogout}
             className="flex items-center gap-3 rounded-lg border-l-4 border-transparent px-3 py-2.5 text-sm font-medium text-white/70 hover:bg-white/5 hover:text-white"
           >
             <LogOut className="h-5 w-5" />

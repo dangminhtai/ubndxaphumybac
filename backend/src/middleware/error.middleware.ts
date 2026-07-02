@@ -10,8 +10,13 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ) {
-  console.error(err.stack);
-  res.status(err.statusCode || 500).json({
+  const statusCode = err.statusCode || 500;
+  
+  if (statusCode >= 500) {
+    console.error(err.stack);
+  }
+
+  res.status(statusCode).json({
     error: err.message || 'Internal Server Error',
   });
 }

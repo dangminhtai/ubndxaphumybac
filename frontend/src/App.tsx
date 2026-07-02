@@ -1,19 +1,30 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
-import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import WeeklyReport from './pages/WeeklyReport';
+import EmployeeReport from './pages/EmployeeReport';
 import MonthlyReport from './pages/MonthlyReport';
+import AdminUsers from './pages/AdminUsers';
+import AdminPeriods from './pages/AdminPeriods';
+import MyReports from './pages/MyReports';
+import ProtectedRoute from './components/ProtectedRoute';
+import ChangePassword from './pages/ChangePassword';
+import MonthlySummary from './pages/MonthlySummary';
 
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/weekly-report" element={<WeeklyReport />} />
-        <Route path="/monthly-report" element={<MonthlyReport />} />
+        <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
+        <Route path="/register" element={<Navigate to="/login" replace />} />
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/employee-report" element={<ProtectedRoute roles={['admin', 'staff', 'department_lead']}><EmployeeReport /></ProtectedRoute>} />
+        <Route path="/my-reports" element={<ProtectedRoute roles={['staff', 'department_lead']}><MyReports /></ProtectedRoute>} />
+        <Route path="/weekly-report" element={<Navigate to="/employee-report" replace />} />
+        <Route path="/monthly-report" element={<ProtectedRoute roles={['staff', 'department_lead']}><MonthlyReport /></ProtectedRoute>} />
+        <Route path="/monthly-summary" element={<ProtectedRoute roles={['admin']}><MonthlySummary /></ProtectedRoute>} />
+        <Route path="/admin/users" element={<ProtectedRoute roles={['admin']}><AdminUsers /></ProtectedRoute>} />
+        <Route path="/admin/periods" element={<ProtectedRoute roles={['admin']}><AdminPeriods /></ProtectedRoute>} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>

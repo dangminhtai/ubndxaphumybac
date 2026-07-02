@@ -7,12 +7,14 @@ export async function connectDatabase() {
       serverSelectionTimeoutMS: 5000,
     });
     console.log('Connected to MongoDB');
+    return true;
   } catch (err: unknown) {
     console.warn('MongoDB not available. API will return errors for DB operations.');
     console.warn('Start MongoDB and restart the server, or set MONGODB_URI in .env');
     if (err instanceof Error) {
       console.warn('Error:', err.message);
     }
+    return false;
   }
 }
 

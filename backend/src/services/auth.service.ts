@@ -11,11 +11,17 @@ export interface RegisterInput {
   fullName: string;
   department: string;
   role?: string;
+  position?: string;
 }
 
 export interface LoginInput {
   username: string;
   password: string;
+}
+
+export interface ChangePasswordInput {
+  currentPassword: string;
+  newPassword: string;
 }
 
 function buildAuthResponse(user: {
@@ -24,6 +30,9 @@ function buildAuthResponse(user: {
   fullName: string;
   role: string;
   department: string;
+  position?: string;
+  isActive?: boolean;
+  mustChangePassword?: boolean;
 }) {
   const token = jwt.sign(
     { id: user._id, username: user.username, role: user.role },
@@ -39,12 +48,20 @@ function buildAuthResponse(user: {
       fullName: user.fullName,
       role: user.role,
       department: user.department,
+      position: user.position,
+      isActive: user.isActive,
+      mustChangePassword: user.mustChangePassword,
     },
   };
 }
 
-export async function registerUser(input: RegisterInput) {
-  const { username, password, fullName, department, role } = input;
+function normalizeRole(role?: string) {
+  const allowed = ['admin', 'staff', 'viewer', 'department_lead', 'office_clerk'];
+  return role && allowed.includes(role) ? role : 'staff';
+}
+
+export async function createUser(input: RegisterInput, options: { mustChangePassword?: boolean } = {}) {
+  const { username, password, fullName, department, role, position } = input;
 
   if (!username || !password || !fullName || !department) {
     const error = new Error('Vui lòng điền đầy đủ thông tin bắt buộc');
@@ -71,7 +88,9 @@ export async function registerUser(input: RegisterInput) {
     passwordHash,
     fullName,
     department,
-    role: role || 'user',
+    position,
+    role: normalizeRole(role),
+    mustChangePassword: Boolean(options.mustChangePassword),
   });
 
   return buildAuthResponse(user);
@@ -87,7 +106,7 @@ export async function loginUser(input: LoginInput) {
   }
 
   const user = await User.findOne({ username });
-  if (!user) {
+  if (!user || !user.isActive) {
     const error = new Error('Tên đăng nhập hoặc mật khẩu không đúng');
     Object.assign(error, { statusCode: 401 });
     throw error;
@@ -99,6 +118,133 @@ export async function loginUser(input: LoginInput) {
     Object.assign(error, { statusCode: 401 });
     throw error;
   }
+
+  return buildAuthResponse(user);
+}
+
+export async function getAuthUser(userId: string) {
+  const user = await User.findById(userId).select('-passwordHash');
+  if (!user || !user.isActive) {
+    const error = new Error('Phiên đăng nhập không hợp lệ');
+    Object.assign(error, { statusCode: 401 });
+    throw error;
+  }
+
+  return user;
+}
+
+export async function seedDefaultAdmin() {
+  const existingAdmin = await User.findOne({ username: 'admin' });
+  if (existingAdmin) {
+    if (existingAdmin.mustChangePassword) {
+      existingAdmin.passwordHash = await bcrypt.hash('admin', SALT_ROUNDS);
+      existingAdmin.role = 'admin';
+      existingAdmin.isActive = true;
+      await existingAdmin.save();
+    }
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash('admin', SALT_ROUNDS);
+  await User.create({
+    username: 'admin',
+    passwordHash,
+    fullName: 'Quản trị hệ thống',
+    department: 'UBND Cấp Xã',
+    role: 'admin',
+    position: 'Administrator',
+    isActive: true,
+    mustChangePassword: true,
+  });
+}
+
+export async function listUsers() {
+  return User.find().select('-passwordHash').sort({ createdAt: -1 });
+}
+
+export async function createManagedUser(input: RegisterInput) {
+  const result = await createUser(input, { mustChangePassword: true });
+  return result.user;
+}
+
+export async function updateManagedUser(userId: string, input: Partial<RegisterInput> & { isActive?: boolean }) {
+  const update: Record<string, unknown> = {};
+
+  if (input.fullName) update.fullName = input.fullName;
+  if (input.department) update.department = input.department;
+  if (input.position !== undefined) update.position = input.position;
+  if (input.role) update.role = normalizeRole(input.role);
+  if (typeof input.isActive === 'boolean') update.isActive = input.isActive;
+
+  const user = await User.findByIdAndUpdate(userId, update, { new: true }).select('-passwordHash');
+  if (!user) {
+    const error = new Error('Không tìm thấy tài khoản');
+    Object.assign(error, { statusCode: 404 });
+    throw error;
+  }
+
+  return user;
+}
+
+export async function disableManagedUser(userId: string) {
+  return updateManagedUser(userId, { isActive: false });
+}
+
+export async function resetManagedUserPassword(userId: string, password = '123456') {
+  if (password.length < 6) {
+    const error = new Error('Mật khẩu phải có ít nhất 6 ký tự');
+    Object.assign(error, { statusCode: 400 });
+    throw error;
+  }
+
+  const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { passwordHash, mustChangePassword: true },
+    { new: true }
+  ).select('-passwordHash');
+
+  if (!user) {
+    const error = new Error('Không tìm thấy tài khoản');
+    Object.assign(error, { statusCode: 404 });
+    throw error;
+  }
+
+  return user;
+}
+
+export async function changePassword(userId: string, input: ChangePasswordInput) {
+  const { currentPassword, newPassword } = input;
+
+  if (!currentPassword || !newPassword) {
+    const error = new Error('Vui lòng nhập mật khẩu hiện tại và mật khẩu mới');
+    Object.assign(error, { statusCode: 400 });
+    throw error;
+  }
+
+  if (newPassword.length < 6) {
+    const error = new Error('Mật khẩu mới phải có ít nhất 6 ký tự');
+    Object.assign(error, { statusCode: 400 });
+    throw error;
+  }
+
+  const user = await User.findById(userId);
+  if (!user || !user.isActive) {
+    const error = new Error('Không tìm thấy tài khoản');
+    Object.assign(error, { statusCode: 404 });
+    throw error;
+  }
+
+  const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!isMatch) {
+    const error = new Error('Mật khẩu hiện tại không đúng');
+    Object.assign(error, { statusCode: 401 });
+    throw error;
+  }
+
+  user.passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+  user.mustChangePassword = false;
+  await user.save();
 
   return buildAuthResponse(user);
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -11,7 +12,9 @@ import {
 } from 'chart.js';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import AppLayout from '../components/layout/AppLayout';
-import { getRecentReports, seedReports } from '../api/reportApi';
+import { getReports } from '../api/reportApi';
+import { getDashboardOverview, getSubmissionProgress } from '../api/dashboardApi';
+import type { DashboardOverview, SubmissionProgress } from '../api/dashboardApi';
 import type { Report } from '../types/report';
 import type { User } from '../types/user';
 
@@ -23,28 +26,35 @@ function readUser() {
 
 export default function Dashboard() {
   const [reports, setReports] = useState<Report[]>([]);
+  const [overview, setOverview] = useState<DashboardOverview | null>(null);
+  const [progress, setProgress] = useState<SubmissionProgress[]>([]);
   const user = readUser();
 
   useEffect(() => {
-    const fetchReports = async () => {
+    const fetchData = async () => {
       try {
-        await seedReports();
-        const data = await getRecentReports();
-        setReports(data);
+        const [reportsData, overviewData, progressData] = await Promise.all([
+          getReports(),
+          getDashboardOverview(),
+          getSubmissionProgress(),
+        ]);
+        setReports(reportsData);
+        setOverview(overviewData);
+        setProgress(progressData);
       } catch (err) {
-        console.error('Failed to fetch reports:', err);
+        console.error('Failed to fetch dashboard data:', err);
       }
     };
-    void fetchReports();
+    void fetchData();
   }, []);
 
   const barChartData = {
-    labels: ['Thôn 1', 'Thôn 2', 'Thôn 3', 'Bản A', 'Bản B', 'YT', 'CA'],
+    labels: progress.map(p => p.department),
     datasets: [
       {
         label: 'Đã nộp',
-        data: [1, 1, 0, 1, 1, 1, 1],
-        backgroundColor: ['#10b981', '#10b981', '#cbd5e1', '#10b981', '#10b981', '#10b981', '#10b981'],
+        data: progress.map(p => p.submitted),
+        backgroundColor: progress.map(p => p.submitted > 0 ? '#10b981' : '#cbd5e1'),
         borderRadius: 4,
         barThickness: 20,
       },
@@ -52,11 +62,15 @@ export default function Dashboard() {
   };
 
   const donutChartData = {
-    labels: ['Kinh tế', 'Văn hóa - Xã hội', 'An ninh trật tự', 'Khác'],
+    labels: ['Bản nháp', 'Chờ duyệt', 'Đã duyệt'],
     datasets: [
       {
-        data: [45, 25, 20, 10],
-        backgroundColor: ['#00288e', '#b8c4ff', '#ffb59a', '#d3e4fe'],
+        data: [
+          overview ? overview.totalReports - overview.pendingReports - overview.approvedReports : 0,
+          overview ? overview.pendingReports : 0,
+          overview ? overview.approvedReports : 0,
+        ],
+        backgroundColor: ['#cbd5e1', '#f59e0b', '#10b981'],
         borderWidth: 0,
         hoverOffset: 4,
       },
@@ -97,23 +111,28 @@ export default function Dashboard() {
       title={`Xin chào, ${user.fullName || 'Nguyễn Văn A'}`}
       subtitle="Chúc bạn một ngày làm việc hiệu quả."
       actions={
-        <button className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white shadow-level-1 transition-colors hover:bg-primary-container">
-          Tạo kỳ báo cáo
-        </button>
+        user.role === 'admin' ? (
+          <Link
+            to="/admin/periods"
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white shadow-level-1 transition-colors hover:bg-primary-container inline-block"
+          >
+            Tạo kỳ báo cáo
+          </Link>
+        ) : null
       }
     >
       <div className="grid grid-cols-12 gap-gutter">
         <section className="col-span-12 lg:col-span-8">
           <div className="grid grid-cols-1 gap-gutter md:grid-cols-2">
             <div className="flex h-[360px] flex-col rounded-xl border border-outline-variant bg-white p-5 shadow-level-1">
-              <h3 className="mb-4 font-headline-sm text-base text-on-surface">Tiến độ nộp theo thôn/bản</h3>
+              <h3 className="mb-4 font-headline-sm text-base text-on-surface">Tiến độ nộp (Kỳ hiện tại)</h3>
               <div className="relative min-h-0 flex-1">
                 <Bar data={barChartData} options={commonBarOptions} />
               </div>
             </div>
 
             <div className="flex h-[360px] flex-col rounded-xl border border-outline-variant bg-white p-5 shadow-level-1">
-              <h3 className="mb-4 font-headline-sm text-base text-on-surface">Phân bổ theo lĩnh vực</h3>
+              <h3 className="mb-4 font-headline-sm text-base text-on-surface">Tình trạng báo cáo (Tổng quan)</h3>
               <div className="relative flex min-h-0 flex-1 items-center justify-center">
                 <Doughnut data={donutChartData} options={donutOptions} />
               </div>
@@ -149,6 +168,11 @@ export default function Dashboard() {
                       </tr>
                     );
                   })}
+                  {reports.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="py-4 text-center text-on-surface-variant">Chưa có báo cáo nào</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

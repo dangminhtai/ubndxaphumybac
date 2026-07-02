@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { User, Lock as LockIcon, EyeOff, Eye } from 'lucide-react';
 import { login } from '../api/authApi';
 
@@ -132,10 +132,7 @@ export default function Login() {
               Hệ thống yêu cầu đăng nhập bằng tài khoản nội bộ.
             </p>
             <p className="font-body-md text-body-md text-on-surface-variant mt-unit">
-              Chưa có tài khoản?{' '}
-              <Link to="/register" className="text-primary font-medium hover:underline transition-all">
-                Đăng ký ngay
-              </Link>
+              Tài khoản do admin cơ quan cấp.
             </p>
           </div>
         </div>
