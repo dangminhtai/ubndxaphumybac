@@ -59,7 +59,7 @@ export async function createPeriod(input: PeriodInput, user: AuthUser) {
   });
 }
 
-export async function setPeriodStatus(periodId: string, status: 'open' | 'locked') {
+export async function setPeriodStatus(periodId: string, status: 'open' | 'locked' | 'archived') {
   const period = await ReportPeriod.findByIdAndUpdate(periodId, { status }, { new: true });
   if (!period) {
     const error = new Error('Không tìm thấy kỳ báo cáo');

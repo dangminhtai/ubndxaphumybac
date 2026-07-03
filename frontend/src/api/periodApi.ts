@@ -36,3 +36,8 @@ export async function lockPeriod(id: string) {
   const response = await apiClient.patch<ReportPeriod>(`/periods/${id}/lock`);
   return response.data;
 }
+
+export async function archivePeriod(id: string) {
+  const response = await apiClient.patch<ReportPeriod>(`/periods/${id}/archive`);
+  return response.data;
+}

@@ -145,11 +145,18 @@ export async function createWeeklyReport(input: WeeklyReportInput, user: AuthUse
 }
 
 export async function submitWeeklyReport(reportId: string, user: AuthUser) {
-  const report = await Report.findById(reportId);
+  const report = await Report.findById(reportId).populate('periodId');
 
   if (!report || report.reportType !== 'weekly') {
     const error = new Error('Không tìm thấy báo cáo tuần');
     Object.assign(error, { statusCode: 404 });
+    throw error;
+  }
+
+  const period: any = report.periodId;
+  if (period && period.status === 'archived') {
+    const error = new Error('Kỳ báo cáo đã được lưu trữ, không thể thay đổi');
+    Object.assign(error, { statusCode: 403 });
     throw error;
   }
 
@@ -237,11 +244,18 @@ export async function createMonthlyStaffReport(input: MonthlyStaffInput, user: A
 }
 
 export async function submitMonthlyStaffReport(reportId: string, user: AuthUser) {
-  const report = await Report.findById(reportId);
+  const report = await Report.findById(reportId).populate('periodId');
 
   if (!report || report.reportType !== 'monthly_staff') {
     const error = new Error('Không tìm thấy báo cáo tháng');
     Object.assign(error, { statusCode: 404 });
+    throw error;
+  }
+
+  const period: any = report.periodId;
+  if (period && period.status === 'archived') {
+    const error = new Error('Kỳ báo cáo đã được lưu trữ, không thể thay đổi');
+    Object.assign(error, { statusCode: 403 });
     throw error;
   }
 

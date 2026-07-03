@@ -7,7 +7,7 @@ export interface IMonthlySummary extends Document {
   difficulties: string;
   proposals: string;
   nextTasks: string;
-  status: 'draft' | 'published';
+  status: 'draft' | 'published' | 'archived';
   authorId: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -21,7 +21,7 @@ const monthlySummarySchema = new Schema<IMonthlySummary>(
     difficulties: { type: String, default: '' },
     proposals: { type: String, default: '' },
     nextTasks: { type: String, default: '' },
-    status: { type: String, enum: ['draft', 'published'], default: 'draft' },
+    status: { type: String, enum: ['draft', 'published', 'archived'], default: 'draft' },
     authorId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   },
   { timestamps: true }

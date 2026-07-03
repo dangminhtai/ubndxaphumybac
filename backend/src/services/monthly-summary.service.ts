@@ -35,6 +35,11 @@ export async function generateMonthlySummaryFromStaff(periodId: string, user: Au
 
   const period = await ReportPeriod.findById(periodId);
   if (!period) throw new Error('Không tìm thấy kỳ báo cáo');
+  if (period.status === 'archived') {
+    const error = new Error('Kỳ báo cáo đã được lưu trữ, không thể thay đổi');
+    Object.assign(error, { statusCode: 403 });
+    throw error;
+  }
 
   // Find all submitted or pending reports from staff for this period
   const staffReports = await Report.find({
@@ -81,6 +86,11 @@ export async function updateMonthlySummary(periodId: string, data: any, user: Au
 
   const period = await ReportPeriod.findById(periodId);
   if (!period) throw new Error('Không tìm thấy kỳ báo cáo');
+  if (period.status === 'archived') {
+    const error = new Error('Kỳ báo cáo đã được lưu trữ, không thể thay đổi');
+    Object.assign(error, { statusCode: 403 });
+    throw error;
+  }
 
   let summary = await MonthlySummary.findOne({ periodId });
   if (!summary) {

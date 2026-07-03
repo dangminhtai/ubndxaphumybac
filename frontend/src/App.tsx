@@ -10,6 +10,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ChangePassword from './pages/ChangePassword';
 import MonthlySummary from './pages/MonthlySummary';
 import AdminLogs from './pages/AdminLogs';
+import Archive from './pages/Archive';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
         <Route path="/admin/users" element={<ProtectedRoute roles={['admin']}><AdminUsers /></ProtectedRoute>} />
         <Route path="/admin/periods" element={<ProtectedRoute roles={['admin']}><AdminPeriods /></ProtectedRoute>} />
         <Route path="/admin/logs" element={<ProtectedRoute roles={['admin', 'viewer']}><AdminLogs /></ProtectedRoute>} />
+        <Route path="/archive" element={<ProtectedRoute><Archive /></ProtectedRoute>} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>

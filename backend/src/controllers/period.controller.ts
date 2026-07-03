@@ -76,3 +76,20 @@ export async function lockPeriod(req: AuthenticatedRequest, res: Response, next:
     next(err);
   }
 }
+
+export async function archivePeriod(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    const period = await setPeriodStatus(String(req.params.id), 'archived');
+    void writeAuditLog({
+      action: 'period_archived',
+      category: 'period',
+      user: req.user,
+      targetType: 'ReportPeriod',
+      targetId: String(req.params.id),
+      details: `Lưu trữ kỳ báo cáo: ${period.title}`,
+    });
+    res.json(period);
+  } catch (err) {
+    next(err);
+  }
+}
