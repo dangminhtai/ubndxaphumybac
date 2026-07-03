@@ -1,4 +1,5 @@
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import {
   Activity,
   Archive,
@@ -15,6 +16,7 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { User } from '../../types/user';
+import { getNotifications } from '../../api/notificationApi';
 
 interface AppLayoutProps {
   title: string;
@@ -35,7 +37,7 @@ const NAV_ITEMS = [
   { to: '/monthly-summary', label: 'Tổng hợp tháng', icon: ClipboardList, roles: ['admin'] },
   { to: '/admin/logs', label: 'Nhật ký hệ thống', icon: Activity, roles: ['admin', 'viewer'] },
   { to: '/archive', label: 'Kho lưu trữ', icon: Archive },
-  { to: '#', label: 'Thông báo', icon: Bell },
+  { to: '/notifications', label: 'Thông báo', icon: Bell },
 ];
 
 function readUser() {
@@ -43,8 +45,23 @@ function readUser() {
 }
 
 export default function AppLayout({ title, subtitle, children, actions, bottomBar, bottomStatus }: AppLayoutProps) {
+  const navigate = useNavigate();
   const user = readUser();
   const visibleNavItems = NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(user.role || ''));
+
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchCount = () => {
+      getNotifications(1)
+        .then((res) => setUnreadCount(res.unreadCount))
+        .catch(() => {});
+    };
+    
+    fetchCount();
+    const interval = setInterval(fetchCount, 60000); // Poll every minute
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -138,11 +155,17 @@ export default function AppLayout({ title, subtitle, children, actions, bottomBa
 
           <div className="ml-auto flex items-center gap-4">
             <button
-              className="rounded-full p-2 text-primary transition-colors hover:bg-surface-container-high"
+              className="relative rounded-full p-2 text-primary transition-colors hover:bg-surface-container-high"
               type="button"
               aria-label="Thông báo"
+              onClick={() => navigate('/notifications')}
             >
               <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute right-1.5 top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full border-2 border-white bg-error px-1 text-[9px] font-bold text-white">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </button>
             <div className="flex items-center gap-3 border-l border-outline-variant pl-4">
               <div className="text-right">

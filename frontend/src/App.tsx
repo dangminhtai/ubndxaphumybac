@@ -11,6 +11,7 @@ import ChangePassword from './pages/ChangePassword';
 import MonthlySummary from './pages/MonthlySummary';
 import AdminLogs from './pages/AdminLogs';
 import Archive from './pages/Archive';
+import Notifications from './pages/Notifications';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
         <Route path="/admin/periods" element={<ProtectedRoute roles={['admin']}><AdminPeriods /></ProtectedRoute>} />
         <Route path="/admin/logs" element={<ProtectedRoute roles={['admin', 'viewer']}><AdminLogs /></ProtectedRoute>} />
         <Route path="/archive" element={<ProtectedRoute><Archive /></ProtectedRoute>} />
+        <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>

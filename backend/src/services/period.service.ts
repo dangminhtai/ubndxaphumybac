@@ -1,5 +1,6 @@
 import ReportPeriod from '../models/ReportPeriod';
 import type { AuthUser } from '../middleware/auth.middleware';
+import { notifyAllUsers } from './notification.service';
 
 export interface PeriodInput {
   type: 'weekly' | 'monthly';
@@ -46,7 +47,7 @@ export function listPeriods(type?: string) {
 export async function createPeriod(input: PeriodInput, user: AuthUser) {
   validatePeriodInput(input);
 
-  return ReportPeriod.create({
+  const period = await ReportPeriod.create({
     type: input.type,
     title: buildTitle(input),
     weekNumber: input.weekNumber,
@@ -57,15 +58,39 @@ export async function createPeriod(input: PeriodInput, user: AuthUser) {
     status: input.status || 'draft',
     createdBy: user.id,
   });
+
+  if (period.status === 'open') {
+    void notifyAllUsers({
+      title: 'Kỳ báo cáo mới',
+      message: `Kỳ báo cáo "${period.title}" vừa được mở. Hạn nộp: ${period.dueDate.toLocaleDateString('vi-VN')}`,
+      type: 'period_opened',
+      link: period.type === 'weekly' ? '/weekly-report' : '/monthly-report',
+      excludeRoles: ['admin'],
+    });
+  }
+
+  return period;
 }
 
 export async function setPeriodStatus(periodId: string, status: 'open' | 'locked' | 'archived') {
+  const oldPeriod = await ReportPeriod.findById(periodId);
   const period = await ReportPeriod.findByIdAndUpdate(periodId, { status }, { new: true });
   if (!period) {
     const error = new Error('Không tìm thấy kỳ báo cáo');
     Object.assign(error, { statusCode: 404 });
     throw error;
   }
+
+  if (status === 'open' && oldPeriod && oldPeriod.status !== 'open') {
+    void notifyAllUsers({
+      title: 'Kỳ báo cáo đã mở lại',
+      message: `Kỳ báo cáo "${period.title}" vừa được mở. Hạn nộp: ${period.dueDate.toLocaleDateString('vi-VN')}`,
+      type: 'period_opened',
+      link: period.type === 'weekly' ? '/weekly-report' : '/monthly-report',
+      excludeRoles: ['admin'],
+    });
+  }
+
   return period;
 }
 
