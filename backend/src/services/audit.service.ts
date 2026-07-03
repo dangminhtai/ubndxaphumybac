@@ -1,5 +1,6 @@
 import AuditLog from '../models/AuditLog';
 import type { AuthUser } from '../middleware/auth.middleware';
+import { logger } from '../config/logger';
 
 export interface AuditLogInput {
   action: string;
@@ -27,9 +28,9 @@ export async function writeAuditLog(input: AuditLogInput) {
 
     // Ghi log ra terminal để tiện theo dõi trong quá trình dev / vận hành
     const userDisplay = input.user ? `[${input.user.username}]` : '[SYSTEM]';
-    console.log(`[AUDIT] ${userDisplay} ${input.action} - ${input.details || ''}`);
-  } catch (err) {
-    console.error('Failed to write audit log:', err);
+    logger.info(`[AUDIT] ${userDisplay} ${input.action} - ${input.details || ''}`);
+  } catch (err: any) {
+    logger.error(`Failed to write audit log: ${err.message}`);
   }
 }
 

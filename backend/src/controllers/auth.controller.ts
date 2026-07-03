@@ -16,7 +16,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
   try {
     const result = await loginUser(req.body);
     void writeAuditLog({
-      action: 'login_success',
+      action: 'LOGIN',
       category: 'auth',
       user: { id: String(result.user.id), username: result.user.username, fullName: result.user.fullName, role: result.user.role, department: result.user.department, mustChangePassword: result.user.mustChangePassword || false },
       ip: req.ip,
@@ -46,7 +46,7 @@ export async function me(req: AuthenticatedRequest, res: Response, next: NextFun
 export function logout(req: AuthenticatedRequest, res: Response) {
   if (req.user) {
     void writeAuditLog({
-      action: 'logout',
+      action: 'LOGOUT',
       category: 'auth',
       user: req.user,
       ip: req.ip,

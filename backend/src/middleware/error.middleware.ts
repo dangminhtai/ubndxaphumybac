@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { logger } from '../config/logger';
 
 interface HttpError extends Error {
   statusCode?: number;
@@ -13,7 +14,7 @@ export function errorHandler(
   const statusCode = err.statusCode || 500;
   
   if (statusCode >= 500) {
-    console.error(err.stack);
+    logger.error(`${err.message}\n${err.stack}`);
   }
 
   res.status(statusCode).json({

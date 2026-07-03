@@ -16,7 +16,7 @@ import { seedDefaultAdmin } from './services/auth.service';
 
 const app = express();
 
-app.use(cors());
+app.use(cors({ origin: env.frontendOrigin }));
 app.use(express.json());
 
 import ReportPeriod from './models/ReportPeriod';

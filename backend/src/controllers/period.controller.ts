@@ -30,7 +30,7 @@ export async function postPeriod(req: AuthenticatedRequest, res: Response, next:
     }
     const period = await createPeriod(req.body, req.user);
     void writeAuditLog({
-      action: 'period_created',
+      action: 'ADD',
       category: 'period',
       user: req.user,
       targetType: 'ReportPeriod',
@@ -47,7 +47,7 @@ export async function openPeriod(req: AuthenticatedRequest, res: Response, next:
   try {
     const period = await setPeriodStatus(String(req.params.id), 'open');
     void writeAuditLog({
-      action: 'period_opened',
+      action: 'UNLOCK',
       category: 'period',
       user: req.user,
       targetType: 'ReportPeriod',
@@ -64,7 +64,7 @@ export async function lockPeriod(req: AuthenticatedRequest, res: Response, next:
   try {
     const period = await setPeriodStatus(String(req.params.id), 'locked');
     void writeAuditLog({
-      action: 'period_locked',
+      action: 'LOCK',
       category: 'period',
       user: req.user,
       targetType: 'ReportPeriod',
@@ -81,7 +81,7 @@ export async function archivePeriod(req: AuthenticatedRequest, res: Response, ne
   try {
     const period = await setPeriodStatus(String(req.params.id), 'archived');
     void writeAuditLog({
-      action: 'period_archived',
+      action: 'ARCHIVE',
       category: 'period',
       user: req.user,
       targetType: 'ReportPeriod',

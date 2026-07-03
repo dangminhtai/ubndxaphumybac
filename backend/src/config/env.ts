@@ -6,6 +6,7 @@ interface EnvConfig {
   port: number;
   mongodbUri: string;
   jwtSecret: string;
+  frontendOrigin: string;
 }
 
 function requireEnv(name: string) {
@@ -25,4 +26,5 @@ export const env: EnvConfig = {
   port,
   mongodbUri: requireEnv('MONGODB_URI'),
   jwtSecret: requireEnv('JWT_SECRET'),
+  frontendOrigin: process.env.FRONTEND_ORIGIN || '*',
 };

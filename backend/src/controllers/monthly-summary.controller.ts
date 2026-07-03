@@ -22,7 +22,7 @@ export async function generateSummary(req: AuthenticatedRequest, res: Response, 
   try {
     const summary = await generateMonthlySummaryFromStaff(req.params.periodId as string, req.user!);
     void writeAuditLog({
-      action: 'summary_generated',
+      action: 'ADD',
       category: 'summary',
       user: req.user,
       targetType: 'MonthlySummary',
@@ -39,7 +39,7 @@ export async function updateSummary(req: AuthenticatedRequest, res: Response, ne
   try {
     const summary = await updateMonthlySummary(req.params.periodId as string, req.body, req.user!);
     void writeAuditLog({
-      action: 'summary_updated',
+      action: 'MODIFY',
       category: 'summary',
       user: req.user,
       targetType: 'MonthlySummary',
@@ -56,7 +56,7 @@ export async function exportSummary(req: AuthenticatedRequest, res: Response, ne
   try {
     const filePath = await exportMonthlySummaryDocx(req.params.periodId as string);
     void writeAuditLog({
-      action: 'docx_exported',
+      action: 'EXPORT',
       category: 'export',
       user: req.user,
       targetType: 'MonthlySummary',

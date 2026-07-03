@@ -94,7 +94,7 @@ export async function createUser(input: RegisterInput, options: { mustChangePass
     mustChangePassword: Boolean(options.mustChangePassword),
   });
   void writeAuditLog({
-    action: 'user_created',
+    action: 'ADD',
     category: 'user',
     targetType: 'User',
     targetId: String(user._id),
@@ -122,7 +122,7 @@ export async function loginUser(input: LoginInput) {
 
   const isMatch = await bcrypt.compare(password, user.passwordHash);
   if (!isMatch) {
-    void writeAuditLog({ action: 'login_failed', category: 'auth', details: `Sai mật khẩu cho user: ${username}` });
+    void writeAuditLog({ action: 'LOGIN_FAILED', category: 'auth', details: `Sai mật khẩu cho user: ${username}` });
     const error = new Error('Tên đăng nhập hoặc mật khẩu không đúng');
     Object.assign(error, { statusCode: 401 });
     throw error;
@@ -198,7 +198,7 @@ export async function updateManagedUser(userId: string, input: Partial<RegisterI
 export async function disableManagedUser(userId: string, actor?: { id: string; username: string; fullName: string }) {
   const result = await updateManagedUser(userId, { isActive: false });
   void writeAuditLog({
-    action: 'user_disabled',
+    action: 'DISABLE',
     category: 'user',
     user: actor ? { ...actor, role: '', department: '', mustChangePassword: false } : undefined,
     targetType: 'User',
@@ -228,7 +228,7 @@ export async function resetManagedUserPassword(userId: string, password = '12345
     throw error;
   }
   void writeAuditLog({
-    action: 'password_reset',
+    action: 'RESET_PASSWORD',
     category: 'user',
     targetType: 'User',
     targetId: userId,
@@ -272,7 +272,7 @@ export async function changePassword(userId: string, input: ChangePasswordInput)
   await user.save();
 
   void writeAuditLog({
-    action: 'password_changed',
+    action: 'CHANGE_PASSWORD',
     category: 'auth',
     user: { id: userId, username: user.username, fullName: user.fullName, role: user.role, department: user.department, mustChangePassword: false },
     details: 'Đổi mật khẩu thành công',

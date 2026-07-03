@@ -61,7 +61,7 @@ export async function postWeeklyReport(req: AuthenticatedRequest, res: Response,
     }
     const report = await createWeeklyReport(req.body, req.user);
     void writeAuditLog({
-      action: report.status === 'pending' ? 'report_submitted' : 'report_saved_draft',
+      action: report.status === 'pending' ? 'SUBMIT' : 'MODIFY',
       category: 'report',
       user: req.user,
       targetType: 'Report',
@@ -83,7 +83,7 @@ export async function submitWeekly(req: AuthenticatedRequest, res: Response, nex
     }
     const result = await submitWeeklyReport(String(req.params.id), req.user);
     void writeAuditLog({
-      action: 'report_submitted',
+      action: 'SUBMIT',
       category: 'report',
       user: req.user,
       targetType: 'Report',
@@ -120,7 +120,7 @@ export async function postMonthlyStaffReport(req: AuthenticatedRequest, res: Res
     }
     const report = await createMonthlyStaffReport(req.body, req.user);
     void writeAuditLog({
-      action: report.status === 'pending' ? 'report_submitted' : 'report_saved_draft',
+      action: report.status === 'pending' ? 'SUBMIT' : 'MODIFY',
       category: 'report',
       user: req.user,
       targetType: 'Report',
@@ -142,7 +142,7 @@ export async function submitMonthlyStaff(req: AuthenticatedRequest, res: Respons
     }
     const report = await submitMonthlyStaffReport(String(req.params.id), req.user);
     void writeAuditLog({
-      action: 'report_submitted',
+      action: 'SUBMIT',
       category: 'report',
       user: req.user,
       targetType: 'Report',
@@ -159,7 +159,7 @@ export async function exportWeeklyReport(req: Request, res: Response, next: Next
   try {
     const filePath = await exportWeeklyReportDocx(req.body);
     void writeAuditLog({
-      action: 'docx_exported',
+      action: 'EXPORT',
       category: 'export',
       details: `Xuất DOCX báo cáo tuần`,
     });
@@ -183,7 +183,7 @@ export async function exportWeeklyReportById(req: AuthenticatedRequest, res: Res
     }
     const filePath = await exportWeeklyReportDocxById(String(req.params.id), req.user);
     void writeAuditLog({
-      action: 'docx_exported',
+      action: 'EXPORT',
       category: 'export',
       user: req.user,
       targetType: 'Report',
