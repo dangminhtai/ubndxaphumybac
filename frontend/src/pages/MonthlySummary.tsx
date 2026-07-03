@@ -21,6 +21,7 @@ import {
   exportMonthlySummaryDocx,
 } from '../api/monthlySummaryApi';
 import type { MonthlySummary as IMonthlySummary } from '../api/monthlySummaryApi';
+import { getCurrentPeriod } from '../api/periodApi';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -112,8 +113,7 @@ function ReportEditor({
 
 export default function MonthlySummaryPage() {
   const query = useQuery();
-  const periodId = query.get('periodId') || '';
-  
+  const [periodId, setPeriodId] = useState(query.get('periodId') || '');
   const [form, setForm] = useState<Partial<IMonthlySummary>>({
     content: '',
     difficulties: '',
@@ -130,17 +130,25 @@ export default function MonthlySummaryPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!periodId) {
-      setError('Thiếu periodId trong URL');
-      setLoading(false);
-      return;
-    }
-
     const loadData = async () => {
       setLoading(true);
       setError('');
       try {
-        const data = await getMonthlySummary(periodId);
+        let currentPeriodId = periodId;
+
+        if (!currentPeriodId) {
+          const currentMonthly = await getCurrentPeriod('monthly');
+          if (currentMonthly && currentMonthly._id) {
+            currentPeriodId = currentMonthly._id;
+            setPeriodId(currentPeriodId);
+          } else {
+            setError('Chưa có kỳ báo cáo tháng nào đang mở.');
+            setLoading(false);
+            return;
+          }
+        }
+
+        const data = await getMonthlySummary(currentPeriodId);
         setForm({
           content: data.content || '',
           difficulties: data.difficulties || '',
@@ -217,6 +225,7 @@ export default function MonthlySummaryPage() {
       link.remove();
       URL.revokeObjectURL(url);
       setMessage('Đã xuất file DOCX');
+    } catch (err: any) {
       let errorMessage = 'Không xuất được file DOCX';
       if (err.response?.data instanceof Blob) {
         try {

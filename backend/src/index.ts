@@ -6,6 +6,7 @@ import periodRoutes from './routes/periods';
 import reportRoutes from './routes/reports';
 import monthlySummariesRouter from './routes/monthly-summaries';
 import dashboardRouter from './routes/dashboard';
+import auditLogsRouter from './routes/audit-logs';
 import { closeDatabase, connectDatabase, getDatabaseStatus } from './config/db';
 import { env } from './config/env';
 import { errorHandler } from './middleware/error.middleware';
@@ -67,6 +68,7 @@ app.use('/api/periods', periodRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/monthly-summaries', monthlySummariesRouter);
 app.use('/api/dashboard', dashboardRouter);
+app.use('/api/admin/logs', auditLogsRouter);
 
 app.get('/api/health', (_req, res) => {
   res.json({

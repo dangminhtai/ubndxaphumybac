@@ -1,5 +1,6 @@
 import { NavLink, Link } from 'react-router-dom';
 import {
+  Activity,
   Archive,
   Bell,
   CalendarDays,
@@ -32,6 +33,7 @@ const NAV_ITEMS = [
   { to: '/admin/periods', label: 'Kỳ báo cáo', icon: CalendarDays, roles: ['admin'] },
   { to: '/admin/users', label: 'Tài khoản', icon: Users, roles: ['admin'] },
   { to: '/monthly-summary', label: 'Tổng hợp tháng', icon: ClipboardList, roles: ['admin'] },
+  { to: '/admin/logs', label: 'Nhật ký hệ thống', icon: Activity, roles: ['admin', 'viewer'] },
   { to: '#', label: 'Kho lưu trữ', icon: Archive },
   { to: '#', label: 'Thông báo', icon: Bell },
 ];

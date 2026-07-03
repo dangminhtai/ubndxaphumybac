@@ -10,10 +10,18 @@ import {
   updateManagedUser,
 } from '../services/auth.service';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
+import { writeAuditLog } from '../services/audit.service';
 
 export async function login(req: Request, res: Response, next: NextFunction) {
   try {
     const result = await loginUser(req.body);
+    void writeAuditLog({
+      action: 'login_success',
+      category: 'auth',
+      user: { id: String(result.user.id), username: result.user.username, fullName: result.user.fullName, role: result.user.role, department: result.user.department, mustChangePassword: result.user.mustChangePassword || false },
+      ip: req.ip,
+      details: `Đăng nhập thành công`,
+    });
     res.json(result);
   } catch (err) {
     next(err);
@@ -35,7 +43,16 @@ export async function me(req: AuthenticatedRequest, res: Response, next: NextFun
   }
 }
 
-export function logout(_req: Request, res: Response) {
+export function logout(req: AuthenticatedRequest, res: Response) {
+  if (req.user) {
+    void writeAuditLog({
+      action: 'logout',
+      category: 'auth',
+      user: req.user,
+      ip: req.ip,
+      details: 'Đăng xuất',
+    });
+  }
   res.json({ message: 'Đã đăng xuất' });
 }
 

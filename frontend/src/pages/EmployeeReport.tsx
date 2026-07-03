@@ -188,6 +188,7 @@ export default function EmployeeReport() {
       link.remove();
       URL.revokeObjectURL(url);
       setMessage('Đã xuất file DOCX');
+    } catch (err: any) {
       let errorMessage = 'Không xuất được file DOCX';
       if (err.response?.data instanceof Blob) {
         try {
