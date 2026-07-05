@@ -24,7 +24,7 @@ const ReportPeriodSchema = new Schema<IReportPeriod>({
   startDate: { type: Date, required: true },
   dueDate: { type: Date, required: true },
   status: { type: String, required: true, enum: ['draft', 'open', 'locked', 'archived'], default: 'draft' },
-  createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
 }, { timestamps: true });
 
 ReportPeriodSchema.index(

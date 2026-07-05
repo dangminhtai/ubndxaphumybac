@@ -29,9 +29,9 @@ interface AppLayoutProps {
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Trang chủ', icon: Home },
-  { to: '/employee-report', label: 'Nhập báo cáo', icon: UserPen, roles: ['admin', 'staff', 'department_lead'] },
-  { to: '/my-reports', label: 'Báo cáo của tôi', icon: ClipboardList, roles: ['staff', 'department_lead'] },
-  { to: '/monthly-report', label: 'Báo cáo tháng', icon: CalendarDays, roles: ['staff', 'department_lead'] },
+  { to: '/employee-report', label: 'Nhập báo cáo', icon: UserPen, roles: ['admin', 'staff', 'department_lead', 'user'] },
+  { to: '/my-reports', label: 'Báo cáo của tôi', icon: ClipboardList, roles: ['staff', 'department_lead', 'user'] },
+  { to: '/monthly-report', label: 'Báo cáo tháng', icon: CalendarDays, roles: ['staff', 'department_lead', 'user'] },
   { to: '/admin/periods', label: 'Kỳ báo cáo', icon: CalendarDays, roles: ['admin'] },
   { to: '/admin/users', label: 'Tài khoản', icon: Users, roles: ['admin'] },
   { to: '/monthly-summary', label: 'Tổng hợp tháng', icon: ClipboardList, roles: ['admin'] },

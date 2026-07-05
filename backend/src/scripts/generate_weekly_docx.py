@@ -43,6 +43,11 @@ def activity_label(period):
     return period.replace(" năm ", " tháng_năm_marker ").split(" tháng_năm_marker ")[0]
 
 
+def week_label_no_year(date_obj):
+    week_no = ((date_obj.day - 1) // 7) + 1
+    return f"Tuần {week_no:02d} tháng {date_obj.month}"
+
+
 def default_window():
     today = date.today()
     monday = today - timedelta(days=today.weekday())
@@ -127,45 +132,40 @@ def build_document_xml(payload, template_path):
     digital_transformation = payload.get("digitalTransformation") or ""
     next_tasks = payload.get("nextTasks") or ""
     difficulties = payload.get("difficulties") or ""
-    proposals = payload.get("proposals") or ""
+    submission_date = date.today()
 
     sect_pr = get_section_properties(template_path)
 
     body = []
     body.append(paragraph(department.upper(), bold=True, align="center", size=26, spacing_after=0))
-    body.append(paragraph("CẢI CÁCH HÀNH CHÍNH, KHOA HỌC CÔNG NGHỆ", bold=True, align="center", size=24, spacing_after=0))
+    if field.strip():
+        body.append(paragraph(field.upper(), bold=True, align="center", size=24, spacing_after=0))
     body.append(paragraph("CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM", bold=True, align="center", size=26, spacing_after=0))
     body.append(paragraph("Độc lập - Tự do - Hạnh phúc", bold=True, align="center", size=26, spacing_after=240))
-    body.append(paragraph(format_place_date(due_date), align="right", size=26, italic=True, spacing_after=240))
+    body.append(paragraph(format_place_date(submission_date), align="right", size=26, italic=True, spacing_after=240))
     body.append(paragraph(report_title, bold=True, align="center", size=32, spacing_after=60))
     body.append(paragraph(date_range, bold=True, align="center", size=26, spacing_after=240))
 
-    body.append(section_heading(f"I. TÌNH HÌNH HOẠT ĐỘNG {activity_label(period).upper()}"))
-    if administrative_reform or digital_transformation:
-        body.append(section_heading("1. Cải cách hành chính"))
-        body.append(multiline_block(administrative_reform))
-        body.append(section_heading("2. Khoa học công nghệ và Chuyển đổi số"))
-        body.append(multiline_block(digital_transformation))
-    else:
-        body.append(section_heading(field))
-        body.append(multiline_block(content))
+    strict_activity_period = week_label_no_year(end_date)
+    body.append(section_heading(f"I. TÌNH HÌNH HOẠT ĐỘNG {strict_activity_period.upper()}"))
+    body.append(multiline_block(content))
 
     body.append(section_heading(f"II. PHƯƠNG HƯỚNG, NHIỆM VỤ {next_period.upper()}"))
     body.append(multiline_block(next_tasks))
 
     if difficulties.strip():
-        body.append(section_heading("III. KHÓ KHĂN, VƯỚNG MẮC"))
+        body.append(section_heading("III. TỒN TẠI, HẠN CHẾ"))
         body.append(multiline_block(difficulties))
 
     if proposals.strip():
-        body.append(section_heading("IV. ĐỀ XUẤT, KIẾN NGHỊ"))
+        body.append(section_heading("IV. KIẾN NGHỊ ĐỀ XUẤT"))
         body.append(multiline_block(proposals))
 
     body.append(paragraph(
-        f"Trên đây là báo cáo tình hình hoạt động lĩnh vực {field} được thực hiện vào {period.lower()} và phương hướng hoạt động {next_period.lower()} của chuyên viên phụ trách.",
+        f"Trên đây là báo cáo tình hình hoạt động lĩnh vực {field} được thực hiện vào {strict_activity_period.lower()} và Phương hướng hoạt động {next_period.lower()} của chuyên viên phụ trách.",
         size=28,
     ))
-    body.append(paragraph("Kính báo cáo lãnh đạo Phòng biết và chỉ đạo./.", size=28, spacing_after=320))
+    body.append(paragraph("Kính báo cáo lãnh đạo Phòng biết và chỉ đạo.", size=28, spacing_after=320))
     body.append(paragraph("Người báo cáo", bold=True, align="right", size=28, spacing_after=360))
     body.append(paragraph(sender, bold=True, align="right", size=28, spacing_after=0))
 

@@ -21,10 +21,10 @@ function App() {
         <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
         <Route path="/register" element={<Navigate to="/login" replace />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/employee-report" element={<ProtectedRoute roles={['admin', 'staff', 'department_lead']}><EmployeeReport /></ProtectedRoute>} />
-        <Route path="/my-reports" element={<ProtectedRoute roles={['staff', 'department_lead']}><MyReports /></ProtectedRoute>} />
+        <Route path="/employee-report" element={<ProtectedRoute roles={['admin', 'staff', 'department_lead', 'user']}><EmployeeReport /></ProtectedRoute>} />
+        <Route path="/my-reports" element={<ProtectedRoute roles={['staff', 'department_lead', 'user']}><MyReports /></ProtectedRoute>} />
         <Route path="/weekly-report" element={<Navigate to="/employee-report" replace />} />
-        <Route path="/monthly-report" element={<ProtectedRoute roles={['staff', 'department_lead']}><MonthlyReport /></ProtectedRoute>} />
+        <Route path="/monthly-report" element={<ProtectedRoute roles={['staff', 'department_lead', 'user']}><MonthlyReport /></ProtectedRoute>} />
         <Route path="/monthly-summary" element={<ProtectedRoute roles={['admin']}><MonthlySummary /></ProtectedRoute>} />
         <Route path="/admin/users" element={<ProtectedRoute roles={['admin']}><AdminUsers /></ProtectedRoute>} />
         <Route path="/admin/periods" element={<ProtectedRoute roles={['admin']}><AdminPeriods /></ProtectedRoute>} />

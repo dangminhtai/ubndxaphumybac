@@ -1,10 +1,11 @@
 import { NextFunction, Response } from 'express';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
-import { createPeriod, getOpenPeriod, listPeriods, setPeriodStatus } from '../services/period.service';
+import { getOpenPeriod, listPeriods, setPeriodStatus, updatePeriodDueDate, ensureCurrentWeekPeriod } from '../services/period.service';
 import { writeAuditLog } from '../services/audit.service';
 
 export async function getPeriods(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
+    await ensureCurrentWeekPeriod();
     res.json(await listPeriods(req.query.type?.toString()));
   } catch (err) {
     next(err);
@@ -21,23 +22,24 @@ export async function getCurrentPeriod(req: AuthenticatedRequest, res: Response,
   }
 }
 
-export async function postPeriod(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+export async function patchPeriodDueDate(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
-    if (!req.user) {
-      const error = new Error('Bạn cần đăng nhập');
-      Object.assign(error, { statusCode: 401 });
+    const { dueDate } = req.body;
+    if (!dueDate) {
+      const error = new Error('Cần cung cấp hạn nộp mới');
+      Object.assign(error, { statusCode: 400 });
       throw error;
     }
-    const period = await createPeriod(req.body, req.user);
+    const period = await updatePeriodDueDate(String(req.params.id), dueDate);
     void writeAuditLog({
-      action: 'ADD',
+      action: 'EDIT',
       category: 'period',
       user: req.user,
       targetType: 'ReportPeriod',
-      targetId: String(period._id),
-      details: `Tạo kỳ báo cáo: ${period.title}`,
+      targetId: String(req.params.id),
+      details: `Gia hạn kỳ báo cáo "${period.title}" đến ${new Date(dueDate).toLocaleDateString('vi-VN')}`,
     });
-    res.status(201).json(period);
+    res.json(period);
   } catch (err) {
     next(err);
   }

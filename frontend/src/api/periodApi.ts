@@ -1,17 +1,6 @@
 import { apiClient } from './client';
 import type { ReportPeriod } from '../types/report';
 
-export interface PeriodPayload {
-  type: 'weekly' | 'monthly';
-  title?: string;
-  weekNumber?: number;
-  month?: number;
-  year: number;
-  startDate: string;
-  dueDate: string;
-  status?: 'draft' | 'open';
-}
-
 export async function getPeriods(type?: 'weekly' | 'monthly') {
   const response = await apiClient.get<ReportPeriod[]>('/periods', { params: { type } });
   return response.data;
@@ -22,8 +11,8 @@ export async function getCurrentPeriod(type: 'weekly' | 'monthly') {
   return response.data;
 }
 
-export async function createPeriod(payload: PeriodPayload) {
-  const response = await apiClient.post<ReportPeriod>('/periods', payload);
+export async function updatePeriodDueDate(id: string, dueDate: string) {
+  const response = await apiClient.patch<ReportPeriod>(`/periods/${id}/due-date`, { dueDate });
   return response.data;
 }
 

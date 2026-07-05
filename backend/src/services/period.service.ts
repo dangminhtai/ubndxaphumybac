@@ -1,75 +1,84 @@
 import ReportPeriod from '../models/ReportPeriod';
-import type { AuthUser } from '../middleware/auth.middleware';
 import { notifyAllUsers } from './notification.service';
 
-export interface PeriodInput {
-  type: 'weekly' | 'monthly';
-  title?: string;
-  weekNumber?: number;
-  month?: number;
-  year: number;
-  startDate: string;
-  dueDate: string;
-  status?: 'draft' | 'open' | 'locked' | 'archived';
+/* ── helpers ── */
+
+function getMonday(d: Date) {
+  const date = new Date(d);
+  date.setUTCHours(0, 0, 0, 0);
+  const day = date.getUTCDay();
+  const diff = (day + 6) % 7;
+  date.setUTCDate(date.getUTCDate() - diff);
+  return date;
 }
 
-function validatePeriodInput(input: PeriodInput) {
-  if (!input.type || !input.year || !input.startDate || !input.dueDate) {
-    const error = new Error('Vui lòng nhập đầy đủ loại kỳ, năm, ngày bắt đầu và hạn nộp');
-    Object.assign(error, { statusCode: 400 });
-    throw error;
-  }
-
-  if (input.type === 'weekly' && !input.weekNumber) {
-    const error = new Error('Kỳ tuần cần có số tuần');
-    Object.assign(error, { statusCode: 400 });
-    throw error;
-  }
-
-  if (input.type === 'monthly' && !input.month) {
-    const error = new Error('Kỳ tháng cần có tháng');
-    Object.assign(error, { statusCode: 400 });
-    throw error;
-  }
+function addDays(d: Date, n: number) {
+  const r = new Date(d);
+  r.setUTCDate(r.getUTCDate() + n);
+  return r;
 }
 
-function buildTitle(input: PeriodInput) {
-  if (input.title) return input.title;
-  if (input.type === 'weekly') return `Tuần ${String(input.weekNumber).padStart(2, '0')} tháng ${input.month || ''} năm ${input.year}`.replace(' tháng  năm', ` năm`);
-  return `Tháng ${input.month} năm ${input.year}`;
+function weekLabelFromThursday(thu: Date) {
+  const weekNum = Math.floor((thu.getUTCDate() - 1) / 7) + 1;
+  return `Tuần ${String(weekNum).padStart(2, '0')} tháng ${thu.getUTCMonth() + 1} năm ${thu.getUTCFullYear()}`;
 }
+
+/* ── auto-generate current week period ── */
+
+export async function ensureCurrentWeekPeriod() {
+  const now = new Date();
+  const monday = getMonday(now);
+  const thursday = addDays(monday, 3);
+
+  const weekNum = Math.floor((thursday.getUTCDate() - 1) / 7) + 1;
+  const month = thursday.getUTCMonth() + 1;
+  const year = thursday.getUTCFullYear();
+
+  const existing = await ReportPeriod.findOne({
+    type: 'weekly',
+    startDate: monday,
+    status: { $ne: 'archived' },
+  });
+
+  if (existing) return existing;
+
+  const title = weekLabelFromThursday(thursday);
+
+  const period = await ReportPeriod.create({
+    type: 'weekly',
+    title,
+    weekNumber: weekNum,
+    month,
+    year,
+    startDate: monday,
+    dueDate: thursday,
+    status: 'open',
+    createdBy: null as any,
+  });
+
+  void notifyAllUsers({
+    title: 'Kỳ báo cáo mới',
+    message: `Kỳ báo cáo "${period.title}" đã tự động mở. Hạn nộp: ${thursday.toLocaleDateString('vi-VN')}`,
+    type: 'period_opened',
+    link: '/weekly-report',
+    excludeRoles: ['admin'],
+  });
+
+  return period;
+}
+
+/* ── CRUD ── */
 
 export function listPeriods(type?: string) {
   const filter = type ? { type } : {};
   return ReportPeriod.find(filter).sort({ year: -1, month: -1, weekNumber: -1, createdAt: -1 });
 }
 
-export async function createPeriod(input: PeriodInput, user: AuthUser) {
-  validatePeriodInput(input);
-
-  const period = await ReportPeriod.create({
-    type: input.type,
-    title: buildTitle(input),
-    weekNumber: input.weekNumber,
-    month: input.month,
-    year: input.year,
-    startDate: new Date(input.startDate),
-    dueDate: new Date(input.dueDate),
-    status: input.status || 'draft',
-    createdBy: user.id,
-  });
-
-  if (period.status === 'open') {
-    void notifyAllUsers({
-      title: 'Kỳ báo cáo mới',
-      message: `Kỳ báo cáo "${period.title}" vừa được mở. Hạn nộp: ${period.dueDate.toLocaleDateString('vi-VN')}`,
-      type: 'period_opened',
-      link: period.type === 'weekly' ? '/weekly-report' : '/monthly-report',
-      excludeRoles: ['admin'],
-    });
+export async function getOpenPeriod(type: 'weekly' | 'monthly') {
+  if (type === 'weekly') {
+    await ensureCurrentWeekPeriod();
   }
-
-  return period;
+  return ReportPeriod.findOne({ type, status: 'open' }).sort({ year: -1, month: -1, weekNumber: -1, createdAt: -1 });
 }
 
 export async function setPeriodStatus(periodId: string, status: 'open' | 'locked' | 'archived') {
@@ -94,6 +103,16 @@ export async function setPeriodStatus(periodId: string, status: 'open' | 'locked
   return period;
 }
 
-export async function getOpenPeriod(type: 'weekly' | 'monthly') {
-  return ReportPeriod.findOne({ type, status: 'open' }).sort({ year: -1, month: -1, weekNumber: -1, createdAt: -1 });
+export async function updatePeriodDueDate(periodId: string, newDueDate: string) {
+  const period = await ReportPeriod.findByIdAndUpdate(
+    periodId,
+    { dueDate: new Date(newDueDate) },
+    { new: true },
+  );
+  if (!period) {
+    const error = new Error('Không tìm thấy kỳ báo cáo');
+    Object.assign(error, { statusCode: 404 });
+    throw error;
+  }
+  return period;
 }

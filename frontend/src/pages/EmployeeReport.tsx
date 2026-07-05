@@ -58,6 +58,11 @@ function getActivityLabel(period: string) {
   return period.replace(/ năm \d{4}$/i, '');
 }
 
+function getWeekLabelNoYearFromDate(date: Date) {
+  const weekNumber = Math.floor((date.getUTCDate() - 1) / 7) + 1;
+  return `Tuần ${String(weekNumber).padStart(2, '0')} tháng ${date.getUTCMonth() + 1}`;
+}
+
 function getCurrentReportWindow() {
   const today = getVietnamPlainDate();
   const dayOfWeek = today.getUTCDay();
@@ -71,7 +76,7 @@ function getCurrentReportWindow() {
   return {
     period,
     nextPeriod,
-    activityPeriod: getActivityLabel(period),
+    activityPeriod: getWeekLabelNoYearFromDate(thursday),
     reportTitle: `BÁO CÁO CÔNG TÁC ${period.toUpperCase()}`,
     startDate: toIsoDate(monday),
     endDate: toIsoDate(thursday),
@@ -82,8 +87,10 @@ function getCurrentReportWindow() {
 }
 
 const initialForm = {
-  administrativeReform: '',
-  digitalTransformation: '',
+  field: '',
+  content: '',
+  difficulties: '',
+  proposals: '',
   nextTasks: '',
 };
 
@@ -92,6 +99,32 @@ export default function EmployeeReport() {
   const reportWindow = useMemo(() => getCurrentReportWindow(), []);
   const [form, setForm] = useState(initialForm);
   const [period, setPeriod] = useState<ReportPeriod | null>(null);
+
+  const dynamicReportWindow = useMemo(() => {
+    if (!period) return reportWindow;
+    
+    const start = new Date(period.startDate);
+    const currentThursday = addDays(start, 3);
+    const nextThursday = addDays(currentThursday, 7);
+
+    const currentPeriodLabel = getWeekLabelFromThursday(currentThursday);
+    const nextPeriodLabel = getWeekLabelFromThursday(nextThursday);
+    
+    const today = getVietnamPlainDate();
+
+    return {
+      period: currentPeriodLabel,
+      nextPeriod: nextPeriodLabel,
+      activityPeriod: getWeekLabelNoYearFromDate(currentThursday),
+      reportTitle: `BÁO CÁO CÔNG TÁC ${currentPeriodLabel.toUpperCase()}`,
+      startDate: period.startDate.slice(0, 10),
+      endDate: toIsoDate(currentThursday),
+      dueDate: period.dueDate.slice(0, 10),
+      dateRange: `(Từ ngày ${formatSlashDate(start)} đến ngày ${formatSlashDate(currentThursday)})`,
+      dueDateLabel: formatVietnamDate(today),
+    };
+  }, [period, reportWindow]);
+
   const [reportId, setReportId] = useState('');
   const [reportStatus, setReportStatus] = useState('');
   const [saving, setSaving] = useState(false);
@@ -102,7 +135,6 @@ export default function EmployeeReport() {
 
   const sender = user.fullName || 'Nguyễn Văn A';
   const department = 'PHÒNG VĂN HÓA - XÃ HỘI';
-  const field = 'Cải cách hành chính, Khoa học công nghệ và Chuyển đổi số';
 
   useEffect(() => {
     const loadCurrentReport = async () => {
@@ -115,8 +147,10 @@ export default function EmployeeReport() {
           setReportId(data.report._id);
           setReportStatus(data.report.status);
           setForm({
-            administrativeReform: data.report.administrativeReform || '',
-            digitalTransformation: data.report.digitalTransformation || '',
+            field: data.report.field || '',
+            content: data.report.content || '',
+            difficulties: data.report.difficulties || '',
+            proposals: data.report.proposals || '',
             nextTasks: data.report.nextTasks || '',
           });
           setMessage(data.report.status === 'draft' ? 'Đã tải bản nháp từ MongoDB' : 'Báo cáo kỳ này đã nộp');
@@ -137,19 +171,19 @@ export default function EmployeeReport() {
 
   const buildPayload = (status: WeeklyReportPayload['status']): WeeklyReportPayload => ({
     periodId: period?._id,
-    period: period?.title || reportWindow.period,
-    nextPeriod: reportWindow.nextPeriod,
-    reportTitle: `BÁO CÁO CÔNG TÁC ${(period?.title || reportWindow.period).toUpperCase()}`,
-    startDate: period?.startDate?.slice(0, 10) || reportWindow.startDate,
-    endDate: period?.dueDate?.slice(0, 10) || reportWindow.endDate,
+    period: dynamicReportWindow.period,
+    nextPeriod: dynamicReportWindow.nextPeriod,
+    reportTitle: dynamicReportWindow.reportTitle,
+    startDate: dynamicReportWindow.startDate,
+    endDate: dynamicReportWindow.endDate,
     sender,
     department,
-    field,
-    content: [form.administrativeReform.trim(), form.digitalTransformation.trim()].filter(Boolean).join('\n'),
-    administrativeReform: form.administrativeReform.trim(),
-    digitalTransformation: form.digitalTransformation.trim(),
+    field: form.field.trim(),
+    content: form.content.trim(),
+    difficulties: form.difficulties.trim(),
+    proposals: form.proposals.trim(),
     nextTasks: form.nextTasks.trim(),
-    dueDate: period?.dueDate?.slice(0, 10) || reportWindow.dueDate,
+    dueDate: dynamicReportWindow.dueDate,
     status,
   });
 
@@ -180,7 +214,7 @@ export default function EmployeeReport() {
       const blob = await exportWeeklyReportDocxById(savedReportId);
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      const fileTitle = `BÁO CÁO CÔNG TÁC ${(period?.title || reportWindow.period).toUpperCase()}`;
+      const fileTitle = dynamicReportWindow.reportTitle;
       link.href = url;
       link.download = `${fileTitle.toLowerCase().replace(/\s+/g, '-')}.docx`;
       document.body.appendChild(link);
@@ -301,7 +335,13 @@ export default function EmployeeReport() {
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="text-center">
                 <p className="font-semibold uppercase">{department}</p>
-                <p className="font-semibold uppercase">CẢI CÁCH HÀNH CHÍNH, KHOA HỌC CÔNG NGHỆ</p>
+                <input
+                  type="text"
+                  placeholder="Nhập lĩnh vực phụ trách (Ví dụ: Y TẾ, VĂN HÓA...)"
+                  className="mt-1 w-full text-center font-semibold uppercase text-primary outline-none border-b border-dashed border-outline-variant bg-transparent placeholder:text-outline-variant focus:border-primary"
+                  value={form.field}
+                  onChange={(e) => updateField('field', e.target.value)}
+                />
               </div>
               <div className="text-center">
                 <p className="font-semibold uppercase">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
@@ -309,43 +349,31 @@ export default function EmployeeReport() {
               </div>
             </div>
 
-            <p className="mt-6 text-right italic">Phù Mỹ Bắc, {reportWindow.dueDateLabel}</p>
+            <p className="mt-6 text-right italic">Phù Mỹ Bắc, {dynamicReportWindow.dueDateLabel}</p>
 
             <div className="mt-6 text-center">
               <h3 className="text-xl font-bold uppercase text-on-surface">
-                BÁO CÁO CÔNG TÁC {(period?.title || reportWindow.period).toUpperCase()}
+                {dynamicReportWindow.reportTitle}
               </h3>
               <p className="mt-1 font-semibold">
-                {period
-                  ? `(Từ ngày ${formatSlashDate(new Date(period.startDate))} đến ngày ${formatSlashDate(new Date(period.dueDate))})`
-                  : reportWindow.dateRange}
+                {dynamicReportWindow.dateRange}
               </p>
             </div>
           </section>
 
           <section className="rounded-xl border border-outline-variant bg-white p-6 shadow-level-1">
             <h3 className="mb-4 border-b border-outline-variant pb-2 font-headline-sm text-base font-bold uppercase text-primary">
-              I. Tình hình hoạt động {reportWindow.activityPeriod}
+              I. Tình hình hoạt động {dynamicReportWindow.activityPeriod}
             </h3>
 
             <div className="space-y-5">
               <div>
-                <label className="mb-2 block font-semibold text-on-surface">1. Cải cách hành chính</label>
+                <label className="mb-2 block font-semibold text-on-surface">Kết quả thực hiện</label>
                 <textarea
                   className="min-h-[160px] w-full resize-y rounded-md border border-outline-variant bg-surface p-4 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary"
                   placeholder="Nhập các nội dung theo từng dòng. Khi xuất Word, mỗi dòng sẽ thành một gạch đầu dòng."
-                  value={form.administrativeReform}
-                  onChange={(event) => updateField('administrativeReform', event.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block font-semibold text-on-surface">2. Khoa học công nghệ và Chuyển đổi số</label>
-                <textarea
-                  className="min-h-[160px] w-full resize-y rounded-md border border-outline-variant bg-surface p-4 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary"
-                  placeholder="Nhập các nội dung theo từng dòng. Khi xuất Word, mỗi dòng sẽ thành một gạch đầu dòng."
-                  value={form.digitalTransformation}
-                  onChange={(event) => updateField('digitalTransformation', event.target.value)}
+                  value={form.content}
+                  onChange={(event) => updateField('content', event.target.value)}
                 />
               </div>
             </div>
@@ -353,10 +381,10 @@ export default function EmployeeReport() {
 
           <section className="rounded-xl border border-outline-variant bg-white p-6 shadow-level-1">
             <h3 className="mb-3 border-b border-outline-variant pb-2 font-headline-sm text-base font-bold uppercase text-primary">
-              II. Phương hướng, nhiệm vụ {reportWindow.nextPeriod}
+              II. Phương hướng, nhiệm vụ {dynamicReportWindow.nextPeriod}
             </h3>
             <p className="mb-3 text-sm text-on-surface-variant">
-              Trong {reportWindow.nextPeriod.toLowerCase()}, sẽ tập trung vào các nhiệm vụ cụ thể như sau:
+              Trong {dynamicReportWindow.nextPeriod.toLowerCase()}, sẽ tập trung vào các nhiệm vụ cụ thể như sau:
             </p>
             <textarea
               className="min-h-[150px] w-full resize-y rounded-md border border-outline-variant bg-surface p-4 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary"
@@ -367,11 +395,35 @@ export default function EmployeeReport() {
           </section>
 
           <section className="rounded-xl border border-outline-variant bg-white p-6 shadow-level-1">
+            <h3 className="mb-3 border-b border-outline-variant pb-2 font-headline-sm text-base font-bold uppercase text-primary">
+              III. TỒN TẠI, HẠN CHẾ
+            </h3>
+            <textarea
+              className="min-h-[120px] w-full resize-y rounded-md border border-outline-variant bg-surface p-4 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary"
+              placeholder="Nhập các tồn tại, hạn chế (nếu có)."
+              value={form.difficulties}
+              onChange={(event) => updateField('difficulties', event.target.value)}
+            />
+          </section>
+
+          <section className="rounded-xl border border-outline-variant bg-white p-6 shadow-level-1">
+            <h3 className="mb-3 border-b border-outline-variant pb-2 font-headline-sm text-base font-bold uppercase text-primary">
+              IV. KIẾN NGHỊ ĐỀ XUẤT
+            </h3>
+            <textarea
+              className="min-h-[120px] w-full resize-y rounded-md border border-outline-variant bg-surface p-4 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary"
+              placeholder="Nhập kiến nghị đề xuất (nếu có)."
+              value={form.proposals}
+              onChange={(event) => updateField('proposals', event.target.value)}
+            />
+          </section>
+
+          <section className="rounded-xl border border-outline-variant bg-white p-6 shadow-level-1">
             <p>
-              Trên đây là báo cáo tình hình hoạt động lĩnh vực {field} được thực hiện vào {reportWindow.activityPeriod.toLowerCase()} và
-              phương hướng hoạt động {reportWindow.nextPeriod.toLowerCase()} của chuyên viên phụ trách.
+              Trên đây là báo cáo tình hình hoạt động lĩnh vực {form.field || '...'} được thực hiện vào {dynamicReportWindow.activityPeriod.toLowerCase()} và
+              Phương hướng hoạt động {dynamicReportWindow.nextPeriod.toLowerCase()} của chuyên viên phụ trách.
             </p>
-            <p className="mt-2">Kính báo cáo lãnh đạo Phòng biết và chỉ đạo./.</p>
+            <p className="mt-2">Kính báo cáo lãnh đạo Phòng biết và chỉ đạo.</p>
             <div className="mt-8 text-right">
               <p className="font-semibold">Người báo cáo</p>
               <p className="mt-12 font-semibold">{sender}</p>
