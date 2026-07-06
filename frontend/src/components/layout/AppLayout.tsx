@@ -9,7 +9,6 @@ import {
   Home,
   LogOut,
   Search,
-  Settings,
   Shield,
   UserPen,
   Users,
@@ -41,13 +40,17 @@ const NAV_ITEMS = [
 ];
 
 function readUser() {
-  return JSON.parse(localStorage.getItem('user') || '{}') as Partial<User>;
+  const rawUser = localStorage.getItem('user');
+  if (!rawUser) {
+    throw new Error('Thiếu thông tin người dùng trong phiên đăng nhập');
+  }
+  return JSON.parse(rawUser) as Partial<User>;
 }
 
 export default function AppLayout({ title, subtitle, children, actions, bottomBar, bottomStatus }: AppLayoutProps) {
   const navigate = useNavigate();
   const user = readUser();
-  const visibleNavItems = NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(user.role || ''));
+  const visibleNavItems = NAV_ITEMS.filter((item) => !item.roles || (user.role && item.roles.includes(user.role)));
 
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -88,20 +91,6 @@ export default function AppLayout({ title, subtitle, children, actions, bottomBa
               const commonClass =
                 'flex items-center gap-3 rounded-lg border-l-4 px-3 py-2.5 text-sm font-medium transition-colors';
 
-              if (item.to === '#') {
-                return (
-                  <li key={item.label}>
-                    <a
-                      href="#"
-                      className={`${commonClass} border-transparent text-white/70 hover:bg-white/5 hover:text-white`}
-                    >
-                      <Icon className="h-5 w-5" />
-                      <span>{item.label}</span>
-                    </a>
-                  </li>
-                );
-              }
-
               return (
                 <li key={item.to}>
                   <NavLink
@@ -124,13 +113,6 @@ export default function AppLayout({ title, subtitle, children, actions, bottomBa
         </nav>
 
         <div className="border-t border-white/10 px-3 py-stack-md">
-          <a
-            href="#"
-            className="flex items-center gap-3 rounded-lg border-l-4 border-transparent px-3 py-2.5 text-sm font-medium text-white/70 hover:bg-white/5 hover:text-white"
-          >
-            <Settings className="h-5 w-5" />
-            <span>Cài đặt</span>
-          </a>
           <Link
             to="/login"
             onClick={handleLogout}
@@ -169,11 +151,11 @@ export default function AppLayout({ title, subtitle, children, actions, bottomBa
             </button>
             <div className="flex items-center gap-3 border-l border-outline-variant pl-4">
               <div className="text-right">
-                <div className="text-sm font-semibold">{user.fullName || 'Nguyễn Văn A'}</div>
-                <div className="text-xs text-on-surface-variant">{user.role || user.department || 'Cán bộ'}</div>
+                <div className="text-sm font-semibold">{user.fullName}</div>
+                <div className="text-xs text-on-surface-variant">{user.role}</div>
               </div>
               <div className="flex h-9 w-9 items-center justify-center rounded-full border border-outline-variant bg-surface-container text-sm font-semibold text-primary">
-                {(user.fullName || 'A').trim().charAt(0).toUpperCase()}
+                {user.fullName?.trim().charAt(0).toUpperCase()}
               </div>
             </div>
           </div>

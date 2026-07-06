@@ -17,7 +17,16 @@ def esc(value):
 
 def read_payload():
     raw = sys.stdin.buffer.read().decode("utf-8-sig")
-    return json.loads(raw or "{}")
+    if not raw.strip():
+        raise ValueError("Thiếu payload JSON")
+    return json.loads(raw)
+
+
+def required(payload, key):
+    value = payload.get(key)
+    if value is None or value == "":
+        raise ValueError(f"Thiếu dữ liệu bắt buộc: {key}")
+    return value
 
 
 def format_place_date(today=None):
@@ -65,7 +74,7 @@ def bullet(text):
 def multiline_block(text):
     lines = [line.strip() for line in str(text or "").splitlines() if line.strip()]
     if not lines:
-        return paragraph("Không có nội dung.", size=28)
+        return ""
     if len(lines) == 1:
         return paragraph(lines[0], size=28)
     return "".join(bullet(line) for line in lines)
@@ -85,10 +94,10 @@ def get_section_properties(template_path):
 
 
 def build_document_xml(payload, template_path):
-    period = payload.get("period") or "Tháng ..."
-    report_title = payload.get("reportTitle") or f"BÁO CÁO CÔNG TÁC {period.upper()}"
-    department = payload.get("department") or "PHÒNG VĂN HÓA - XÃ HỘI"
-    content = payload.get("content") or ""
+    period = required(payload, "period")
+    report_title = required(payload, "reportTitle")
+    department = required(payload, "department")
+    content = required(payload, "content")
     difficulties = payload.get("difficulties") or ""
     proposals = payload.get("proposals") or ""
     next_tasks = payload.get("nextTasks") or ""

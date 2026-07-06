@@ -18,7 +18,18 @@ import type { ReportPeriod, MonthlyStaffPayload } from '../types/report';
 import type { User } from '../types/user';
 
 function readUser() {
-  return JSON.parse(localStorage.getItem('user') || '{}') as Partial<User>;
+  const rawUser = localStorage.getItem('user');
+  if (!rawUser) {
+    throw new Error('Thiếu thông tin người dùng trong phiên đăng nhập');
+  }
+  return JSON.parse(rawUser) as Partial<User>;
+}
+
+function requireText(value: string | undefined, message: string) {
+  if (!value) {
+    throw new Error(message);
+  }
+  return value;
 }
 
 function getVietnamPlainDate(now = new Date()) {
@@ -171,8 +182,8 @@ export default function MonthlyReport() {
   const [message, setMessage] = useState('Bản nháp chưa lưu');
   const [error, setError] = useState('');
 
-  const sender = user.fullName || 'Nguyễn Văn A';
-  const department = user.department || 'PHÒNG VĂN HÓA - XÃ HỘI';
+  const sender = requireText(user.fullName, 'Thiếu họ tên người dùng trong phiên đăng nhập');
+  const department = requireText(user.department, 'Thiếu đơn vị người dùng trong phiên đăng nhập');
 
   useEffect(() => {
     const loadCurrentReport = async () => {

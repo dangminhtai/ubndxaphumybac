@@ -21,7 +21,11 @@ import type { User } from '../types/user';
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
 function readUser() {
-  return JSON.parse(localStorage.getItem('user') || '{}') as Partial<User>;
+  const rawUser = localStorage.getItem('user');
+  if (!rawUser) {
+    throw new Error('Thiếu thông tin người dùng trong phiên đăng nhập');
+  }
+  return JSON.parse(rawUser) as Partial<User>;
 }
 
 export default function Dashboard() {
@@ -108,7 +112,7 @@ export default function Dashboard() {
 
   return (
     <AppLayout
-      title={`Xin chào, ${user.fullName || 'Nguyễn Văn A'}`}
+      title={`Xin chào, ${user.fullName}`}
       subtitle="Chúc bạn một ngày làm việc hiệu quả."
       actions={
         user.role === 'admin' ? (

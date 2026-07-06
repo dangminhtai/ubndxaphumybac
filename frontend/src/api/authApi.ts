@@ -36,7 +36,7 @@ export async function disableUser(id: string) {
   return response.data;
 }
 
-export async function resetUserPassword(id: string, password = '123456') {
+export async function resetUserPassword(id: string, password: string) {
   const response = await apiClient.post<ManagedUser>(`/admin/users/${id}/reset-password`, { password });
   return response.data;
 }

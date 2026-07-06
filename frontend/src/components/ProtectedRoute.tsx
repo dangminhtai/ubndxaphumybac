@@ -4,7 +4,8 @@ import { getMe } from '../api/authApi';
 import type { User } from '../types/user';
 
 function readUser() {
-  return JSON.parse(localStorage.getItem('user') || '{}') as Partial<User>;
+  const rawUser = localStorage.getItem('user');
+  return rawUser ? (JSON.parse(rawUser) as Partial<User>) : null;
 }
 
 export default function ProtectedRoute({ children, roles }: { children: ReactNode; roles?: string[] }) {
@@ -48,11 +49,11 @@ export default function ProtectedRoute({ children, roles }: { children: ReactNod
     return <div className="min-h-screen bg-background p-6 text-on-surface">Đang kiểm tra phiên đăng nhập...</div>;
   }
 
-  if (user.mustChangePassword && window.location.pathname !== '/change-password') {
+  if (user?.mustChangePassword && window.location.pathname !== '/change-password') {
     return <Navigate to="/change-password" replace />;
   }
 
-  if (roles && !roles.includes(user.role || '')) {
+  if (roles && (!user?.role || !roles.includes(user.role))) {
     return <Navigate to="/dashboard" replace />;
   }
 

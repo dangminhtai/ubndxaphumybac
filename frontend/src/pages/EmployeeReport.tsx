@@ -13,7 +13,18 @@ import type { ReportPeriod, WeeklyReportPayload } from '../types/report';
 import type { User } from '../types/user';
 
 function readUser() {
-  return JSON.parse(localStorage.getItem('user') || '{}') as Partial<User>;
+  const rawUser = localStorage.getItem('user');
+  if (!rawUser) {
+    throw new Error('Thiếu thông tin người dùng trong phiên đăng nhập');
+  }
+  return JSON.parse(rawUser) as Partial<User>;
+}
+
+function requireText(value: string | undefined, message: string) {
+  if (!value) {
+    throw new Error(message);
+  }
+  return value;
 }
 
 function getVietnamPlainDate(now = new Date()) {
@@ -52,10 +63,6 @@ function formatVietnamDate(date: Date) {
 function getWeekLabelFromThursday(thursday: Date) {
   const weekNumber = Math.floor((thursday.getUTCDate() - 1) / 7) + 1;
   return `Tuần ${String(weekNumber).padStart(2, '0')} tháng ${thursday.getUTCMonth() + 1} năm ${thursday.getUTCFullYear()}`;
-}
-
-function getActivityLabel(period: string) {
-  return period.replace(/ năm \d{4}$/i, '');
 }
 
 function getWeekLabelNoYearFromDate(date: Date) {
@@ -102,14 +109,14 @@ export default function EmployeeReport() {
 
   const dynamicReportWindow = useMemo(() => {
     if (!period) return reportWindow;
-    
+
     const start = new Date(period.startDate);
     const currentThursday = addDays(start, 3);
     const nextThursday = addDays(currentThursday, 7);
 
     const currentPeriodLabel = getWeekLabelFromThursday(currentThursday);
     const nextPeriodLabel = getWeekLabelFromThursday(nextThursday);
-    
+
     const today = getVietnamPlainDate();
 
     return {
@@ -133,8 +140,8 @@ export default function EmployeeReport() {
   const [message, setMessage] = useState('Bản nháp chưa lưu');
   const [error, setError] = useState('');
 
-  const sender = user.fullName || 'Nguyễn Văn A';
-  const department = 'PHÒNG VĂN HÓA - XÃ HỘI';
+  const sender = requireText(user.fullName, 'Thiếu họ tên người dùng trong phiên đăng nhập');
+  const department = requireText(user.department, 'Thiếu đơn vị người dùng trong phiên đăng nhập');
 
   useEffect(() => {
     const loadCurrentReport = async () => {
@@ -420,7 +427,7 @@ export default function EmployeeReport() {
 
           <section className="rounded-xl border border-outline-variant bg-white p-6 shadow-level-1">
             <p>
-              Trên đây là báo cáo tình hình hoạt động lĩnh vực {form.field || '...'} được thực hiện vào {dynamicReportWindow.activityPeriod.toLowerCase()} và
+              Trên đây là báo cáo tình hình hoạt động lĩnh vực {form.field} được thực hiện vào {dynamicReportWindow.activityPeriod.toLowerCase()} và
               Phương hướng hoạt động {dynamicReportWindow.nextPeriod.toLowerCase()} của chuyên viên phụ trách.
             </p>
             <p className="mt-2">Kính báo cáo lãnh đạo Phòng biết và chỉ đạo.</p>

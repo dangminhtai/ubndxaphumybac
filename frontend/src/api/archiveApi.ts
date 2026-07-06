@@ -1,11 +1,4 @@
-import axios from 'axios';
-
-const API = import.meta.env.VITE_API_URL || '/api';
-
-function authHeaders() {
-  const token = localStorage.getItem('token');
-  return { Authorization: `Bearer ${token}` };
-}
+import { apiClient } from './client';
 
 export interface ArchivedReport {
   _id: string;
@@ -54,8 +47,6 @@ export async function getArchivedReports(query: ArchiveQuery = {}): Promise<Arch
   if (query.reportType) params.set('reportType', query.reportType);
   if (query.sender) params.set('sender', query.sender);
 
-  const res = await axios.get<ArchiveResponse>(`${API}/archive/reports?${params.toString()}`, {
-    headers: authHeaders(),
-  });
+  const res = await apiClient.get<ArchiveResponse>(`/archive/reports?${params.toString()}`);
   return res.data;
 }

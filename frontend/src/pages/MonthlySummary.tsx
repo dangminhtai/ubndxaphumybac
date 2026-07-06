@@ -12,6 +12,8 @@ import {
   Download,
   Underline,
   Wand2,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
 import {
@@ -121,6 +123,8 @@ export default function MonthlySummaryPage() {
     nextTasks: '',
     periodTitle: '',
   });
+  const [employeeReports, setEmployeeReports] = useState<any[]>([]);
+  const [expandedReportId, setExpandedReportId] = useState<string | null>(null);
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -156,6 +160,9 @@ export default function MonthlySummaryPage() {
           nextTasks: data.nextTasks || '',
           periodTitle: data.periodTitle,
         });
+        if (data.employeeReports) {
+          setEmployeeReports(data.employeeReports);
+        }
       } catch (err: any) {
         setError('Lỗi tải bản tổng hợp: ' + err.message);
       } finally {
@@ -315,20 +322,84 @@ export default function MonthlySummaryPage() {
           <span className="font-semibold text-primary">{form.periodTitle}</span>
         </div>
 
-        <form className="space-y-stack-lg pb-8">
-          <div className="rounded-xl border border-outline-variant bg-white p-stack-lg shadow-level-1">
-            <div className="flex flex-col gap-stack-lg">
-              {SECTIONS.map((section, idx) => (
-                <ReportEditor
-                  key={idx}
-                  section={section}
-                  value={(form[section.fieldKey] as string) || ''}
-                  onChange={(val) => updateField(section.fieldKey, val)}
-                />
-              ))}
+        <div className="flex flex-col lg:flex-row gap-8 pb-8">
+          <form className="flex-1 space-y-stack-lg">
+            <div className="rounded-xl border border-outline-variant bg-white p-stack-lg shadow-level-1">
+              <div className="flex flex-col gap-stack-lg">
+                {SECTIONS.map((section, idx) => (
+                  <ReportEditor
+                    key={idx}
+                    section={section}
+                    value={(form[section.fieldKey] as string) || ''}
+                    onChange={(val) => updateField(section.fieldKey, val)}
+                  />
+                ))}
+              </div>
+            </div>
+          </form>
+
+          {/* Sidebar for Employee Reports */}
+          <div className="w-full lg:w-80 flex-shrink-0">
+            <div className="sticky top-24 rounded-xl border border-outline-variant bg-white p-4 shadow-level-1">
+              <h3 className="mb-4 font-headline-sm text-base font-semibold text-on-surface">
+                Báo cáo nhân viên ({employeeReports.length})
+              </h3>
+              {employeeReports.length === 0 ? (
+                <p className="text-sm text-on-surface-variant">Chưa có báo cáo nào được nộp trong kỳ này.</p>
+              ) : (
+                <div className="flex max-h-[600px] flex-col gap-3 overflow-y-auto pr-1">
+                  {employeeReports.map((r) => (
+                    <div key={r._id} className="rounded-lg border border-outline-variant bg-surface-container-lowest p-3">
+                      <button
+                        type="button"
+                        className="flex w-full items-center justify-between text-left"
+                        onClick={() => setExpandedReportId(expandedReportId === r._id ? null : r._id)}
+                      >
+                        <div>
+                          <div className="text-sm font-semibold text-primary">{r.sender}</div>
+                          <div className="text-xs text-on-surface-variant">{r.department}</div>
+                        </div>
+                        {expandedReportId === r._id ? (
+                          <ChevronUp className="h-4 w-4 text-on-surface-variant" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 text-on-surface-variant" />
+                        )}
+                      </button>
+
+                      {expandedReportId === r._id && (
+                        <div className="mt-3 border-t border-outline-variant pt-3 text-sm text-on-surface whitespace-pre-wrap">
+                          <div className="font-semibold mb-1">Kết quả thực hiện:</div>
+                          <div className="mb-3">{r.content || 'Không có'}</div>
+                          
+                          {r.difficulties && (
+                            <>
+                              <div className="font-semibold mb-1">Khó khăn:</div>
+                              <div className="mb-3">{r.difficulties}</div>
+                            </>
+                          )}
+                          
+                          {r.proposals && (
+                            <>
+                              <div className="font-semibold mb-1">Đề xuất:</div>
+                              <div className="mb-3">{r.proposals}</div>
+                            </>
+                          )}
+                          
+                          {r.nextTasks && (
+                            <>
+                              <div className="font-semibold mb-1">Nhiệm vụ tới:</div>
+                              <div className="mb-3">{r.nextTasks}</div>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-        </form>
+        </div>
       </div>
     </AppLayout>
   );

@@ -26,5 +26,5 @@ export const env: EnvConfig = {
   port,
   mongodbUri: requireEnv('MONGODB_URI'),
   jwtSecret: requireEnv('JWT_SECRET'),
-  frontendOrigin: process.env.FRONTEND_ORIGIN || '*',
+  frontendOrigin: requireEnv('FRONTEND_ORIGIN'),
 };

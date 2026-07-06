@@ -36,6 +36,26 @@ export async function notifyAllUsers(payload: {
 
   await Notification.insertMany(notifications);
 }
+export async function notifyUsersByRole(payload: {
+  roles: string[];
+  title: string;
+  message: string;
+  type?: string;
+  link?: string;
+}) {
+  const users = await User.find({ role: { $in: payload.roles }, isActive: true }).select('_id');
+  if (users.length === 0) return;
+
+  const notifications = users.map(user => ({
+    recipientId: user._id,
+    title: payload.title,
+    message: payload.message,
+    type: payload.type || 'system',
+    link: payload.link,
+  }));
+
+  await Notification.insertMany(notifications);
+}
 
 export async function getUserNotifications(userId: string, limit: number = 20) {
   const notifications = await Notification.find({ recipientId: userId })

@@ -1,11 +1,4 @@
-import axios from 'axios';
-
-const API = import.meta.env.VITE_API_URL || '/api';
-
-function authHeaders() {
-  const token = localStorage.getItem('token');
-  return { Authorization: `Bearer ${token}` };
-}
+import { apiClient } from './client';
 
 export interface AuditLogEntry {
   _id: string;
@@ -49,8 +42,6 @@ export async function getAuditLogs(query: AuditLogQuery = {}): Promise<AuditLogR
   if (query.startDate) params.set('startDate', query.startDate);
   if (query.endDate) params.set('endDate', query.endDate);
 
-  const res = await axios.get<AuditLogResponse>(`${API}/admin/logs?${params.toString()}`, {
-    headers: authHeaders(),
-  });
+  const res = await apiClient.get<AuditLogResponse>(`/admin/logs?${params.toString()}`);
   return res.data;
 }

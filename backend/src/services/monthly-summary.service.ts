@@ -5,9 +5,29 @@ import Report, { IReport } from '../models/Report';
 import ReportPeriod from '../models/ReportPeriod';
 import type { AuthUser } from '../middleware/auth.middleware';
 
+function requireSummaryValue(value: string | undefined, message: string) {
+  if (!value) {
+    const error = new Error(message);
+    Object.assign(error, { statusCode: 400 });
+    throw error;
+  }
+  return value;
+}
+
 export async function getMonthlySummaryByPeriod(periodId: string) {
   const period = await ReportPeriod.findById(periodId);
   if (!period) throw new Error('Không tìm thấy kỳ báo cáo');
+
+  const periodsInMonth = await ReportPeriod.find({
+    year: period.year,
+    month: period.month,
+  });
+  const periodIdsInMonth = periodsInMonth.map(p => p._id);
+
+  const employeeReports = await Report.find({
+    periodId: { $in: periodIdsInMonth },
+    status: { $in: ['pending', 'approved'] },
+  }).sort({ createdAt: -1 });
 
   let summary = await MonthlySummary.findOne({ periodId });
   if (!summary) {
@@ -20,10 +40,11 @@ export async function getMonthlySummaryByPeriod(periodId: string) {
       proposals: '',
       nextTasks: '',
       status: 'draft',
+      employeeReports,
     };
   }
 
-  return summary;
+  return { ...summary.toObject(), employeeReports };
 }
 
 export async function generateMonthlySummaryFromStaff(periodId: string, user: AuthUser) {
@@ -41,10 +62,15 @@ export async function generateMonthlySummaryFromStaff(periodId: string, user: Au
     throw error;
   }
 
-  // Find all submitted or pending reports from staff for this period
+  const periodsInMonth = await ReportPeriod.find({
+    year: period.year,
+    month: period.month,
+  });
+  const periodIdsInMonth = periodsInMonth.map(p => p._id);
+
+  // Find all submitted or pending reports from staff for this month (both weekly and monthly_staff)
   const staffReports = await Report.find({
-    periodId,
-    reportType: 'monthly_staff',
+    periodId: { $in: periodIdsInMonth },
     status: { $in: ['pending', 'approved'] },
   });
 
@@ -108,20 +134,23 @@ export async function updateMonthlySummary(periodId: string, data: any, user: Au
 }
 
 export async function exportMonthlySummaryDocx(periodId: string) {
-  const summary = await MonthlySummary.findOne({ periodId });
+  const summary = await MonthlySummary.findOne({ periodId }).populate('authorId', 'department');
   if (!summary) {
     const error = new Error('Bản tổng hợp chưa được tạo');
     Object.assign(error, { statusCode: 404 });
     throw error;
   }
 
+  const author = summary.authorId as any;
+
   const payload = {
     period: summary.periodTitle,
+    reportTitle: `BÁO CÁO CÔNG TÁC ${summary.periodTitle.toUpperCase()}`,
     content: summary.content,
     difficulties: summary.difficulties,
     proposals: summary.proposals,
     nextTasks: summary.nextTasks,
-    department: 'PHÒNG VĂN HÓA - XÃ HỘI',
+    department: requireSummaryValue(author?.department, 'Bản tổng hợp thiếu đơn vị người tạo'),
   };
 
   const templatePath = path.resolve(__dirname, '../../../../template_docx/Báo cáo tháng 6 và phương hướng, nhiệm vụ tháng 7.docx');

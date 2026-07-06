@@ -67,6 +67,53 @@ export async function ensureCurrentWeekPeriod() {
   return period;
 }
 
+/* ── auto-generate current month period ── */
+
+export async function ensureCurrentMonthPeriod() {
+  const now = new Date();
+  const date = new Date(now);
+  date.setUTCHours(0, 0, 0, 0);
+  
+  const month = date.getUTCMonth() + 1;
+  const year = date.getUTCFullYear();
+
+  const firstDay = new Date(Date.UTC(year, month - 1, 1));
+  const lastDay = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
+
+  const existing = await ReportPeriod.findOne({
+    type: 'monthly',
+    month,
+    year,
+    status: { $ne: 'archived' },
+  });
+
+  if (existing) return existing;
+
+  const title = `Tháng ${month} năm ${year}`;
+
+  const period = await ReportPeriod.create({
+    type: 'monthly',
+    title,
+    weekNumber: 0,
+    month,
+    year,
+    startDate: firstDay,
+    dueDate: lastDay,
+    status: 'open',
+    createdBy: null as any,
+  });
+
+  void notifyAllUsers({
+    title: 'Kỳ báo cáo tháng mới',
+    message: `Kỳ báo cáo "${period.title}" đã tự động mở. Hạn nộp: ${lastDay.toLocaleDateString('vi-VN')}`,
+    type: 'period_opened',
+    link: '/monthly-report',
+    excludeRoles: ['admin'],
+  });
+
+  return period;
+}
+
 /* ── CRUD ── */
 
 export function listPeriods(type?: string) {
@@ -77,6 +124,8 @@ export function listPeriods(type?: string) {
 export async function getOpenPeriod(type: 'weekly' | 'monthly') {
   if (type === 'weekly') {
     await ensureCurrentWeekPeriod();
+  } else if (type === 'monthly') {
+    await ensureCurrentMonthPeriod();
   }
   return ReportPeriod.findOne({ type, status: 'open' }).sort({ year: -1, month: -1, weekNumber: -1, createdAt: -1 });
 }

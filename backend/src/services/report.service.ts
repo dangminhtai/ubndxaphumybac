@@ -5,11 +5,12 @@ import path from 'path';
 import Report from '../models/Report';
 import ReportPeriod from '../models/ReportPeriod';
 import type { AuthUser } from '../middleware/auth.middleware';
+import { notifyUsersByRole } from './notification.service';
 
 export interface WeeklyReportInput {
   periodId?: string;
   period: string;
-  reportTitle?: string;
+  reportTitle: string;
   startDate?: string;
   endDate?: string;
   nextPeriod?: string;
@@ -52,26 +53,24 @@ export function listReportsForUser(user: AuthUser) {
 function resolveWeeklyTemplatePath() {
   const rootDir = path.resolve(process.cwd(), '..', '..');
   const exactName = 'Báo cáo tuần 04 tháng 6, nhiệm vụ tuần 05 tháng 6 năm 2026 (CCHC-CĐS).docx';
-  const exactPath = path.join(rootDir, exactName);
-
-  if (fs.existsSync(exactPath)) {
-    return exactPath;
-  }
-
-  const fallback = fs
-    .readdirSync(rootDir)
-    .find((fileName) => fileName.toLowerCase().endsWith('.docx') && fileName.includes('Báo cáo tuần'));
-
-  return fallback ? path.join(rootDir, fallback) : exactPath;
+  return path.join(rootDir, exactName);
 }
 
 function validateWeeklyReportInput(input: WeeklyReportInput) {
-  const hasMainContent = Boolean(input.content || input.administrativeReform || input.digitalTransformation);
-  if (!input.period || !input.field || !hasMainContent) {
+  if (!input.period || !input.reportTitle || !input.field || !input.content) {
     const error = new Error('Vui lòng nhập đầy đủ tuần báo cáo, lĩnh vực và kết quả thực hiện');
     Object.assign(error, { statusCode: 400 });
     throw error;
   }
+}
+
+function requireReportValue(value: string | undefined, message: string) {
+  if (!value) {
+    const error = new Error(message);
+    Object.assign(error, { statusCode: 400 });
+    throw error;
+  }
+  return value;
 }
 
 async function resolveWeeklyPeriod(periodId?: string) {
@@ -104,7 +103,12 @@ export async function createWeeklyReport(input: WeeklyReportInput, user: AuthUse
   validateWeeklyReportInput(input);
   const period = await resolveWeeklyPeriod(input.periodId);
 
-  const title = input.reportTitle || `BÁO CÁO CÔNG TÁC ${input.period.toUpperCase()}`;
+  const title = input.reportTitle;
+  if (!title) {
+    const error = new Error('Thiếu tiêu đề báo cáo tuần');
+    Object.assign(error, { statusCode: 400 });
+    throw error;
+  }
   const existing = await Report.findOne({ ownerId: user.id, periodId: period.id, reportType: 'weekly' });
 
   if (existing && existing.status !== 'draft') {
@@ -123,10 +127,10 @@ export async function createWeeklyReport(input: WeeklyReportInput, user: AuthUse
     startDate: input.startDate ? new Date(input.startDate) : undefined,
     endDate: input.endDate ? new Date(input.endDate) : undefined,
     field: input.field,
-    department: user.department || input.department,
-    sender: user.fullName || input.sender,
+    department: user.department,
+    sender: user.fullName,
     status: input.status,
-    content: input.content || [input.administrativeReform, input.digitalTransformation].filter(Boolean).join('\n'),
+    content: input.content,
     administrativeReform: input.administrativeReform,
     digitalTransformation: input.digitalTransformation,
     nextTasks: input.nextTasks,
@@ -174,7 +178,17 @@ export async function submitWeeklyReport(reportId: string, user: AuthUser) {
 
   report.status = 'pending';
   report.submittedAt = new Date();
-  return report.save();
+  await report.save();
+
+  void notifyUsersByRole({
+    roles: ['admin', 'office_clerk'],
+    title: 'Có báo cáo tuần mới',
+    message: `${user.fullName} vừa nộp báo cáo tuần.`,
+    type: 'report_submitted',
+    link: '/archive',
+  });
+
+  return report;
 }
 
 async function resolveMonthlyPeriod(periodId?: string) {
@@ -225,8 +239,8 @@ export async function createMonthlyStaffReport(input: MonthlyStaffInput, user: A
     ownerId: user.id,
     periodId: period.id,
     period: input.period,
-    department: user.department || input.department,
-    sender: user.fullName || input.sender,
+    department: user.department,
+    sender: user.fullName,
     status: input.status,
     content: input.content,
     difficulties: input.difficulties,
@@ -273,7 +287,17 @@ export async function submitMonthlyStaffReport(reportId: string, user: AuthUser)
 
   report.status = 'pending';
   report.submittedAt = new Date();
-  return report.save();
+  await report.save();
+
+  void notifyUsersByRole({
+    roles: ['admin', 'office_clerk'],
+    title: 'Có báo cáo tháng mới',
+    message: `${user.fullName} vừa nộp báo cáo tháng.`,
+    type: 'report_submitted',
+    link: '/archive',
+  });
+
+  return report;
 }
 
 export async function exportWeeklyReportDocx(input: WeeklyReportInput) {
@@ -308,7 +332,7 @@ export async function exportWeeklyReportDocx(input: WeeklyReportInput) {
         return;
       }
       console.error('Python Script Failed. Code:', code, 'Stderr:', stderr);
-      reject(new Error(stderr || 'Không tạo được file DOCX'));
+      reject(new Error(stderr));
     });
 
     child.stdin.write(JSON.stringify(input));
@@ -333,14 +357,14 @@ export async function exportWeeklyReportDocxById(reportId: string, user: AuthUse
   }
 
   return exportWeeklyReportDocx({
-    period: report.period || '',
-    reportTitle: report.reportTitle || report.title,
+    period: requireReportValue(report.period, 'Báo cáo thiếu kỳ báo cáo'),
+    reportTitle: requireReportValue(report.reportTitle, 'Báo cáo thiếu tiêu đề theo template DOCX'),
     startDate: report.startDate?.toISOString(),
     endDate: report.endDate?.toISOString(),
-    field: report.field || '',
-    sender: report.sender,
-    department: report.department,
-    content: report.content,
+    field: requireReportValue(report.field, 'Báo cáo thiếu lĩnh vực'),
+    sender: requireReportValue(report.sender, 'Báo cáo thiếu người báo cáo'),
+    department: requireReportValue(report.department, 'Báo cáo thiếu đơn vị báo cáo'),
+    content: requireReportValue(report.content, 'Báo cáo thiếu kết quả thực hiện'),
     administrativeReform: report.administrativeReform,
     digitalTransformation: report.digitalTransformation,
     nextTasks: report.nextTasks,

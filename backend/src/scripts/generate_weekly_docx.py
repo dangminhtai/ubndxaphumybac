@@ -17,7 +17,16 @@ def esc(value):
 
 def read_payload():
     raw = sys.stdin.buffer.read().decode("utf-8-sig")
-    return json.loads(raw or "{}")
+    if not raw.strip():
+        raise ValueError("Thiếu payload JSON")
+    return json.loads(raw)
+
+
+def required(payload, key):
+    value = payload.get(key)
+    if value is None or value == "":
+        raise ValueError(f"Thiếu dữ liệu bắt buộc: {key}")
+    return value
 
 
 def parse_iso(value):
@@ -94,7 +103,7 @@ def bullet(text):
 def multiline_block(text):
     lines = [line.strip() for line in str(text or "").splitlines() if line.strip()]
     if not lines:
-        return paragraph("Không có nội dung.", size=28)
+        return ""
     if len(lines) == 1:
         return paragraph(lines[0], size=28)
     return "".join(bullet(line) for line in lines)
@@ -114,24 +123,24 @@ def get_section_properties(template_path):
 
 
 def build_document_xml(payload, template_path):
-    monday, thursday = default_window()
-    start_date = parse_iso(payload.get("startDate")) or monday
-    end_date = parse_iso(payload.get("endDate")) or thursday
-    due_date = parse_iso(payload.get("dueDate")) or end_date
+    start_date = parse_iso(required(payload, "startDate"))
+    end_date = parse_iso(required(payload, "endDate"))
+    due_date = parse_iso(required(payload, "dueDate"))
 
-    period = payload.get("period") or week_label_from_thursday(end_date)
-    next_period = payload.get("nextPeriod") or week_label_from_thursday(end_date + timedelta(days=7))
-    report_title = payload.get("reportTitle") or f"BÁO CÁO CÔNG TÁC {period.upper()}"
+    period = required(payload, "period")
+    next_period = required(payload, "nextPeriod")
+    report_title = required(payload, "reportTitle")
     date_range = f"(Từ ngày {format_slash(start_date)} đến ngày {format_slash(end_date)})"
 
-    field = payload.get("field") or "Lĩnh vực"
-    sender = payload.get("sender") or "Người báo cáo"
-    department = payload.get("department") or "UBND Cấp Xã"
-    content = payload.get("content") or ""
+    field = required(payload, "field")
+    sender = required(payload, "sender")
+    department = required(payload, "department")
+    content = required(payload, "content")
     administrative_reform = payload.get("administrativeReform") or ""
     digital_transformation = payload.get("digitalTransformation") or ""
     next_tasks = payload.get("nextTasks") or ""
     difficulties = payload.get("difficulties") or ""
+    proposals = payload.get("proposals") or ""
     submission_date = date.today()
 
     sect_pr = get_section_properties(template_path)

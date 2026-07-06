@@ -11,11 +11,6 @@ export async function getReports() {
   return response.data;
 }
 
-export async function seedReports() {
-  const response = await apiClient.post<{ message: string }>('/reports/seed');
-  return response.data;
-}
-
 export async function createWeeklyReport(payload: WeeklyReportPayload) {
   const response = await apiClient.post<Report>('/reports/weekly', payload);
   return response.data;

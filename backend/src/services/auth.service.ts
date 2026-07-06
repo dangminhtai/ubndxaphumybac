@@ -208,7 +208,13 @@ export async function disableManagedUser(userId: string, actor?: { id: string; u
   return result;
 }
 
-export async function resetManagedUserPassword(userId: string, password = '123456') {
+export async function resetManagedUserPassword(userId: string, password?: string) {
+  if (!password) {
+    const error = new Error('Thiếu mật khẩu mới');
+    Object.assign(error, { statusCode: 400 });
+    throw error;
+  }
+
   if (password.length < 6) {
     const error = new Error('Mật khẩu phải có ít nhất 6 ký tự');
     Object.assign(error, { statusCode: 400 });
