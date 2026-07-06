@@ -118,14 +118,14 @@ export default function Dashboard() {
       <div className="grid grid-cols-12 gap-gutter">
         <section className="col-span-12 lg:col-span-8">
           <div className="grid grid-cols-1 gap-gutter md:grid-cols-2">
-            <div className="flex h-[360px] flex-col rounded-xl border border-outline-variant bg-white p-5 shadow-level-1">
+            <div className="flex h-[260px] flex-col rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:h-[360px] md:p-5">
               <h3 className="mb-4 font-headline-sm text-base text-on-surface">Tiến độ nộp (Kỳ hiện tại)</h3>
               <div className="relative min-h-0 flex-1">
                 <Bar data={barChartData} options={commonBarOptions} />
               </div>
             </div>
 
-            <div className="flex h-[360px] flex-col rounded-xl border border-outline-variant bg-white p-5 shadow-level-1">
+            <div className="flex h-[260px] flex-col rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:h-[360px] md:p-5">
               <h3 className="mb-4 font-headline-sm text-base text-on-surface">Tình trạng báo cáo (Tổng quan)</h3>
               <div className="relative flex min-h-0 flex-1 items-center justify-center">
                 <Doughnut data={donutChartData} options={donutOptions} />
@@ -133,9 +133,10 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="mt-gutter rounded-xl border border-outline-variant bg-white p-5 shadow-level-1">
+          <div className="mt-gutter rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-5">
             <h3 className="mb-4 font-headline-sm text-base text-on-surface">Báo cáo mới cập nhật</h3>
-            <div className="overflow-x-auto">
+            {/* Mobile: card list, Desktop: table */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full border-collapse text-left">
                 <thead>
                   <tr className="border-b border-outline-variant text-xs uppercase tracking-wide text-on-surface-variant">
@@ -169,6 +170,24 @@ export default function Dashboard() {
                   )}
                 </tbody>
               </table>
+            </div>
+            {/* Mobile card list */}
+            <div className="flex flex-col gap-3 md:hidden">
+              {reports.map((report) => {
+                const badge = getStatusBadge(report.status);
+                return (
+                  <div key={report._id} className="rounded-lg border border-outline-variant bg-surface-container-low p-3">
+                    <div className="font-medium text-sm text-on-surface mb-1">{report.title}</div>
+                    <div className="text-xs text-on-surface-variant mb-2">{report.department} • {report.sender}</div>
+                    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}>
+                      {badge.label}
+                    </span>
+                  </div>
+                );
+              })}
+              {reports.length === 0 && (
+                <div className="py-4 text-center text-sm text-on-surface-variant">Chưa có báo cáo nào</div>
+              )}
             </div>
           </div>
         </section>

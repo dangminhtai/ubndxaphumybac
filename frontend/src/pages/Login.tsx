@@ -39,17 +39,17 @@ export default function Login() {
       </div>
       
       {/* Login Card Container */}
-      <div className="relative z-10 w-full max-w-[440px] px-container-padding">
+      <div className="relative z-10 w-full max-w-[440px] px-4 md:px-container-padding">
         {/* The Card */}
         <div className="bg-surface-container-lowest rounded-xl shadow-lg border border-outline-variant overflow-hidden">
           {/* Card Header */}
-          <div className="p-8 pb-6 flex flex-col items-center border-b border-surface-container">
+          <div className="p-5 pb-4 flex flex-col items-center border-b border-surface-container md:p-8 md:pb-6">
             <img 
-              className="w-20 h-20 object-contain mb-stack-md" 
+              className="w-14 h-14 object-contain mb-3 md:w-20 md:h-20 md:mb-stack-md" 
               alt="National Emblem" 
               src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEhm2fau82Ii0foaFdx-SjHvfINraH_03XWpDeiwu4J2CqNawLVjC4141WkgKoj_IrShqIDB-ih2as9s0xv8NC8Pjutk93N6REvZrD6aObknMiPnswLEFTsFRZ-7iu-UrxkOzEHpKt8wupxvFW2g9OUqB1Bx7zmwLUnvI04YpMHLfjBJUEMGdECqvWUUm-tRC-FAzdmiPk54tq3NsdLyBHXtauTnefXwby14y1jheOMEAJSsN9scPC7Yrl88Cg_NMz2GwsNcd_vFSg"
             />
-            <h1 className="font-headline-sm text-headline-sm text-primary text-center uppercase tracking-wide">
+            <h1 className="font-headline-sm text-base md:text-headline-sm text-primary text-center uppercase tracking-wide">
               HỆ THỐNG QUẢN LÝ BÁO CÁO ĐIỆN TỬ
             </h1>
             <p className="font-body-md text-body-md text-on-surface-variant mt-unit text-center">
@@ -58,7 +58,7 @@ export default function Login() {
           </div>
           
           {/* Card Body / Form */}
-          <div className="p-8">
+          <div className="p-5 md:p-8">
             {error && <div className="text-error mb-4 text-center text-sm">{error}</div>}
             <form onSubmit={handleLogin} className="flex flex-col gap-stack-md">
               {/* Username Field */}
@@ -67,7 +67,7 @@ export default function Login() {
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 text-outline w-5 h-5" />
                   <input 
-                    className="w-full pl-10 pr-3 py-2 border border-outline-variant rounded-lg bg-surface-bright focus:bg-surface-container-lowest font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-outline/70" 
+                    className="w-full pl-10 pr-3 py-2.5 min-h-[44px] border border-outline-variant rounded-lg bg-surface-bright focus:bg-surface-container-lowest font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-outline/70" 
                     id="username" 
                     name="username" 
                     placeholder="Nhập tên đăng nhập" 
@@ -85,7 +85,7 @@ export default function Login() {
                 <div className="relative">
                   <LockIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-outline w-5 h-5" />
                   <input 
-                    className="w-full pl-10 pr-10 py-2 border border-outline-variant rounded-lg bg-surface-bright focus:bg-surface-container-lowest font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-outline/70" 
+                    className="w-full pl-10 pr-10 py-2.5 min-h-[44px] border border-outline-variant rounded-lg bg-surface-bright focus:bg-surface-container-lowest font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-outline/70" 
                     id="password" 
                     name="password" 
                     placeholder="Nhập mật khẩu" 
@@ -117,7 +117,7 @@ export default function Login() {
               
               {/* Submit Button */}
               <button 
-                className="w-full bg-primary hover:bg-primary-container text-on-primary font-body-lg text-body-lg font-semibold py-3 rounded-lg shadow-sm hover:shadow transition-all flex justify-center items-center gap-2 disabled:opacity-50" 
+                className="w-full bg-primary hover:bg-primary-container text-on-primary font-body-lg text-body-lg font-semibold py-3 min-h-[44px] rounded-lg shadow-sm hover:shadow transition-all flex justify-center items-center gap-2 disabled:opacity-50" 
                 type="submit"
                 disabled={loading}
               >
@@ -127,7 +127,7 @@ export default function Login() {
           </div>
           
           {/* Technical/Security Notice */}
-          <div className="bg-surface-container-low px-8 py-4 border-t border-surface-container text-center">
+          <div className="bg-surface-container-low px-5 py-3 border-t border-surface-container text-center md:px-8 md:py-4">
             <p className="font-body-md text-body-md text-on-surface-variant flex items-center justify-center gap-2">
               Hệ thống yêu cầu đăng nhập bằng tài khoản nội bộ.
             </p>

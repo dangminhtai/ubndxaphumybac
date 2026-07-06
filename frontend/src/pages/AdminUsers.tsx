@@ -184,7 +184,7 @@ export default function AdminUsers() {
       />
       <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
         {/* Create form */}
-        <section className="rounded-xl border border-outline-variant bg-white p-5 shadow-level-1 self-start sticky top-24">
+        <section className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 self-start lg:sticky lg:top-24 md:p-5">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-base font-semibold">{editingUserId ? 'Cập nhật tài khoản' : 'Tạo tài khoản'}</h3>
             {editingUserId && (
@@ -261,9 +261,9 @@ export default function AdminUsers() {
         </section>
 
         {/* User list */}
-        <section className="rounded-xl border border-outline-variant bg-white p-5 shadow-level-1">
+        <section className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-5">
           <h3 className="mb-4 text-base font-semibold">Danh sách tài khoản</h3>
-          <div className="overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-outline-variant text-xs uppercase text-on-surface-variant">
                 <tr>
@@ -335,6 +335,36 @@ export default function AdminUsers() {
                 ))}
               </tbody>
             </table>
+          </div>
+          {/* Mobile card list */}
+          <div className="flex flex-col gap-3 md:hidden">
+            {users.map((user) => (
+              <div key={user._id || user.id} className="rounded-lg border border-outline-variant p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="font-semibold text-sm truncate">{user.fullName}</div>
+                    <div className="text-xs text-on-surface-variant">@{user.username}</div>
+                    <div className="text-xs text-on-surface-variant mt-1">{user.department || '—'} • {user.position || '—'}</div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <span className="rounded-full bg-surface-container-high px-2 py-0.5 text-[10px] font-semibold">
+                      {roleLabels[user.role] || user.role}
+                    </span>
+                    {user.isActive === false ? (
+                      <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-600">Đã khóa</span>
+                    ) : (
+                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">Hoạt động</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-2 pt-2 border-t border-outline-variant">
+                  <button className="flex-1 rounded-lg border border-outline-variant py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50" onClick={() => handleEdit(user)}>Sửa</button>
+                  <button className="flex-1 rounded-lg border border-outline-variant py-1.5 text-xs font-medium text-amber-600 hover:bg-amber-50" onClick={() => void resetPassword(user._id || user.id)}>Đặt MK</button>
+                  <button className="flex-1 rounded-lg border border-outline-variant py-1.5 text-xs font-medium text-error hover:bg-error-container" onClick={() => void disable(user._id || user.id, user.isActive ?? true)}>{user.isActive === false ? 'Mở khóa' : 'Khóa'}</button>
+                  <button className="rounded-lg border border-red-200 bg-red-50 py-1.5 px-2 text-xs font-medium text-red-600 hover:bg-red-100" onClick={() => void handleDelete(user._id || user.id)}>Xóa</button>
+                </div>
+              </div>
+            ))}
           </div>
         </section>
       </div>

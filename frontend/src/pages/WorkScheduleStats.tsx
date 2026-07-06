@@ -145,8 +145,8 @@ export default function WorkScheduleStats() {
       title="Thống kê lịch công tác"
       subtitle="Theo dõi khối lượng, trạng thái và phân bổ lịch công tác theo lĩnh vực."
     >
-      <section className="mb-5 rounded-xl border border-outline-variant bg-white p-4 shadow-level-1">
-        <div className="grid gap-3 md:grid-cols-[220px_220px_auto_auto]">
+      <section className="mb-5 rounded-xl border border-outline-variant bg-white p-3 shadow-level-1 md:p-4">
+        <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-[220px_220px_auto_auto]">
           <label>
             <span className="mb-1 block text-sm font-medium text-on-surface-variant">Từ ngày</span>
             <input
@@ -201,7 +201,7 @@ export default function WorkScheduleStats() {
           </div>
 
           <div className="grid gap-5 xl:grid-cols-2">
-            <section className="flex h-[380px] flex-col rounded-xl border border-outline-variant bg-white p-5 shadow-level-1">
+            <section className="flex h-[380px] flex-col rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-5">
               <h3 className="mb-4 text-base font-semibold text-on-surface">Phân bổ theo lĩnh vực</h3>
               {stats.byField.length > 0 ? (
                 <div className="relative min-h-0 flex-1">
@@ -212,7 +212,7 @@ export default function WorkScheduleStats() {
               )}
             </section>
 
-            <section className="flex h-[380px] flex-col rounded-xl border border-outline-variant bg-white p-5 shadow-level-1">
+            <section className="flex h-[380px] flex-col rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-5">
               <h3 className="mb-4 text-base font-semibold text-on-surface">Tỷ lệ theo trạng thái</h3>
               {stats.byStatus.length > 0 ? (
                 <div className="relative min-h-0 flex-1">

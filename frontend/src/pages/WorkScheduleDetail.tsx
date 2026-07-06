@@ -164,7 +164,7 @@ export default function WorkScheduleDetail() {
         </div>
       ) : schedule ? (
         <div className="grid gap-5 xl:grid-cols-[1fr_360px]">
-          <section className="rounded-xl border border-outline-variant bg-white p-5 shadow-level-1">
+          <section className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-5">
             <div className="mb-4 flex flex-wrap items-center gap-2">
               <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_CLASSES[schedule.status]}`}>
                 {STATUS_LABELS[schedule.status]}
@@ -196,7 +196,7 @@ export default function WorkScheduleDetail() {
           </section>
 
           <aside className="space-y-5">
-            <section className="rounded-xl border border-outline-variant bg-white p-5 shadow-level-1">
+            <section className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-5">
               <h3 className="mb-4 text-base font-semibold text-on-surface">Thông tin lịch</h3>
               <div className="space-y-3">
                 <InfoItem icon={CalendarDays} label="Ngày thực hiện" value={formatDate(schedule.date)} />
@@ -208,7 +208,7 @@ export default function WorkScheduleDetail() {
               </div>
             </section>
 
-            <section className="rounded-xl border border-outline-variant bg-white p-5 shadow-level-1">
+            <section className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-5">
               <h3 className="mb-4 text-base font-semibold text-on-surface">Cập nhật trạng thái</h3>
               {canChangeStatus ? (
                 <div className="space-y-3">

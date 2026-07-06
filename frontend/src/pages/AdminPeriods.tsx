@@ -60,7 +60,7 @@ export default function AdminPeriods() {
         }}
         onCancel={() => setDialogState({ isOpen: false, periodId: '' })}
       />
-      <section className="rounded-xl border border-outline-variant bg-white p-5 shadow-level-1">
+      <section className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-5">
         <div className="mb-4 flex items-center gap-3">
           <CalendarClock className="h-5 w-5 text-primary" />
           <h3 className="text-base font-semibold">Danh sách kỳ báo cáo</h3>
@@ -72,7 +72,7 @@ export default function AdminPeriods() {
           )}
 
           {periods.map((period) => (
-            <div key={period._id} className="flex flex-col gap-3 rounded-lg border border-outline-variant p-4 md:flex-row md:items-center md:justify-between">
+            <div key={period._id} className="flex flex-col gap-3 rounded-lg border border-outline-variant p-3 md:flex-row md:items-center md:justify-between md:p-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold">{period.title}</span>

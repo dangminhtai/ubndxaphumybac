@@ -1,4 +1,4 @@
-import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import {
   Activity,
@@ -9,10 +9,12 @@ import {
   ClipboardList,
   Home,
   LogOut,
+  Menu,
   Search,
   Shield,
   UserPen,
   Users,
+  X,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { User } from '../../types/user';
@@ -42,6 +44,24 @@ const NAV_ITEMS = [
   { to: '/notifications', label: 'Thông báo', icon: Bell },
 ];
 
+// Bottom nav: 4-5 key items depending on role
+function getMobileNavItems(role: string | undefined) {
+  if (role === 'admin') {
+    return [
+      { to: '/dashboard', label: 'Trang chủ', icon: Home },
+      { to: '/monthly-summary', label: 'Tổng hợp', icon: ClipboardList },
+      { to: '/work-schedules', label: 'Lịch', icon: CalendarDays },
+      { to: '/notifications', label: 'Thông báo', icon: Bell },
+    ];
+  }
+  return [
+    { to: '/dashboard', label: 'Trang chủ', icon: Home },
+    { to: '/employee-report', label: 'Báo cáo', icon: UserPen },
+    { to: '/work-schedules', label: 'Lịch', icon: CalendarDays },
+    { to: '/notifications', label: 'Thông báo', icon: Bell },
+  ];
+}
+
 function readUser() {
   const rawUser = localStorage.getItem('user');
   if (!rawUser) {
@@ -52,10 +72,18 @@ function readUser() {
 
 export default function AppLayout({ title, subtitle, children, actions, bottomBar, bottomStatus }: AppLayoutProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const user = readUser();
   const visibleNavItems = NAV_ITEMS.filter((item) => !item.roles || (user.role && item.roles.includes(user.role)));
+  const mobileNavItems = getMobileNavItems(user.role);
 
   const [unreadCount, setUnreadCount] = useState(0);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Close drawer on route change
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     const fetchCount = () => {
@@ -65,7 +93,7 @@ export default function AppLayout({ title, subtitle, children, actions, bottomBa
     };
     
     fetchCount();
-    const interval = setInterval(fetchCount, 60000); // Poll every minute
+    const interval = setInterval(fetchCount, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -76,6 +104,7 @@ export default function AppLayout({ title, subtitle, children, actions, bottomBa
 
   return (
     <div className="min-h-screen bg-background text-on-surface font-body-md">
+      {/* ─── Desktop Sidebar (hidden on mobile) ─── */}
       <aside className="fixed left-0 top-0 z-50 hidden h-screen w-sidebar-width flex-col bg-primary text-on-primary md:flex">
         <div className="flex items-center gap-3 border-b border-white/10 p-container-padding">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15">
@@ -127,8 +156,81 @@ export default function AppLayout({ title, subtitle, children, actions, bottomBa
         </div>
       </aside>
 
+      {/* ─── Mobile Drawer Overlay ─── */}
+      {drawerOpen && (
+        <div className="fixed inset-0 z-[60] md:hidden" onClick={() => setDrawerOpen(false)}>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <aside
+            className="absolute left-0 top-0 h-full w-72 bg-primary text-on-primary shadow-xl animate-slide-in"
+            onClick={(e) => e.stopPropagation()}
+            style={{ animation: 'slideIn .2s ease-out' }}
+          >
+            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <Shield className="h-6 w-6" />
+                <span className="font-bold">UBND Cấp Xã</span>
+              </div>
+              <button onClick={() => setDrawerOpen(false)} className="rounded-full p-1 hover:bg-white/10">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <nav className="flex-1 overflow-y-auto px-3 py-3">
+              <ul className="flex flex-col gap-1">
+                {visibleNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = location.pathname === item.to || location.pathname.startsWith(item.to + '/');
+                  return (
+                    <li key={item.to}>
+                      <Link
+                        to={item.to}
+                        className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                          isActive ? 'bg-white/10 text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
+                        }`}
+                      >
+                        <Icon className="h-5 w-5" />
+                        <span>{item.label}</span>
+                        {item.to === '/notifications' && unreadCount > 0 && (
+                          <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-error px-1 text-[10px] font-bold text-white">
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                          </span>
+                        )}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+
+            <div className="border-t border-white/10 px-3 py-3">
+              <div className="mb-3 px-3 text-xs text-white/50 truncate">{user.fullName} • {user.role}</div>
+              <Link
+                to="/login"
+                onClick={handleLogout}
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white/70 hover:bg-white/5 hover:text-white"
+              >
+                <LogOut className="h-5 w-5" />
+                <span>Đăng xuất</span>
+              </Link>
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {/* ─── Main Content Area ─── */}
       <div className="min-h-screen md:ml-sidebar-width">
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-outline-variant bg-surface px-container-padding">
+        {/* ─── Top Header ─── */}
+        <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-outline-variant bg-surface px-4 md:h-16 md:px-container-padding">
+          {/* Mobile: hamburger menu */}
+          <button
+            className="rounded-lg p-2 text-on-surface hover:bg-surface-container-high md:hidden"
+            onClick={() => setDrawerOpen(true)}
+            aria-label="Menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+
+          {/* Desktop: search bar */}
           <div className="relative hidden w-80 md:block">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-outline" />
             <input
@@ -138,7 +240,7 @@ export default function AppLayout({ title, subtitle, children, actions, bottomBa
             />
           </div>
 
-          <div className="ml-auto flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <button
               className="relative rounded-full p-2 text-primary transition-colors hover:bg-surface-container-high"
               type="button"
@@ -152,7 +254,7 @@ export default function AppLayout({ title, subtitle, children, actions, bottomBa
                 </span>
               )}
             </button>
-            <div className="flex items-center gap-3 border-l border-outline-variant pl-4">
+            <div className="hidden items-center gap-3 border-l border-outline-variant pl-4 sm:flex">
               <div className="text-right">
                 <div className="text-sm font-semibold">{user.fullName}</div>
                 <div className="text-xs text-on-surface-variant">{user.role}</div>
@@ -164,27 +266,71 @@ export default function AppLayout({ title, subtitle, children, actions, bottomBa
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1440px] px-container-padding py-stack-lg pb-28">
-          <div className="mb-stack-lg flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div>
-              <h2 className="font-headline-lg text-headline-lg text-on-surface">{title}</h2>
-              {subtitle && <p className="mt-1 text-on-surface-variant">{subtitle}</p>}
+        {/* ─── Page Content ─── */}
+        <main className={`mx-auto w-full max-w-[1440px] px-4 py-4 md:px-container-padding md:py-stack-lg ${bottomBar ? 'pb-36 md:pb-28' : 'pb-20 md:pb-8'}`}>
+          <div className="mb-4 flex flex-col gap-2 md:mb-stack-lg md:flex-row md:items-end md:justify-between md:gap-4">
+            <div className="min-w-0">
+              <h2 className="truncate text-xl font-bold text-on-surface md:text-headline-lg md:font-headline-lg">{title}</h2>
+              {subtitle && <p className="mt-1 text-sm text-on-surface-variant md:text-base">{subtitle}</p>}
             </div>
-            {actions}
+            {actions && <div className="flex flex-wrap gap-2 md:flex-shrink-0">{actions}</div>}
           </div>
 
           {children}
         </main>
       </div>
 
+      {/* ─── Bottom Action Bar (form pages) ─── */}
       {bottomBar && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-outline-variant bg-surface-container-lowest px-container-padding py-4 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] md:left-sidebar-width">
-          <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-4">
-            <div>{bottomStatus}</div>
-            <div className="flex justify-end gap-4">{bottomBar}</div>
+        <div className="fixed bottom-14 left-0 right-0 z-40 border-t border-outline-variant bg-surface-container-lowest px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] md:bottom-0 md:left-sidebar-width md:px-container-padding md:py-4">
+          <div className="mx-auto flex max-w-[1440px] flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-4">
+            <div className="text-xs text-on-surface-variant md:text-sm">{bottomStatus}</div>
+            <div className="flex flex-wrap justify-end gap-2 md:gap-4">{bottomBar}</div>
           </div>
         </div>
       )}
+
+      {/* ─── Mobile Bottom Navigation ─── */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-14 items-center justify-around border-t border-outline-variant bg-surface md:hidden">
+        {mobileNavItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = location.pathname === item.to || location.pathname.startsWith(item.to + '/');
+          const isNotif = item.to === '/notifications';
+          return (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={`relative flex flex-col items-center justify-center gap-0.5 px-3 py-1 text-[10px] font-medium transition-colors ${
+                isActive ? 'text-primary' : 'text-on-surface-variant'
+              }`}
+            >
+              <Icon className="h-5 w-5" />
+              <span>{item.label}</span>
+              {isNotif && unreadCount > 0 && (
+                <span className="absolute -right-1 top-0 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-error px-1 text-[9px] font-bold text-white">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </Link>
+          );
+        })}
+        {/* More menu button */}
+        <button
+          onClick={() => setDrawerOpen(true)}
+          className="flex flex-col items-center justify-center gap-0.5 px-3 py-1 text-[10px] font-medium text-on-surface-variant"
+        >
+          <Menu className="h-5 w-5" />
+          <span>Thêm</span>
+        </button>
+      </nav>
+
+      {/* Inline keyframe for drawer slide-in */}
+      <style>{`
+        @keyframes slideIn {
+          from { transform: translateX(-100%); }
+          to { transform: translateX(0); }
+        }
+      `}</style>
     </div>
   );
 }

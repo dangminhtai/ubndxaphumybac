@@ -278,27 +278,27 @@ export default function MonthlyReport() {
       bottomBar={
         <>
           <button
-            className="rounded-lg border border-outline px-6 py-2.5 font-semibold text-on-surface transition-colors hover:bg-surface-container-low"
+            className="rounded-lg border border-outline px-4 py-2 text-sm md:text-base md:px-6 md:py-2.5 font-semibold text-on-surface transition-colors hover:bg-surface-container-low"
             type="button"
           >
             Hủy bỏ
           </button>
           <button
-            className="inline-flex items-center gap-2 rounded-lg bg-surface-container-high px-6 py-2.5 font-semibold text-primary transition-colors hover:bg-surface-container-highest disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 md:gap-2 rounded-lg bg-surface-container-high px-4 py-2 text-sm md:text-base md:px-6 md:py-2.5 font-semibold text-primary transition-colors hover:bg-surface-container-highest disabled:opacity-60"
             type="button"
             disabled={saving || loading || (reportStatus !== '' && reportStatus !== 'draft')}
             onClick={() => void submitReport('draft')}
           >
-            {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
+            {saving ? <Loader2 className="h-4 w-4 md:h-5 md:w-5 animate-spin" /> : <Save className="h-4 w-4 md:h-5 md:w-5" />}
             Lưu nháp
           </button>
           <button
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 font-semibold text-white shadow-level-1 transition-colors hover:bg-primary-container disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 md:gap-2 rounded-lg bg-primary px-4 py-2 text-sm md:text-base md:px-6 md:py-2.5 font-semibold text-white shadow-level-1 transition-colors hover:bg-primary-container disabled:opacity-60"
             type="button"
             disabled={saving || loading || (reportStatus !== '' && reportStatus !== 'draft')}
             onClick={() => void submitSavedReport()}
           >
-            {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+            {saving ? <Loader2 className="h-4 w-4 md:h-5 md:w-5 animate-spin" /> : <Send className="h-4 w-4 md:h-5 md:w-5" />}
             Gửi báo cáo
           </button>
         </>
@@ -324,7 +324,7 @@ export default function MonthlyReport() {
         </div>
 
         <form className="space-y-stack-lg pb-8">
-          <div className="rounded-xl border border-outline-variant bg-white p-stack-lg shadow-level-1">
+          <div className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-stack-lg">
             <div className="flex flex-col gap-stack-lg">
               {SECTIONS.map((section) => (
                 <ReportEditor
@@ -337,7 +337,7 @@ export default function MonthlyReport() {
             </div>
           </div>
 
-          <section className="rounded-xl border border-outline-variant bg-white p-stack-lg shadow-level-1">
+          <section className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-stack-lg">
             <div className="mb-stack-md flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <h3 className="font-headline-sm text-base text-on-surface">Đính kèm minh chứng</h3>
               <span className="text-sm text-on-surface-variant">Hỗ trợ: Word, Excel, PDF, PNG/JPG (Max: 25MB)</span>

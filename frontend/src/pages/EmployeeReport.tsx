@@ -271,9 +271,9 @@ export default function EmployeeReport() {
       title="Nhập báo cáo cho nhân viên"
       subtitle="Biểu mẫu web bám theo cấu trúc template Word chính."
       actions={
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-2 md:gap-3">
           <button
-            className="inline-flex items-center gap-2 rounded-lg border border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface transition-colors hover:bg-surface-container-low disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-outline-variant px-3 py-2 text-xs font-semibold text-on-surface transition-colors hover:bg-surface-container-low disabled:opacity-60 md:gap-2 md:px-4 md:text-sm"
             type="button"
             disabled={saving || loading || reportStatus !== '' && reportStatus !== 'draft'}
             onClick={() => void submitReport('draft')}
@@ -282,14 +282,14 @@ export default function EmployeeReport() {
             Lưu nháp
           </button>
           <button
-            className="inline-flex items-center gap-2 rounded-lg bg-surface-container-high px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-surface-container-highest"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-surface-container-high px-3 py-2 text-xs font-semibold text-primary transition-colors hover:bg-surface-container-highest md:gap-2 md:px-4 md:text-sm"
             type="button"
           >
             <Eye className="h-4 w-4" />
             Xem trước
           </button>
           <button
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-container disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-primary-container disabled:opacity-60 md:gap-2 md:px-4 md:text-sm"
             type="button"
             disabled={exporting || loading}
             onClick={() => void exportDocx()}
@@ -338,19 +338,19 @@ export default function EmployeeReport() {
         )}
 
         <form className="space-y-6 pb-8">
-          <section className="rounded-xl border border-outline-variant bg-white p-6 shadow-level-1">
+          <section className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-6">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="text-center">
                 <p className="font-semibold uppercase">{department}</p>
                 <input
                   type="text"
                   placeholder="Nhập lĩnh vực phụ trách (Ví dụ: Y TẾ, VĂN HÓA...)"
-                  className="mt-1 w-full text-center font-semibold uppercase text-primary outline-none border-b border-dashed border-outline-variant bg-transparent placeholder:text-outline-variant focus:border-primary"
+                  className="mt-1 w-full text-center text-sm font-semibold uppercase text-primary outline-none border-b border-dashed border-outline-variant bg-transparent placeholder:text-outline-variant focus:border-primary md:text-base"
                   value={form.field}
                   onChange={(e) => updateField('field', e.target.value)}
                 />
               </div>
-              <div className="text-center">
+              <div className="text-center text-sm md:text-base">
                 <p className="font-semibold uppercase">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
                 <p className="font-semibold">Độc lập - Tự do - Hạnh phúc</p>
               </div>
@@ -359,7 +359,7 @@ export default function EmployeeReport() {
             <p className="mt-6 text-right italic">Phù Mỹ Bắc, {dynamicReportWindow.dueDateLabel}</p>
 
             <div className="mt-6 text-center">
-              <h3 className="text-xl font-bold uppercase text-on-surface">
+              <h3 className="text-base font-bold uppercase text-on-surface md:text-xl">
                 {dynamicReportWindow.reportTitle}
               </h3>
               <p className="mt-1 font-semibold">
@@ -368,7 +368,7 @@ export default function EmployeeReport() {
             </div>
           </section>
 
-          <section className="rounded-xl border border-outline-variant bg-white p-6 shadow-level-1">
+          <section className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-6">
             <h3 className="mb-4 border-b border-outline-variant pb-2 font-headline-sm text-base font-bold uppercase text-primary">
               I. Tình hình hoạt động {dynamicReportWindow.activityPeriod}
             </h3>
@@ -377,7 +377,7 @@ export default function EmployeeReport() {
               <div>
                 <label className="mb-2 block font-semibold text-on-surface">Kết quả thực hiện</label>
                 <textarea
-                  className="min-h-[160px] w-full resize-y rounded-md border border-outline-variant bg-surface p-4 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary"
+                  className="min-h-[120px] w-full resize-y rounded-md border border-outline-variant bg-surface p-3 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary md:min-h-[160px] md:p-4"
                   placeholder="Nhập các nội dung theo từng dòng. Khi xuất Word, mỗi dòng sẽ thành một gạch đầu dòng."
                   value={form.content}
                   onChange={(event) => updateField('content', event.target.value)}
@@ -386,7 +386,7 @@ export default function EmployeeReport() {
             </div>
           </section>
 
-          <section className="rounded-xl border border-outline-variant bg-white p-6 shadow-level-1">
+          <section className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-6">
             <h3 className="mb-3 border-b border-outline-variant pb-2 font-headline-sm text-base font-bold uppercase text-primary">
               II. Phương hướng, nhiệm vụ {dynamicReportWindow.nextPeriod}
             </h3>
@@ -394,26 +394,26 @@ export default function EmployeeReport() {
               Trong {dynamicReportWindow.nextPeriod.toLowerCase()}, sẽ tập trung vào các nhiệm vụ cụ thể như sau:
             </p>
             <textarea
-              className="min-h-[150px] w-full resize-y rounded-md border border-outline-variant bg-surface p-4 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary"
+              className="min-h-[100px] w-full resize-y rounded-md border border-outline-variant bg-surface p-3 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary md:min-h-[150px] md:p-4"
               placeholder="Nhập nhiệm vụ tuần sau theo từng dòng."
               value={form.nextTasks}
               onChange={(event) => updateField('nextTasks', event.target.value)}
             />
           </section>
 
-          <section className="rounded-xl border border-outline-variant bg-white p-6 shadow-level-1">
+          <section className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-6">
             <h3 className="mb-3 border-b border-outline-variant pb-2 font-headline-sm text-base font-bold uppercase text-primary">
               III. TỒN TẠI, HẠN CHẾ
             </h3>
             <textarea
-              className="min-h-[120px] w-full resize-y rounded-md border border-outline-variant bg-surface p-4 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary"
+              className="min-h-[80px] w-full resize-y rounded-md border border-outline-variant bg-surface p-3 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary md:min-h-[120px] md:p-4"
               placeholder="Nhập các tồn tại, hạn chế (nếu có)."
               value={form.difficulties}
               onChange={(event) => updateField('difficulties', event.target.value)}
             />
           </section>
 
-          <section className="rounded-xl border border-outline-variant bg-white p-6 shadow-level-1">
+          <section className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-6">
             <h3 className="mb-3 border-b border-outline-variant pb-2 font-headline-sm text-base font-bold uppercase text-primary">
               IV. KIẾN NGHỊ ĐỀ XUẤT
             </h3>
@@ -425,7 +425,7 @@ export default function EmployeeReport() {
             />
           </section>
 
-          <section className="rounded-xl border border-outline-variant bg-white p-6 shadow-level-1">
+          <section className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-6">
             <p>
               Trên đây là báo cáo tình hình hoạt động lĩnh vực {form.field} được thực hiện vào {dynamicReportWindow.activityPeriod.toLowerCase()} và
               Phương hướng hoạt động {dynamicReportWindow.nextPeriod.toLowerCase()} của chuyên viên phụ trách.

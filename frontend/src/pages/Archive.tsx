@@ -187,9 +187,9 @@ export default function Archive() {
       {viewingReport && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
           <div className="flex h-full max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-level-3">
-            <div className="flex items-center justify-between border-b border-outline-variant px-6 py-4">
+            <div className="flex items-center justify-between border-b border-outline-variant px-4 py-3 md:px-6 md:py-4">
               <div>
-                <h2 className="text-xl font-bold text-on-surface">{viewingReport.title}</h2>
+                <h2 className="text-base font-bold text-on-surface md:text-xl">{viewingReport.title}</h2>
                 <p className="text-sm text-on-surface-variant">Kỳ báo cáo: {viewingReport.periodInfo?.title}</p>
               </div>
               <button
@@ -199,7 +199,7 @@ export default function Archive() {
                 <X className="h-5 w-5 text-on-surface-variant" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-6 space-y-8">
+            <div className="flex-1 overflow-y-auto p-4 space-y-6 md:p-6 md:space-y-8">
               <section>
                 <h3 className="mb-3 font-semibold text-primary">1. Kết quả thực hiện</h3>
                 <div className="prose prose-sm max-w-none text-on-surface" dangerouslySetInnerHTML={{ __html: viewingReport.content || '<p className="text-on-surface-variant italic">Không có nội dung</p>' }} />
@@ -222,12 +222,12 @@ export default function Archive() {
       )}
       <div className="space-y-4">
         {/* Filter bar */}
-        <div className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1">
+        <div className="rounded-xl border border-outline-variant bg-white p-3 shadow-level-1 md:p-4">
           <div className="flex items-center gap-2 mb-3">
             <Filter className="h-4 w-4 text-primary" />
             <span className="text-sm font-semibold text-on-surface">Bộ lọc tìm kiếm</span>
           </div>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-5">
             <div>
               <label className="mb-1 block text-xs text-on-surface-variant">Loại báo cáo</label>
               <select

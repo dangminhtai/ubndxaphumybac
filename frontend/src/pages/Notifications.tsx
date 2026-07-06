@@ -82,7 +82,7 @@ export default function Notifications() {
           </div>
         )}
 
-        <div className="flex items-center justify-between rounded-xl border border-outline-variant bg-white p-4 shadow-level-1">
+        <div className="flex flex-col gap-3 rounded-xl border border-outline-variant bg-white p-3 shadow-level-1 sm:flex-row sm:items-center sm:justify-between md:p-4">
           <div className="flex items-center gap-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-container text-primary">
               <Bell className="h-5 w-5" />
@@ -95,7 +95,7 @@ export default function Notifications() {
           {unreadCount > 0 && (
             <button
               onClick={() => void handleMarkAllRead()}
-              className="inline-flex items-center gap-2 rounded-lg border border-outline-variant px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-surface-container-low"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-outline-variant px-3 py-2 text-xs font-medium text-primary transition-colors hover:bg-surface-container-low md:gap-2 md:px-4 md:text-sm"
             >
               <CheckCircle2 className="h-4 w-4" />
               Đánh dấu đọc tất cả
@@ -120,21 +120,21 @@ export default function Notifications() {
                 <div
                   key={notif._id}
                   onClick={() => void handleNotificationClick(notif)}
-                  className={`flex cursor-pointer gap-4 p-4 transition-colors hover:bg-surface-container-lowest ${
+                  className={`flex cursor-pointer gap-3 p-3 transition-colors hover:bg-surface-container-lowest md:gap-4 md:p-4 ${
                     notif.isRead ? 'opacity-70' : 'bg-surface-container-low'
                   }`}
                 >
                   <div className="mt-1 flex-shrink-0">
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-full ${notif.isRead ? 'bg-surface-container-highest text-on-surface-variant' : 'bg-primary-container text-primary'}`}>
-                      {notif.type === 'period_opened' ? <Check className="h-5 w-5" /> : <Info className="h-5 w-5" />}
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-full md:h-10 md:w-10 ${notif.isRead ? 'bg-surface-container-highest text-on-surface-variant' : 'bg-primary-container text-primary'}`}>
+                      {notif.type === 'period_opened' ? <Check className="h-4 w-4 md:h-5 md:w-5" /> : <Info className="h-4 w-4 md:h-5 md:w-5" />}
                     </div>
                   </div>
                   <div className="flex-1">
-                    <div className="flex items-start justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
                       <h4 className={`text-sm ${notif.isRead ? 'font-medium text-on-surface' : 'font-semibold text-primary'}`}>
                         {notif.title}
                       </h4>
-                      <span className="text-xs text-on-surface-variant whitespace-nowrap ml-2">
+                      <span className="text-[10px] text-on-surface-variant whitespace-nowrap md:text-xs md:ml-2">
                         {formatTime(notif.createdAt)}
                       </span>
                     </div>

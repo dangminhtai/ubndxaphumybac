@@ -366,12 +366,12 @@ export default function MonthlySummaryPage() {
             onCancel={closeDialog}
           />
           <button
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 font-semibold text-white shadow-level-1 transition-colors hover:bg-primary-container disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 md:gap-2 rounded-lg bg-primary px-4 py-2 text-sm md:text-base md:px-6 md:py-2.5 font-semibold text-white shadow-level-1 transition-colors hover:bg-primary-container disabled:opacity-60"
             type="button"
             disabled={saving || loading}
             onClick={() => void handleSave()}
           >
-            {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
+            {saving ? <Loader2 className="h-4 w-4 md:h-5 md:w-5 animate-spin" /> : <Save className="h-4 w-4 md:h-5 md:w-5" />}
             Lưu bản tổng hợp
           </button>
         </>
@@ -398,7 +398,7 @@ export default function MonthlySummaryPage() {
 
         <div className="flex flex-col lg:flex-row gap-8 pb-8">
           <form className="flex-1 space-y-stack-lg">
-            <div className="rounded-xl border border-outline-variant bg-white p-stack-lg shadow-level-1">
+            <div className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-stack-lg">
               <div className="flex flex-col gap-stack-lg">
                 {SECTIONS.map((section, idx) => (
                   <ReportEditor

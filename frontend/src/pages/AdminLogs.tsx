@@ -140,10 +140,45 @@ function LogRow({ log }: { log: AuditLogEntry }) {
       <td className="px-4 py-3 text-sm text-on-surface">
         {log.fullName || log.username || '—'}
       </td>
-      <td className="px-4 py-3 text-sm text-on-surface-variant max-w-xs truncate">
+      <td className="px-4 py-3 text-sm text-on-surface-variant max-w-xs truncate" title={log.details}>
         {log.details || '—'}
       </td>
     </tr>
+  );
+}
+
+function LogCard({ log }: { log: AuditLogEntry }) {
+  const Icon = getCategoryIcon(log.category);
+  const colorClass = getCategoryColor(log.category);
+
+  return (
+    <div className="flex flex-col gap-2 border-b border-outline-variant p-4 transition-colors hover:bg-surface-container-low">
+      <div className="flex items-start justify-between gap-2">
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${colorClass}`}>
+          <Icon className="h-3.5 w-3.5" />
+          {CATEGORIES.find((c) => c.value === log.category)?.label || log.category}
+        </span>
+        <span className="text-xs text-on-surface-variant whitespace-nowrap">
+          {formatDateTime(log.createdAt)}
+        </span>
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-semibold text-on-surface">
+          {log.fullName || log.username || 'Hệ thống'}
+        </span>
+        <span
+          className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${getActionColor(log.action)}`}
+          title={getActionTitle(log.action)}
+        >
+          {getActionCode(log.action)}
+        </span>
+      </div>
+      {log.details && (
+        <p className="text-sm text-on-surface-variant line-clamp-2">
+          {log.details}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -193,7 +228,7 @@ export default function AdminLogs() {
     >
       <div className="space-y-4">
         {/* Filter bar */}
-        <div className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1">
+        <div className="rounded-xl border border-outline-variant bg-white p-3 shadow-level-1 md:p-4">
           <div className="flex items-center gap-2 mb-3">
             <Filter className="h-4 w-4 text-primary" />
             <span className="text-sm font-semibold text-on-surface">Bộ lọc</span>
@@ -269,7 +304,7 @@ export default function AdminLogs() {
             </div>
           ) : data && data.logs.length > 0 ? (
             <>
-              <div className="overflow-x-auto">
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full min-w-[700px]">
                   <thead>
                     <tr className="border-b border-outline-variant bg-surface-container-low">
@@ -296,6 +331,11 @@ export default function AdminLogs() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+              <div className="flex flex-col md:hidden">
+                {data.logs.map((log) => (
+                  <LogCard key={log._id} log={log} />
+                ))}
               </div>
 
               {/* Pagination */}

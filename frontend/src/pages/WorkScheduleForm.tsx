@@ -204,7 +204,7 @@ export default function WorkScheduleForm() {
         </div>
       ) : (
         <form onSubmit={submit} className="space-y-5">
-          <section className="rounded-xl border border-outline-variant bg-white p-5 shadow-level-1">
+          <section className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-5">
             <h3 className="mb-4 text-base font-semibold text-on-surface">1. Thời gian và địa điểm</h3>
             <div className="grid gap-4 md:grid-cols-2">
               <label className="md:col-span-2">
@@ -258,7 +258,7 @@ export default function WorkScheduleForm() {
             </div>
           </section>
 
-          <section className="rounded-xl border border-outline-variant bg-white p-5 shadow-level-1">
+          <section className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-5">
             <h3 className="mb-4 text-base font-semibold text-on-surface">2. Phân loại và nhân sự</h3>
             <div className="grid gap-4 md:grid-cols-3">
               <label>
@@ -345,7 +345,7 @@ export default function WorkScheduleForm() {
             )}
           </section>
 
-          <section className="rounded-xl border border-outline-variant bg-white p-5 shadow-level-1">
+          <section className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-5">
             <h3 className="mb-4 text-base font-semibold text-on-surface">3. Nội dung</h3>
             <div className="space-y-4">
               <label className="block">
