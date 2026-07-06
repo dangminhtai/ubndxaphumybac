@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import authRoutes from './routes/auth';
 import adminRoutes from './routes/admin';
 import periodRoutes from './routes/periods';
@@ -51,6 +52,16 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use(errorHandler);
+
+// Serve frontend in production
+if (process.env.NODE_ENV === 'production') {
+  const frontendPath = path.join(__dirname, '../../frontend/dist');
+  app.use(express.static(frontendPath));
+
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  });
+}
 
 const server = app.listen(env.port, () => {
   console.log(`Server running on port ${env.port}`);
