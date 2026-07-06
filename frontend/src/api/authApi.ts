@@ -21,6 +21,11 @@ export async function changePassword(payload: { currentPassword: string; newPass
   return response.data;
 }
 
+export async function skipPasswordChange() {
+  const response = await apiClient.post<ManagedUser>('/auth/skip-password-change');
+  return response.data;
+}
+
 export async function getUsers() {
   const response = await apiClient.get<ManagedUser[]>('/admin/users');
   return response.data;

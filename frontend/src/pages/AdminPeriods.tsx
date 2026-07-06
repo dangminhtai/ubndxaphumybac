@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Archive as ArchiveIcon, CalendarClock, Check, Lock, Pencil, Unlock, X } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
+import Dialog from '../components/ui/Dialog';
 import { archivePeriod, getPeriods, lockPeriod, openPeriod, updatePeriodDueDate } from '../api/periodApi';
 import type { ReportPeriod } from '../types/report';
 
@@ -23,6 +24,7 @@ export default function AdminPeriods() {
   const [periods, setPeriods] = useState<ReportPeriod[]>([]);
   const [editingId, setEditingId] = useState('');
   const [editDueDate, setEditDueDate] = useState('');
+  const [dialogState, setDialogState] = useState({ isOpen: false, periodId: '' });
 
   const loadPeriods = async () => {
     setPeriods(await getPeriods());
@@ -45,6 +47,19 @@ export default function AdminPeriods() {
 
   return (
     <AppLayout title="Quản lý kỳ báo cáo" subtitle="Hệ thống tự động tạo kỳ báo cáo tuần (Thứ 2 → Thứ 5). Admin có thể gia hạn, khóa hoặc lưu trữ.">
+      <Dialog
+        isOpen={dialogState.isOpen}
+        type="confirm"
+        title="Lưu trữ kỳ báo cáo"
+        message="Bạn có chắc muốn đưa kỳ báo cáo này vào lưu trữ vĩnh viễn?"
+        confirmText="Lưu trữ"
+        isDanger={true}
+        onConfirm={() => {
+          setDialogState({ isOpen: false, periodId: '' });
+          void archivePeriod(dialogState.periodId).then(loadPeriods);
+        }}
+        onCancel={() => setDialogState({ isOpen: false, periodId: '' })}
+      />
       <section className="rounded-xl border border-outline-variant bg-white p-5 shadow-level-1">
         <div className="mb-4 flex items-center gap-3">
           <CalendarClock className="h-5 w-5 text-primary" />
@@ -125,11 +140,7 @@ export default function AdminPeriods() {
                     <button
                       className="inline-flex items-center gap-1.5 rounded-lg border border-outline-variant px-3 py-1.5 text-sm font-medium text-error transition-colors hover:bg-error-container hover:border-error"
                       type="button"
-                      onClick={() => {
-                        if (window.confirm('Bạn có chắc muốn đưa kỳ báo cáo này vào lưu trữ vĩnh viễn?')) {
-                          void archivePeriod(period._id).then(loadPeriods);
-                        }
-                      }}
+                      onClick={() => setDialogState({ isOpen: true, periodId: period._id })}
                     >
                       <ArchiveIcon className="h-4 w-4" />
                       Lưu trữ

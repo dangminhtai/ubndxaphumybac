@@ -50,7 +50,12 @@ export async function getMonthlyStaffCurrent(periodId?: string) {
   return response.data;
 }
 
-export async function submitMonthlyStaffReport(reportId: string) {
-  const response = await apiClient.post<Report>(`/reports/${reportId}/submit-monthly`);
+export async function submitMonthlyStaffReport(id: string) {
+  const response = await apiClient.post<Report>(`/reports/${id}/submit-monthly`);
+  return response.data;
+}
+
+export async function returnReport(id: string, reason: string) {
+  const response = await apiClient.post<Report>(`/reports/${id}/return`, { reason });
   return response.data;
 }

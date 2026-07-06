@@ -172,7 +172,7 @@ export async function listUsers() {
 }
 
 export async function createManagedUser(input: RegisterInput) {
-  const result = await createUser(input, { mustChangePassword: true });
+  const result = await createUser(input, { mustChangePassword: false });
   return result.user;
 }
 
@@ -260,6 +260,21 @@ export async function resetManagedUserPassword(userId: string, password?: string
     details: `Reset mật khẩu cho: ${user.username}`,
   });
 
+  return user;
+}
+
+export async function skipPasswordChange(userId: string) {
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { mustChangePassword: false },
+    { new: true }
+  ).select('-passwordHash');
+
+  if (!user) {
+    const error = new Error('Không tìm thấy tài khoản');
+    Object.assign(error, { statusCode: 404 });
+    throw error;
+  }
   return user;
 }
 

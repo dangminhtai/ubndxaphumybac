@@ -3,6 +3,7 @@ import { spawn } from 'child_process';
 import { MonthlySummary } from '../models/MonthlySummary';
 import Report, { IReport } from '../models/Report';
 import ReportPeriod from '../models/ReportPeriod';
+import User from '../models/User';
 import type { AuthUser } from '../middleware/auth.middleware';
 
 function requireSummaryValue(value: string | undefined, message: string) {
@@ -24,10 +25,13 @@ export async function getMonthlySummaryByPeriod(periodId: string) {
   });
   const periodIdsInMonth = periodsInMonth.map(p => p._id);
 
-  const employeeReports = await Report.find({
+  let rawEmployeeReports = await Report.find({
     periodId: { $in: periodIdsInMonth },
     status: { $in: ['pending', 'approved'] },
-  }).sort({ createdAt: -1 });
+  }).populate('ownerId').sort({ createdAt: -1 });
+
+  // Lọc bỏ những báo cáo của user đã bị xóa hoặc vô hiệu hóa
+  const employeeReports = rawEmployeeReports.filter(r => r.ownerId && (r.ownerId as any).isActive);
 
   let summary = await MonthlySummary.findOne({ periodId });
   if (!summary) {
@@ -69,10 +73,21 @@ export async function generateMonthlySummaryFromStaff(periodId: string, user: Au
   const periodIdsInMonth = periodsInMonth.map(p => p._id);
 
   // Find all submitted or pending reports from staff for this month (both weekly and monthly_staff)
-  const staffReports = await Report.find({
+  const rawStaffReports = await Report.find({
     periodId: { $in: periodIdsInMonth },
     status: { $in: ['pending', 'approved'] },
-  });
+  }).populate('ownerId');
+
+  const staffReports = rawStaffReports.filter(r => r.ownerId && (r.ownerId as any).isActive);
+
+  const totalStaffUsers = await User.countDocuments({ role: 'staff', isActive: true });
+  const uniqueSubmitters = new Set(staffReports.map(r => r.ownerId.toString()));
+
+  if (uniqueSubmitters.size < totalStaffUsers) {
+    const error = new Error(`Chưa đủ báo cáo. Hiện có ${uniqueSubmitters.size}/${totalStaffUsers} nhân viên đã nộp báo cáo.`);
+    Object.assign(error, { statusCode: 400 });
+    throw error;
+  }
 
   const combinedContent = staffReports.map((r: IReport) => `[${r.sender} - ${r.department}]\n${r.content}`).join('\n\n');
   const combinedDifficulties = staffReports.filter((r: IReport) => r.difficulties).map((r: IReport) => `[${r.sender}]\n${r.difficulties}`).join('\n\n');

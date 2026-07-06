@@ -5,7 +5,7 @@ import path from 'path';
 import Report from '../models/Report';
 import ReportPeriod from '../models/ReportPeriod';
 import type { AuthUser } from '../middleware/auth.middleware';
-import { notifyUsersByRole } from './notification.service';
+import { createNotification, notifyUsersByRole } from './notification.service';
 
 export interface WeeklyReportInput {
   periodId?: string;
@@ -187,6 +187,53 @@ export async function submitWeeklyReport(reportId: string, user: AuthUser) {
     type: 'report_submitted',
     link: '/archive',
   });
+
+  return report;
+}
+
+export async function returnReport(reportId: string, reason: string, adminUser: AuthUser) {
+  if (adminUser.role !== 'admin') {
+    const error = new Error('Chỉ admin mới có quyền trả lại báo cáo');
+    Object.assign(error, { statusCode: 403 });
+    throw error;
+  }
+
+  const report = await Report.findById(reportId).populate('periodId');
+  if (!report) {
+    const error = new Error('Không tìm thấy báo cáo');
+    Object.assign(error, { statusCode: 404 });
+    throw error;
+  }
+
+  const period: any = report.periodId;
+  if (period && period.status === 'archived') {
+    const error = new Error('Kỳ báo cáo đã được lưu trữ, không thể trả lại báo cáo');
+    Object.assign(error, { statusCode: 403 });
+    throw error;
+  }
+
+  if (report.status !== 'pending' && report.status !== 'approved') {
+    const error = new Error('Chỉ có thể trả lại báo cáo đã nộp');
+    Object.assign(error, { statusCode: 400 });
+    throw error;
+  }
+
+  report.status = 'draft';
+  // Remove submittedAt if it exists
+  if (report.submittedAt) {
+    report.submittedAt = undefined;
+  }
+  await report.save();
+
+  if (report.ownerId) {
+    void createNotification({
+      recipientId: report.ownerId.toString(),
+      title: 'Báo cáo bị trả lại',
+      message: `Quản trị viên đã trả lại báo cáo "${report.title}" của bạn với lý do: ${reason}`,
+      type: 'report_returned',
+      link: report.reportType === 'weekly' ? '/employee-report' : '/monthly-report',
+    });
+  }
 
   return report;
 }

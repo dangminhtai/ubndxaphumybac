@@ -8,9 +8,11 @@ import {
   FileText,
   Download,
   Search,
+  X,
 } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
-import { getArchivedReports } from '../api/archiveApi';
+import Dialog from '../components/ui/Dialog';
+import { getArchivedReports, getArchivedReportById } from '../api/archiveApi';
 import type { ArchivedReport, ArchiveResponse } from '../api/archiveApi';
 import { exportWeeklyReportDocxById } from '../api/reportApi';
 import { exportMonthlySummaryDocx } from '../api/monthlySummaryApi';
@@ -27,7 +29,7 @@ function formatDateTime(iso: string) {
   return d.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
 }
 
-function ReportRow({ report, onDownload }: { report: ArchivedReport; onDownload: (r: ArchivedReport) => void }) {
+function ReportRow({ report, onDownload, onView }: { report: ArchivedReport; onDownload: (r: ArchivedReport) => void; onView: (r: ArchivedReport) => void }) {
   return (
     <tr className="border-b border-outline-variant transition-colors hover:bg-surface-container-low">
       <td className="px-4 py-3 text-sm text-on-surface-variant whitespace-nowrap">
@@ -51,14 +53,24 @@ function ReportRow({ report, onDownload }: { report: ArchivedReport; onDownload:
         {report.sender}
       </td>
       <td className="px-4 py-3 text-right">
-        <button
-          onClick={() => onDownload(report)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-outline-variant bg-surface px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-surface-container-high"
-          title="Tải DOCX"
-        >
-          <Download className="h-4 w-4" />
-          Tải về
-        </button>
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={() => onView(report)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-outline-variant bg-surface px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-surface-container-high"
+            title="Xem nội dung"
+          >
+            <FileText className="h-4 w-4" />
+            Xem
+          </button>
+          <button
+            onClick={() => onDownload(report)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-outline-variant bg-surface px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-surface-container-high"
+            title="Tải DOCX"
+          >
+            <Download className="h-4 w-4" />
+            Tải về
+          </button>
+        </div>
       </td>
     </tr>
   );
@@ -68,6 +80,13 @@ export default function Archive() {
   const [data, setData] = useState<ArchiveResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [dialogState, setDialogState] = useState({ isOpen: false, title: '', message: '' });
+  
+  // View Report state
+  const [viewingReport, setViewingReport] = useState<any>(null);
+  const [loadingView, setLoadingView] = useState(false);
+
+  const closeDialog = () => setDialogState(prev => ({ ...prev, isOpen: false }));
 
   const [page, setPage] = useState(1);
   const [reportType, setReportType] = useState('');
@@ -121,8 +140,29 @@ export default function Archive() {
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
+      URL.revokeObjectURL(url);
     } catch (err: any) {
-      alert('Không thể tải DOCX: ' + (err.response?.data?.error || err.message));
+      setDialogState({
+        isOpen: true,
+        title: 'Lỗi xuất file DOCX',
+        message: 'Không thể tải DOCX: ' + (err.response?.data?.error || err.message),
+      });
+    }
+  };
+
+  const handleView = async (report: ArchivedReport) => {
+    try {
+      setLoadingView(true);
+      const fullReport = await getArchivedReportById(report._id, report.reportType);
+      setViewingReport(fullReport);
+    } catch (err: any) {
+      setDialogState({
+        isOpen: true,
+        title: 'Lỗi xem báo cáo',
+        message: 'Không thể xem chi tiết: ' + (err.response?.data?.error || err.message),
+      });
+    } finally {
+      setLoadingView(false);
     }
   };
 
@@ -131,6 +171,55 @@ export default function Archive() {
       title="Kho lưu trữ"
       subtitle="Tra cứu và tải lại các báo cáo từ những kỳ báo cáo đã lưu trữ"
     >
+      <Dialog
+        isOpen={dialogState.isOpen}
+        type="alert"
+        title={dialogState.title}
+        message={dialogState.message}
+        onConfirm={closeDialog}
+        onCancel={closeDialog}
+      />
+      {loadingView && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      )}
+      {viewingReport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="flex h-full max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-level-3">
+            <div className="flex items-center justify-between border-b border-outline-variant px-6 py-4">
+              <div>
+                <h2 className="text-xl font-bold text-on-surface">{viewingReport.title}</h2>
+                <p className="text-sm text-on-surface-variant">Kỳ báo cáo: {viewingReport.periodInfo?.title}</p>
+              </div>
+              <button
+                className="rounded-full p-2 transition-colors hover:bg-surface-container-highest"
+                onClick={() => setViewingReport(null)}
+              >
+                <X className="h-5 w-5 text-on-surface-variant" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 space-y-8">
+              <section>
+                <h3 className="mb-3 font-semibold text-primary">1. Kết quả thực hiện</h3>
+                <div className="prose prose-sm max-w-none text-on-surface" dangerouslySetInnerHTML={{ __html: viewingReport.content || '<p className="text-on-surface-variant italic">Không có nội dung</p>' }} />
+              </section>
+              <section>
+                <h3 className="mb-3 font-semibold text-primary">2. Khó khăn, vướng mắc</h3>
+                <div className="prose prose-sm max-w-none text-on-surface" dangerouslySetInnerHTML={{ __html: viewingReport.difficulties || '<p className="text-on-surface-variant italic">Không có nội dung</p>' }} />
+              </section>
+              <section>
+                <h3 className="mb-3 font-semibold text-primary">3. Kiến nghị, đề xuất</h3>
+                <div className="prose prose-sm max-w-none text-on-surface" dangerouslySetInnerHTML={{ __html: viewingReport.proposals || '<p className="text-on-surface-variant italic">Không có nội dung</p>' }} />
+              </section>
+              <section>
+                <h3 className="mb-3 font-semibold text-primary">4. Nhiệm vụ trọng tâm thời gian tới</h3>
+                <div className="prose prose-sm max-w-none text-on-surface" dangerouslySetInnerHTML={{ __html: viewingReport.nextTasks || '<p className="text-on-surface-variant italic">Không có nội dung</p>' }} />
+              </section>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="space-y-4">
         {/* Filter bar */}
         <div className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1">
@@ -243,6 +332,7 @@ export default function Archive() {
                       <ReportRow 
                         key={report._id} 
                         report={report} 
+                        onView={handleView}
                         onDownload={handleDownload} 
                       />
                     ))}

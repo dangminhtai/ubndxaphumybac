@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Lock } from 'lucide-react';
-import { changePassword } from '../api/authApi';
+import { changePassword, skipPasswordChange } from '../api/authApi';
 
 export default function ChangePassword() {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -28,6 +28,20 @@ export default function ChangePassword() {
       navigate('/dashboard');
     } catch {
       setError('Không đổi được mật khẩu. Kiểm tra mật khẩu hiện tại và độ dài mật khẩu mới.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSkip = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const user = await skipPasswordChange();
+      localStorage.setItem('user', JSON.stringify(user));
+      navigate('/dashboard');
+    } catch {
+      setError('Lỗi khi bỏ qua đổi mật khẩu.');
     } finally {
       setLoading(false);
     }
@@ -72,10 +86,20 @@ export default function ChangePassword() {
           />
         </div>
 
-        <button className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-semibold text-white disabled:opacity-60" type="submit" disabled={loading}>
-          {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-          Đổi mật khẩu
-        </button>
+        <div className="mt-5 flex gap-3">
+          <button
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-surface-container-low px-4 py-2.5 font-semibold text-on-surface transition-colors hover:bg-surface-container-highest disabled:opacity-60"
+            type="button"
+            disabled={loading}
+            onClick={() => void handleSkip()}
+          >
+            Bỏ qua
+          </button>
+          <button className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-semibold text-white disabled:opacity-60" type="submit" disabled={loading}>
+            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+            Đổi mật khẩu
+          </button>
+        </div>
       </form>
     </div>
   );

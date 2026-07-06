@@ -50,3 +50,8 @@ export async function getArchivedReports(query: ArchiveQuery = {}): Promise<Arch
   const res = await apiClient.get<ArchiveResponse>(`/archive/reports?${params.toString()}`);
   return res.data;
 }
+
+export async function getArchivedReportById(id: string, type: string) {
+  const res = await apiClient.get<any>(`/archive/reports/${type}/${id}`);
+  return res.data;
+}

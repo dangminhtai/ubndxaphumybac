@@ -1,6 +1,6 @@
 import { NextFunction, Response } from 'express';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
-import { getArchivedReports } from '../services/archive.service';
+import { getArchivedReports, getArchivedReportById } from '../services/archive.service';
 
 export async function getArchive(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
@@ -20,6 +20,16 @@ export async function getArchive(req: AuthenticatedRequest, res: Response, next:
       sender: req.query.sender as string,
     });
     
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getArchiveById(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    const { type, id } = req.params;
+    const result = await getArchivedReportById(id, type);
     res.json(result);
   } catch (err) {
     next(err);

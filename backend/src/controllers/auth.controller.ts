@@ -9,6 +9,7 @@ import {
   loginUser,
   resetManagedUserPassword,
   updateManagedUser,
+  skipPasswordChange
 } from '../services/auth.service';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import { writeAuditLog } from '../services/audit.service';
@@ -118,6 +119,20 @@ export async function deleteUser(req: Request, res: Response, next: NextFunction
 export async function resetPassword(req: Request, res: Response, next: NextFunction) {
   try {
     const user = await resetManagedUserPassword(String(req.params.id), req.body.password);
+    res.json(user);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function postSkipPasswordChange(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    if (!req.user) {
+      const error = new Error('Bạn cần đăng nhập');
+      Object.assign(error, { statusCode: 401 });
+      throw error;
+    }
+    const user = await skipPasswordChange(req.user.id);
     res.json(user);
   } catch (err) {
     next(err);

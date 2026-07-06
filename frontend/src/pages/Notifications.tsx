@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Bell, Check, CheckCircle2, ChevronRight, Loader2, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '../components/layout/AppLayout';
+import Dialog from '../components/ui/Dialog';
 import { getNotifications, markAllNotificationsAsRead, markNotificationAsRead } from '../api/notificationApi';
 import type { AppNotification } from '../api/notificationApi';
 
@@ -15,6 +16,9 @@ export default function Notifications() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [dialogState, setDialogState] = useState({ isOpen: false, message: '' });
+
+  const closeDialog = () => setDialogState(prev => ({ ...prev, isOpen: false }));
 
   const loadNotifications = async () => {
     setLoading(true);
@@ -37,7 +41,7 @@ export default function Notifications() {
       await markAllNotificationsAsRead();
       setNotifications(notifications.map(n => ({ ...n, isRead: true })));
     } catch {
-      alert('Có lỗi xảy ra khi cập nhật thông báo');
+      setDialogState({ isOpen: true, message: 'Có lỗi xảy ra khi cập nhật thông báo' });
     }
   };
 
@@ -59,8 +63,19 @@ export default function Notifications() {
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
-    <AppLayout title="Thông báo" subtitle="Các hoạt động và cập nhật mới nhất từ hệ thống.">
-      <div className="mx-auto max-w-4xl space-y-4">
+    <AppLayout
+      title="Thông báo"
+      subtitle="Quản lý và theo dõi các sự kiện, yêu cầu hệ thống"
+    >
+      <Dialog
+        isOpen={dialogState.isOpen}
+        type="alert"
+        title="Thông báo hệ thống"
+        message={dialogState.message}
+        onConfirm={closeDialog}
+        onCancel={closeDialog}
+      />
+      <div className="mx-auto max-w-4xl space-y-6">
         {error && (
           <div className="rounded-lg bg-error-container p-4 text-sm text-error">
             {error}

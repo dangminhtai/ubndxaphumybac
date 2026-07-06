@@ -11,6 +11,7 @@ import {
   getCurrentMonthlyStaffReport,
   createMonthlyStaffReport,
   submitMonthlyStaffReport,
+  returnReport
 } from '../services/report.service';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import { writeAuditLog } from '../services/audit.service';
@@ -89,6 +90,34 @@ export async function submitWeekly(req: AuthenticatedRequest, res: Response, nex
       targetType: 'Report',
       targetId: String(req.params.id),
       details: `Nộp báo cáo tuần`,
+    });
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function postReturnReport(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    if (!req.user) {
+      const error = new Error('Bạn cần đăng nhập');
+      Object.assign(error, { statusCode: 401 });
+      throw error;
+    }
+    const { reason } = req.body;
+    if (!reason) {
+      const error = new Error('Vui lòng nhập lý do trả lại báo cáo');
+      Object.assign(error, { statusCode: 400 });
+      throw error;
+    }
+    const result = await returnReport(String(req.params.id), reason, req.user);
+    void writeAuditLog({
+      action: 'RETURN',
+      category: 'report',
+      user: req.user,
+      targetType: 'Report',
+      targetId: String(req.params.id),
+      details: `Trả lại báo cáo: ${result.title} (Lý do: ${reason})`,
     });
     res.json(result);
   } catch (err) {

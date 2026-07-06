@@ -128,7 +128,7 @@ def build_document_xml(payload, template_path):
     due_date = parse_iso(required(payload, "dueDate"))
 
     period = required(payload, "period")
-    next_period = required(payload, "nextPeriod")
+    next_period = payload.get("nextPeriod") or "TUẦN TIẾP THEO"
     report_title = required(payload, "reportTitle")
     date_range = f"(Từ ngày {format_slash(start_date)} đến ngày {format_slash(end_date)})"
 

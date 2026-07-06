@@ -24,6 +24,9 @@ import {
 } from '../api/monthlySummaryApi';
 import type { MonthlySummary as IMonthlySummary } from '../api/monthlySummaryApi';
 import { getCurrentPeriod } from '../api/periodApi';
+import { returnReport } from '../api/reportApi';
+import Dialog from '../components/ui/Dialog';
+import type { DialogType } from '../components/ui/Dialog';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -130,6 +133,27 @@ export default function MonthlySummaryPage() {
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [exporting, setExporting] = useState(false);
+  
+  // Dialog state
+  const [dialogState, setDialogState] = useState<{
+    isOpen: boolean;
+    type: DialogType;
+    title: string;
+    message?: string;
+    inputPlaceholder?: string;
+    confirmText?: string;
+    cancelText?: string;
+    isDanger?: boolean;
+    onConfirm: (val?: string) => void;
+  }>({
+    isOpen: false,
+    type: 'alert',
+    title: '',
+    onConfirm: () => {},
+  });
+
+  const closeDialog = () => setDialogState(prev => ({ ...prev, isOpen: false }));
+
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -193,27 +217,34 @@ export default function MonthlySummaryPage() {
 
   const handleGenerate = async () => {
     if (!periodId) return;
-    if (!confirm('Tạo tổng hợp tự động sẽ ghi đè nội dung hiện tại bằng dữ liệu từ các báo cáo chuyên viên đã nộp. Bạn có chắc chắn?')) {
-      return;
-    }
     
-    setGenerating(true);
-    setError('');
-    try {
-      const data = await generateMonthlySummary(periodId);
-      setForm({
-        content: data.content || '',
-        difficulties: data.difficulties || '',
-        proposals: data.proposals || '',
-        nextTasks: data.nextTasks || '',
-        periodTitle: data.periodTitle,
-      });
-      setMessage('Đã tổng hợp dữ liệu thành công');
-    } catch (err: any) {
-      setError('Lỗi khi tổng hợp: ' + (err.response?.data?.error || err.message));
-    } finally {
-      setGenerating(false);
-    }
+    setDialogState({
+      isOpen: true,
+      type: 'confirm',
+      title: 'Tạo tổng hợp tự động',
+      message: 'Tạo tổng hợp tự động sẽ ghi đè nội dung hiện tại bằng dữ liệu từ các báo cáo chuyên viên đã nộp. Bạn có chắc chắn?',
+      confirmText: 'Đồng ý',
+      onConfirm: async () => {
+        closeDialog();
+        setGenerating(true);
+        setError('');
+        try {
+          const data = await generateMonthlySummary(periodId);
+          setForm({
+            content: data.content || '',
+            difficulties: data.difficulties || '',
+            proposals: data.proposals || '',
+            nextTasks: data.nextTasks || '',
+            periodTitle: data.periodTitle,
+          });
+          setMessage('Đã tổng hợp dữ liệu thành công');
+        } catch (err: any) {
+          setError('Lỗi khi tổng hợp: ' + (err.response?.data?.error || err.message));
+        } finally {
+          setGenerating(false);
+        }
+      },
+    });
   };
 
   const handleExport = async () => {
@@ -247,6 +278,37 @@ export default function MonthlySummaryPage() {
     } finally {
       setExporting(false);
     }
+  };
+
+  const handleReturn = async (reportId: string) => {
+    setDialogState({
+      isOpen: true,
+      type: 'prompt',
+      title: 'Trả lại báo cáo',
+      message: 'Nhập lý do trả lại báo cáo này:',
+      inputPlaceholder: 'Lý do...',
+      confirmText: 'Trả về',
+      isDanger: true,
+      onConfirm: async (reason?: string) => {
+        if (!reason) {
+          closeDialog();
+          return;
+        }
+        closeDialog();
+        
+        try {
+          setLoading(true);
+          await returnReport(reportId, reason);
+          setMessage('Đã trả lại báo cáo cho nhân viên');
+          // Remove from the list
+          setEmployeeReports(current => current.filter(r => r._id !== reportId));
+        } catch (err: any) {
+          setError('Lỗi khi trả lại báo cáo: ' + (err.response?.data?.error || err.message));
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
   };
 
   if (!periodId) {
@@ -291,6 +353,18 @@ export default function MonthlySummaryPage() {
       }
       bottomBar={
         <>
+          <Dialog
+            isOpen={dialogState.isOpen}
+            type={dialogState.type}
+            title={dialogState.title}
+            message={dialogState.message}
+            inputPlaceholder={dialogState.inputPlaceholder}
+            confirmText={dialogState.confirmText}
+            cancelText={dialogState.cancelText}
+            isDanger={dialogState.isDanger}
+            onConfirm={dialogState.onConfirm}
+            onCancel={closeDialog}
+          />
           <button
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 font-semibold text-white shadow-level-1 transition-colors hover:bg-primary-container disabled:opacity-60"
             type="button"
@@ -298,7 +372,7 @@ export default function MonthlySummaryPage() {
             onClick={() => void handleSave()}
           >
             {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
-            Lưu bản nháp
+            Lưu bản tổng hợp
           </button>
         </>
       }
@@ -391,6 +465,17 @@ export default function MonthlySummaryPage() {
                               <div className="mb-3">{r.nextTasks}</div>
                             </>
                           )}
+                          
+                          <div className="mt-4 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => void handleReturn(r._id)}
+                              disabled={loading}
+                              className="inline-flex items-center gap-2 rounded-lg bg-error-container px-3 py-1.5 text-xs font-semibold text-error transition-colors hover:bg-error/20 disabled:opacity-60"
+                            >
+                              Trả về (Yêu cầu sửa)
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>

@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Loader2, Plus, RotateCcw, UserX, Pencil, Trash2, X } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
-import { createUser, disableUser, getUsers, resetUserPassword, updateUser, deleteUser as deleteUserApi } from '../api/authApi';
+import Dialog from '../components/ui/Dialog';
+import type { DialogType } from '../components/ui/Dialog';
+import { createUser, getUsers, resetUserPassword, updateUser, deleteUser as deleteUserApi } from '../api/authApi';
 import type { CreateUserPayload, ManagedUser } from '../types/user';
 
 const initialForm: CreateUserPayload = {
@@ -33,6 +35,26 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+
+  // Dialog state
+  const [dialogState, setDialogState] = useState<{
+    isOpen: boolean;
+    type: DialogType;
+    title: string;
+    message?: string;
+    inputPlaceholder?: string;
+    confirmText?: string;
+    cancelText?: string;
+    isDanger?: boolean;
+    onConfirm: (val?: string) => void;
+  }>({
+    isOpen: false,
+    type: 'alert',
+    title: '',
+    onConfirm: () => {},
+  });
+
+  const closeDialog = () => setDialogState(prev => ({ ...prev, isOpen: false }));
 
   const loadUsers = async () => {
     setLoading(true);
@@ -93,32 +115,73 @@ export default function AdminUsers() {
   };
 
   const disable = async (id: string, isActive: boolean) => {
-    if (!window.confirm(isActive ? 'Bạn có chắc muốn vô hiệu hóa tài khoản này?' : 'Bạn có chắc muốn mở khóa tài khoản này?')) return;
-    await updateUser(id, { isActive: !isActive });
-    await loadUsers();
+    setDialogState({
+      isOpen: true,
+      type: 'confirm',
+      title: isActive ? 'Vô hiệu hóa tài khoản' : 'Mở khóa tài khoản',
+      message: isActive ? 'Bạn có chắc muốn vô hiệu hóa tài khoản này?' : 'Bạn có chắc muốn mở khóa tài khoản này?',
+      confirmText: 'Đồng ý',
+      onConfirm: async () => {
+        closeDialog();
+        await updateUser(id, { isActive: !isActive });
+        await loadUsers();
+      }
+    });
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('BẠN CÓ CHẮC CHẮN MUỐN XÓA VĨNH VIỄN TÀI KHOẢN NÀY?')) return;
-    try {
-      await deleteUserApi(id);
-      setMessage('Đã xóa tài khoản');
-      await loadUsers();
-    } catch {
-      setError('Lỗi khi xóa tài khoản');
-    }
+    setDialogState({
+      isOpen: true,
+      type: 'confirm',
+      title: 'Xóa tài khoản',
+      message: 'Bạn có chắc chắn muốn xóa vĩnh viễn tài khoản này?',
+      confirmText: 'Xóa',
+      isDanger: true,
+      onConfirm: async () => {
+        closeDialog();
+        try {
+          await deleteUserApi(id);
+          setMessage('Đã xóa tài khoản');
+          await loadUsers();
+        } catch {
+          setError('Lỗi khi xóa tài khoản');
+        }
+      }
+    });
   };
 
   const resetPassword = async (id: string) => {
-    const newPassword = window.prompt('Nhập mật khẩu mới cho tài khoản này');
-    if (!newPassword) return;
-    await resetUserPassword(id, newPassword);
-    setMessage('Đã đặt lại mật khẩu mới');
-    await loadUsers();
+    setDialogState({
+      isOpen: true,
+      type: 'prompt',
+      title: 'Đặt lại mật khẩu',
+      message: 'Nhập mật khẩu mới cho tài khoản này:',
+      inputPlaceholder: 'Mật khẩu mới...',
+      confirmText: 'Đặt lại',
+      onConfirm: async (newPassword?: string) => {
+        closeDialog();
+        if (!newPassword) return;
+        await resetUserPassword(id, newPassword);
+        setMessage('Đã đặt lại mật khẩu mới');
+        await loadUsers();
+      }
+    });
   };
 
   return (
     <AppLayout title="Quản lý tài khoản" subtitle="Admin tạo tài khoản nhân viên và viewer, không dùng đăng ký công khai.">
+      <Dialog
+        isOpen={dialogState.isOpen}
+        type={dialogState.type}
+        title={dialogState.title}
+        message={dialogState.message}
+        inputPlaceholder={dialogState.inputPlaceholder}
+        confirmText={dialogState.confirmText}
+        cancelText={dialogState.cancelText}
+        isDanger={dialogState.isDanger}
+        onConfirm={dialogState.onConfirm}
+        onCancel={closeDialog}
+      />
       <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
         {/* Create form */}
         <section className="rounded-xl border border-outline-variant bg-white p-5 shadow-level-1 self-start sticky top-24">
@@ -148,7 +211,7 @@ export default function AdminUsers() {
                   onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.value }))}
                 />
                 {field === 'password' && !editingUserId && (
-                  <p className="mt-1 text-xs text-on-surface-variant">Người dùng sẽ phải đổi mật khẩu khi đăng nhập lần đầu.</p>
+                  <p className="mt-1 text-xs text-on-surface-variant">Tài khoản có thể đăng nhập ngay mà không bắt buộc đổi mật khẩu.</p>
                 )}
               </div>
               );
@@ -254,7 +317,7 @@ export default function AdminUsers() {
                           className="rounded-lg border border-outline-variant p-2 transition-colors hover:bg-error-container"
                           type="button"
                           title={user.isActive === false ? 'Mở khóa tài khoản' : 'Vô hiệu hóa tài khoản'}
-                          onClick={() => void disable(user._id || user.id, user.isActive)}
+                          onClick={() => void disable(user._id || user.id, user.isActive ?? true)}
                         >
                           <UserX className="h-4 w-4 text-error" />
                         </button>
