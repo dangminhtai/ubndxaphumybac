@@ -29,7 +29,7 @@ export async function getArchive(req: AuthenticatedRequest, res: Response, next:
 export async function getArchiveById(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
     const { type, id } = req.params;
-    const result = await getArchivedReportById(id, type);
+    const result = await getArchivedReportById(String(id), String(type));
     res.json(result);
   } catch (err) {
     next(err);

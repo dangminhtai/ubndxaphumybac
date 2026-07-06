@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -114,16 +114,6 @@ export default function Dashboard() {
     <AppLayout
       title={`Xin chào, ${user.fullName}`}
       subtitle="Chúc bạn một ngày làm việc hiệu quả."
-      actions={
-        user.role === 'admin' ? (
-          <Link
-            to="/admin/periods"
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white shadow-level-1 transition-colors hover:bg-primary-container inline-block"
-          >
-            Tạo kỳ báo cáo
-          </Link>
-        ) : null
-      }
     >
       <div className="grid grid-cols-12 gap-gutter">
         <section className="col-span-12 lg:col-span-8">

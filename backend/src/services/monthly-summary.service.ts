@@ -81,7 +81,7 @@ export async function generateMonthlySummaryFromStaff(periodId: string, user: Au
   const staffReports = rawStaffReports.filter(r => r.ownerId && (r.ownerId as any).isActive);
 
   const totalStaffUsers = await User.countDocuments({ role: 'staff', isActive: true });
-  const uniqueSubmitters = new Set(staffReports.map(r => r.ownerId.toString()));
+  const uniqueSubmitters = new Set(staffReports.map(r => r.ownerId!.toString()));
 
   if (uniqueSubmitters.size < totalStaffUsers) {
     const error = new Error(`Chưa đủ báo cáo. Hiện có ${uniqueSubmitters.size}/${totalStaffUsers} nhân viên đã nộp báo cáo.`);

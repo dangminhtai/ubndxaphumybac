@@ -11,6 +11,7 @@ import {
   Users,
   Download,
   ClipboardList,
+  CalendarClock,
   Search,
 } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
@@ -25,6 +26,7 @@ const CATEGORIES = [
   { value: 'user', label: 'Tài khoản' },
   { value: 'export', label: 'DOCX' },
   { value: 'summary', label: 'Tổng hợp tháng' },
+  { value: 'schedule', label: 'Lịch công tác' },
 ];
 
 function getCategoryIcon(category: string) {
@@ -35,6 +37,7 @@ function getCategoryIcon(category: string) {
     case 'user': return Users;
     case 'export': return Download;
     case 'summary': return ClipboardList;
+    case 'schedule': return CalendarClock;
     default: return Activity;
   }
 }
@@ -47,6 +50,7 @@ function getCategoryColor(category: string) {
     case 'user': return 'bg-purple-100 text-purple-700';
     case 'export': return 'bg-rose-100 text-rose-700';
     case 'summary': return 'bg-cyan-100 text-cyan-700';
+    case 'schedule': return 'bg-indigo-100 text-indigo-700';
     default: return 'bg-gray-100 text-gray-700';
   }
 }

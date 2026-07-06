@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import {
   Activity,
   Archive,
+  BarChart3,
   Bell,
   CalendarDays,
   ClipboardList,
@@ -34,6 +35,8 @@ const NAV_ITEMS = [
   { to: '/admin/periods', label: 'Kỳ báo cáo', icon: CalendarDays, roles: ['admin'] },
   { to: '/admin/users', label: 'Tài khoản', icon: Users, roles: ['admin'] },
   { to: '/monthly-summary', label: 'Tổng hợp tháng', icon: ClipboardList, roles: ['admin'] },
+  { to: '/work-schedules', label: 'Lịch công tác', icon: CalendarDays },
+  { to: '/work-schedules/stats', label: 'Thống kê lịch', icon: BarChart3, roles: ['admin', 'department_lead'] },
   { to: '/admin/logs', label: 'Nhật ký hệ thống', icon: Activity, roles: ['admin', 'viewer'] },
   { to: '/archive', label: 'Kho lưu trữ', icon: Archive },
   { to: '/notifications', label: 'Thông báo', icon: Bell },
