@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Loader2, Plus, RotateCcw, UserX } from 'lucide-react';
+import { Loader2, Plus, RotateCcw, UserX, Pencil, Trash2, X } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
-import { createUser, disableUser, getUsers, resetUserPassword } from '../api/authApi';
+import { createUser, disableUser, getUsers, resetUserPassword, updateUser, deleteUser as deleteUserApi } from '../api/authApi';
 import type { CreateUserPayload, ManagedUser } from '../types/user';
 
 const initialForm: CreateUserPayload = {
   username: '',
   password: '',
   fullName: '',
-  department: '',
+  department: 'PHÒNG VĂN HÓA - XÃ HỘI',
   role: 'staff',
   position: '',
 };
@@ -23,15 +23,13 @@ const fieldLabels: Record<string, string> = {
 
 const roleLabels: Record<string, string> = {
   staff: 'Nhân viên',
-  viewer: 'Xem báo cáo',
-  department_lead: 'Lãnh đạo phòng',
-  office_clerk: 'Văn thư/tổng hợp',
   admin: 'Quản trị viên',
 };
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [form, setForm] = useState(initialForm);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -56,21 +54,59 @@ export default function AdminUsers() {
     setLoading(true);
     setError('');
     try {
-      await createUser(form);
+      if (editingUserId) {
+        await updateUser(editingUserId, form);
+        setMessage('Đã cập nhật tài khoản');
+        setEditingUserId(null);
+      } else {
+        await createUser(form);
+        setMessage('Đã tạo tài khoản');
+      }
       setForm(initialForm);
-      setMessage('Đã tạo tài khoản');
       await loadUsers();
     } catch {
-      setError('Không tạo được tài khoản');
+      setError(editingUserId ? 'Không cập nhật được tài khoản' : 'Không tạo được tài khoản');
     } finally {
       setLoading(false);
     }
   };
 
-  const disable = async (id: string) => {
-    if (!window.confirm('Bạn có chắc muốn vô hiệu hóa tài khoản này?')) return;
-    await disableUser(id);
+  const handleEdit = (user: ManagedUser) => {
+    setEditingUserId(user._id || user.id);
+    setForm({
+      username: user.username,
+      password: '', // Leave empty when editing
+      fullName: user.fullName || '',
+      department: user.department || '',
+      role: user.role,
+      position: user.position || '',
+    });
+    setError('');
+    setMessage('');
+  };
+
+  const cancelEdit = () => {
+    setEditingUserId(null);
+    setForm(initialForm);
+    setError('');
+    setMessage('');
+  };
+
+  const disable = async (id: string, isActive: boolean) => {
+    if (!window.confirm(isActive ? 'Bạn có chắc muốn vô hiệu hóa tài khoản này?' : 'Bạn có chắc muốn mở khóa tài khoản này?')) return;
+    await updateUser(id, { isActive: !isActive });
     await loadUsers();
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('BẠN CÓ CHẮC CHẮN MUỐN XÓA VĨNH VIỄN TÀI KHOẢN NÀY?')) return;
+    try {
+      await deleteUserApi(id);
+      setMessage('Đã xóa tài khoản');
+      await loadUsers();
+    } catch {
+      setError('Lỗi khi xóa tài khoản');
+    }
   };
 
   const resetPassword = async (id: string) => {
@@ -85,10 +121,19 @@ export default function AdminUsers() {
     <AppLayout title="Quản lý tài khoản" subtitle="Admin tạo tài khoản nhân viên và viewer, không dùng đăng ký công khai.">
       <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
         {/* Create form */}
-        <section className="rounded-xl border border-outline-variant bg-white p-5 shadow-level-1">
-          <h3 className="mb-4 text-base font-semibold">Tạo tài khoản</h3>
+        <section className="rounded-xl border border-outline-variant bg-white p-5 shadow-level-1 self-start sticky top-24">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-base font-semibold">{editingUserId ? 'Cập nhật tài khoản' : 'Tạo tài khoản'}</h3>
+            {editingUserId && (
+              <button onClick={cancelEdit} className="text-on-surface-variant hover:text-on-surface">
+                <X className="h-5 w-5" />
+              </button>
+            )}
+          </div>
           <div className="space-y-4">
-            {(['username', 'password', 'fullName', 'department', 'position'] as const).map((field) => (
+            {(['username', 'password', 'fullName', 'position'] as const).map((field) => {
+              if (editingUserId && field === 'username') return null; // Can't change username
+              return (
               <div key={field}>
                 <label className="mb-1 block text-sm font-medium text-on-surface-variant">
                   {fieldLabels[field]}
@@ -96,38 +141,56 @@ export default function AdminUsers() {
                 </label>
                 <input
                   className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm outline-none focus:border-primary"
-                  placeholder={`Nhập ${fieldLabels[field].toLowerCase()}...`}
+                  placeholder={field === 'password' && editingUserId ? 'Bỏ trống nếu không đổi...' : `Nhập ${fieldLabels[field].toLowerCase()}...`}
                   type={field === 'password' ? 'password' : 'text'}
                   value={form[field] || ''}
+                  disabled={field === 'username' && editingUserId !== null}
                   onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.value }))}
                 />
-                {field === 'password' && (
+                {field === 'password' && !editingUserId && (
                   <p className="mt-1 text-xs text-on-surface-variant">Người dùng sẽ phải đổi mật khẩu khi đăng nhập lần đầu.</p>
                 )}
               </div>
-            ))}
+              );
+            })}
+            <div>
+              <label className="mb-1 block text-sm font-medium text-on-surface-variant">Phòng ban</label>
+              <select
+                className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm outline-none focus:border-primary disabled:opacity-60 disabled:bg-surface-container-low"
+                value={form.department || 'PHÒNG VĂN HÓA - XÃ HỘI'}
+                disabled={form.role === 'staff'}
+                onChange={(event) => setForm((current) => ({ ...current, department: event.target.value }))}
+              >
+                <option value="PHÒNG VĂN HÓA - XÃ HỘI">PHÒNG VĂN HÓA - XÃ HỘI</option>
+                <option value="UBND Cấp Xã">UBND Cấp Xã</option>
+              </select>
+            </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-on-surface-variant">Vai trò</label>
               <select
                 className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm outline-none focus:border-primary"
                 value={form.role}
-                onChange={(event) => setForm((current) => ({ ...current, role: event.target.value }))}
+                onChange={(event) => {
+                  const newRole = event.target.value;
+                  setForm((current) => ({
+                    ...current,
+                    role: newRole,
+                    department: (newRole === 'staff') ? 'PHÒNG VĂN HÓA - XÃ HỘI' : current.department,
+                  }));
+                }}
               >
                 <option value="staff">Nhân viên</option>
-                <option value="viewer">Xem báo cáo</option>
-                <option value="department_lead">Lãnh đạo phòng</option>
-                <option value="office_clerk">Văn thư/tổng hợp</option>
                 <option value="admin">Quản trị viên</option>
               </select>
             </div>
             <button
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-semibold text-white disabled:opacity-60"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-semibold text-white disabled:opacity-60 transition-colors hover:bg-primary-container"
               type="button"
               disabled={loading}
               onClick={() => void submit()}
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              Tạo tài khoản
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : (editingUserId ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />)}
+              {editingUserId ? 'Cập nhật tài khoản' : 'Tạo tài khoản'}
             </button>
           </div>
           {message && <p className="mt-3 text-sm text-emerald-700">{message}</p>}
@@ -174,6 +237,14 @@ export default function AdminUsers() {
                         <button
                           className="rounded-lg border border-outline-variant p-2 transition-colors hover:bg-surface-container-low"
                           type="button"
+                          title="Sửa thông tin"
+                          onClick={() => handleEdit(user)}
+                        >
+                          <Pencil className="h-4 w-4 text-blue-600" />
+                        </button>
+                        <button
+                          className="rounded-lg border border-outline-variant p-2 transition-colors hover:bg-surface-container-low"
+                          type="button"
                           title="Đặt lại mật khẩu"
                           onClick={() => void resetPassword(user._id || user.id)}
                         >
@@ -182,10 +253,18 @@ export default function AdminUsers() {
                         <button
                           className="rounded-lg border border-outline-variant p-2 transition-colors hover:bg-error-container"
                           type="button"
-                          title="Vô hiệu hóa tài khoản"
-                          onClick={() => void disable(user._id || user.id)}
+                          title={user.isActive === false ? 'Mở khóa tài khoản' : 'Vô hiệu hóa tài khoản'}
+                          onClick={() => void disable(user._id || user.id, user.isActive)}
                         >
                           <UserX className="h-4 w-4 text-error" />
+                        </button>
+                        <button
+                          className="rounded-lg border border-outline-variant p-2 transition-colors hover:bg-error-container bg-red-50 border-red-200"
+                          type="button"
+                          title="Xóa vĩnh viễn"
+                          onClick={() => void handleDelete(user._id || user.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-600" />
                         </button>
                       </div>
                     </td>

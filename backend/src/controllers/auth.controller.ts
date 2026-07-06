@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import {
   changePassword,
   createManagedUser,
+  deleteManagedUser,
   disableManagedUser,
   getAuthUser,
   listUsers,
@@ -99,6 +100,15 @@ export async function patchUser(req: Request, res: Response, next: NextFunction)
 export async function disableUser(req: Request, res: Response, next: NextFunction) {
   try {
     const user = await disableManagedUser(String(req.params.id));
+    res.json(user);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deleteUser(req: Request, res: Response, next: NextFunction) {
+  try {
+    const user = await deleteManagedUser(String(req.params.id));
     res.json(user);
   } catch (err) {
     next(err);

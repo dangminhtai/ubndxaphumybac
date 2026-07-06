@@ -208,6 +208,25 @@ export async function disableManagedUser(userId: string, actor?: { id: string; u
   return result;
 }
 
+export async function deleteManagedUser(userId: string) {
+  const user = await User.findByIdAndDelete(userId);
+  if (!user) {
+    const error = new Error('Không tìm thấy tài khoản');
+    Object.assign(error, { statusCode: 404 });
+    throw error;
+  }
+  
+  void writeAuditLog({
+    action: 'DELETE',
+    category: 'user',
+    targetType: 'User',
+    targetId: userId,
+    details: `Xóa vĩnh viễn tài khoản: ${user.username}`,
+  });
+  
+  return user;
+}
+
 export async function resetManagedUserPassword(userId: string, password?: string) {
   if (!password) {
     const error = new Error('Thiếu mật khẩu mới');

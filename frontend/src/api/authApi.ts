@@ -40,3 +40,12 @@ export async function resetUserPassword(id: string, password: string) {
   const response = await apiClient.post<ManagedUser>(`/admin/users/${id}/reset-password`, { password });
   return response.data;
 }
+export async function updateUser(id: string, payload: Partial<CreateUserPayload> & { isActive?: boolean }) {
+  const response = await apiClient.patch<ManagedUser>(`/admin/users/${id}`, payload);
+  return response.data;
+}
+
+export async function deleteUser(id: string) {
+  const response = await apiClient.delete<ManagedUser>(`/admin/users/${id}`);
+  return response.data;
+}
