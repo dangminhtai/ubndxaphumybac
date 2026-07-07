@@ -45,9 +45,28 @@ Tiêu chí hoàn thành:
 Mô tả:
 - Tích hợp thư viện `react-hot-toast` để hiển thị popup thông báo góc màn hình.
 - Tích hợp file âm thanh `notification.mp3` để phát khi có thông báo mới.
-- Cải thiện logic fetch thông báo: So sánh ID thông báo mới nhất. Nếu có thông báo mới (chưa đọc), kích hoạt phát âm thanh và văng popup (toast).
+- Tích hợp HTML5 Web Notification API để đẩy thông báo thẳng ra màn hình Desktop (Action Center của Windows/macOS) ngay cả khi user đang thu nhỏ trình duyệt.
+- Cải thiện logic fetch thông báo: So sánh ID thông báo mới nhất. Nếu có thông báo mới (chưa đọc), kích hoạt phát âm thanh và văng popup (toast & desktop notification).
 - Click vào popup sẽ tự động điều hướng sang trang chi tiết thông báo `/notifications`.
 
 Tiêu chí hoàn thành:
 - App không lỗi build.
 - Có popup bật lên và có âm thanh khi có thông báo mới (hoặc logic đã được code chuẩn xác đón nhận dữ liệu mới).
+
+## REQ006 - Tăng thời hạn JWT Session lên 3 tháng
+
+Mô tả:
+- Sửa JWT expiration time từ 8 tiếng thành 90 ngày (`90d`).
+- Điều này giúp người dùng sử dụng nội bộ không phải đăng nhập lại liên tục, giữ cookie/token trên thiết bị lâu dài.
+
+Tiêu chí hoàn thành:
+- File `auth.service.ts` được cập nhật chính xác tham số `expiresIn`.
+
+## REQ007 - Sửa lỗi điều hướng "Tổng hợp báo cáo" trên di động
+
+Mô tả:
+- Khi truy cập route `/monthly-summary` từ menu mà không có `periodId`, giao diện không được phép ném lỗi "Không tìm thấy kỳ báo cáo" ngay lập tức.
+- Yêu cầu chờ trạng thái `loading` để call API lấy ID kỳ báo cáo hiện tại.
+
+Tiêu chí hoàn thành:
+- Bổ sung `if (loading) return <Loading/>` trước khi báo lỗi `periodId`.

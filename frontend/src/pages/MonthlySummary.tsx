@@ -311,6 +311,14 @@ export default function MonthlySummaryPage() {
     });
   };
 
+  if (loading) {
+    return (
+      <AppLayout title="Tổng hợp báo cáo tháng" subtitle="Đang tải dữ liệu...">
+        <div className="flex justify-center p-8 text-outline">Đang tải...</div>
+      </AppLayout>
+    );
+  }
+
   if (!periodId) {
     return (
       <AppLayout title="Tổng hợp báo cáo tháng" subtitle="Lỗi tham số">
