@@ -94,8 +94,8 @@ export default function AppLayout({ title, subtitle, children, actions, bottomBa
           setUnreadCount(res.unreadCount);
           if (res.notifications && res.notifications.length > 0) {
             const latest = res.notifications[0];
-            // Compare with the previous fetched latest notification
-            if (latestNotifIdRef.current && latestNotifIdRef.current !== latest._id && !latest.isRead) {
+            // If the latest notification is unread and it's a new ID (or initial load)
+            if (latestNotifIdRef.current !== latest._id && !latest.isRead) {
               // Play sound
               try {
                 const audio = new Audio('/notification.mp3');
