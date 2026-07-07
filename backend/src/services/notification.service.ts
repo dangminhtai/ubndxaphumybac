@@ -1,7 +1,6 @@
 import Notification, { INotification } from '../models/Notification';
 import GlobalNotification from '../models/GlobalNotification';
 import User from '../models/User';
-import WorkSchedule from '../models/WorkSchedule';
 
 export async function createNotification(payload: {
   recipientId: string;
@@ -109,6 +108,8 @@ export async function generateOnboardingNotifications(userId: string) {
     createdAt: { $gte: thirtyDaysAgo }
   });
 
+  if (globalNotifs.length === 0) return;
+
   const notifications = globalNotifs.map(gn => ({
     recipientId: userId,
     title: gn.title,
@@ -118,28 +119,5 @@ export async function generateOnboardingNotifications(userId: string) {
     createdAt: gn.createdAt,
   }));
 
-  // Fallback for WorkSchedules created before GlobalNotification was introduced
-  const recentSchedules = await WorkSchedule.find({
-    createdAt: { $gte: thirtyDaysAgo },
-    isDeleted: false,
-  });
-
-  for (const schedule of recentSchedules) {
-    const link = `/work-schedules/${schedule._id}`;
-    const exists = notifications.some(n => n.link === link);
-    if (!exists) {
-      notifications.push({
-        recipientId: userId,
-        title: 'Có lịch công tác mới',
-        message: `Lịch công tác "${schedule.title}" đã được tạo.`,
-        type: 'work_schedule',
-        link: link,
-        createdAt: schedule.createdAt,
-      });
-    }
-  }
-
-  if (notifications.length > 0) {
-    await Notification.insertMany(notifications);
-  }
+  await Notification.insertMany(notifications);
 }
