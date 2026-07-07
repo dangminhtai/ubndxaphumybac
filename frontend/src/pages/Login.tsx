@@ -131,7 +131,6 @@ export default function Login() {
         {/* Footer */}
         <div className="mt-stack-lg text-center font-body-md text-body-md text-on-surface-variant opacity-80">
           <p>@UBND Phù Mỹ Bắc</p>
-          <p className="text-xs mt-unit">Được phát triển để đảm bảo tính minh bạch và hiệu quả</p>
         </div>
       </div>
     </div>

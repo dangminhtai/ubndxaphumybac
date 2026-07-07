@@ -7,3 +7,13 @@ Mô tả:
 Tiêu chí hoàn thành:
 - Chỉnh sửa thành công `Login.tsx`.
 - Thêm cơ chế đồng hồ ở `Dashboard.tsx` và hiển thị đúng định dạng.
+
+## REQ002 - Cập nhật BP02: Tối ưu hiển thị và Responsive
+
+Mô tả:
+- Xóa dòng chữ "Được phát triển để đảm bảo tính minh bạch và hiệu quả" ở trang Đăng nhập.
+- Đảm bảo tất cả các trang đều responsive trên tất cả các thiết bị.
+
+Tiêu chí hoàn thành:
+- Text đã bị xóa ở footer của `Login.tsx`.
+- Source code đảm bảo sử dụng các Tailwind classes cho responsive layout (`md:`, `lg:`...) cho mọi thiết bị.
