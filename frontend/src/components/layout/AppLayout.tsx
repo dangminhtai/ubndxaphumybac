@@ -1,5 +1,6 @@
 import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import toast from 'react-hot-toast';
 import logo from '../../assets/logo.png';
 import {
   Activity,
@@ -79,6 +80,7 @@ export default function AppLayout({ title, subtitle, children, actions, bottomBa
 
   const [unreadCount, setUnreadCount] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const latestNotifIdRef = useRef<string | null>(null);
 
   // Close drawer on route change
   useEffect(() => {
@@ -88,14 +90,35 @@ export default function AppLayout({ title, subtitle, children, actions, bottomBa
   useEffect(() => {
     const fetchCount = () => {
       getNotifications(1)
-        .then((res) => setUnreadCount(res.unreadCount))
+        .then((res) => {
+          setUnreadCount(res.unreadCount);
+          if (res.notifications && res.notifications.length > 0) {
+            const latest = res.notifications[0];
+            // Compare with the previous fetched latest notification
+            if (latestNotifIdRef.current && latestNotifIdRef.current !== latest._id && !latest.isRead) {
+              // Play sound
+              try {
+                const audio = new Audio('/notification.mp3');
+                audio.play().catch(() => {});
+              } catch (e) {}
+              // Show toast
+              toast((t) => (
+                <div onClick={() => { toast.dismiss(t.id); navigate('/notifications'); }} className="cursor-pointer">
+                  <p className="font-bold text-[14px]">🔔 Có thông báo mới</p>
+                  <p className="text-sm mt-1">{latest.title}</p>
+                </div>
+              ), { duration: 6000, position: 'top-right', style: { border: '1px solid #dce9ff' } });
+            }
+            latestNotifIdRef.current = latest._id;
+          }
+        })
         .catch(() => {});
     };
     
     fetchCount();
     const interval = setInterval(fetchCount, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');

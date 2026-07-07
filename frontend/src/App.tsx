@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import EmployeeReport from './pages/EmployeeReport';
@@ -20,6 +21,7 @@ import WorkScheduleStats from './pages/WorkScheduleStats';
 function App() {
   return (
     <Router>
+      <Toaster position="top-right" />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />

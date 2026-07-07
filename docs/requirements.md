@@ -39,3 +39,15 @@ Mô tả:
 Tiêu chí hoàn thành:
 - `index.html` có đầy đủ các thẻ meta mới.
 - `logo.png` tồn tại ở đường dẫn gốc `/logo.png`.
+
+## REQ005 - Nâng cấp trải nghiệm Thông báo (Notification)
+
+Mô tả:
+- Tích hợp thư viện `react-hot-toast` để hiển thị popup thông báo góc màn hình.
+- Tích hợp file âm thanh `notification.mp3` để phát khi có thông báo mới.
+- Cải thiện logic fetch thông báo: So sánh ID thông báo mới nhất. Nếu có thông báo mới (chưa đọc), kích hoạt phát âm thanh và văng popup (toast).
+- Click vào popup sẽ tự động điều hướng sang trang chi tiết thông báo `/notifications`.
+
+Tiêu chí hoàn thành:
+- App không lỗi build.
+- Có popup bật lên và có âm thanh khi có thông báo mới (hoặc logic đã được code chuẩn xác đón nhận dữ liệu mới).
