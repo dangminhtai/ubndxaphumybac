@@ -45,7 +45,8 @@ Tiêu chí hoàn thành:
 Mô tả:
 - Tích hợp thư viện `react-hot-toast` để hiển thị popup thông báo góc màn hình.
 - Tích hợp file âm thanh `notification.mp3` để phát khi có thông báo mới.
-- Cải thiện logic fetch thông báo: So sánh ID thông báo mới nhất. Nếu có thông báo mới (chưa đọc), kích hoạt phát âm thanh và văng popup (toast).
+- Tích hợp HTML5 Web Notification API để đẩy thông báo thẳng ra màn hình Desktop (Action Center của Windows/macOS) ngay cả khi user đang thu nhỏ trình duyệt.
+- Cải thiện logic fetch thông báo: So sánh ID thông báo mới nhất. Nếu có thông báo mới (chưa đọc), kích hoạt phát âm thanh và văng popup (toast & desktop notification).
 - Click vào popup sẽ tự động điều hướng sang trang chi tiết thông báo `/notifications`.
 
 Tiêu chí hoàn thành:
