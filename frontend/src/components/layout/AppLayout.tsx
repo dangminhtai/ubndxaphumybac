@@ -1,5 +1,6 @@
 import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import logo from '../../assets/logo.png';
 import {
   Activity,
   Archive,
@@ -108,10 +109,10 @@ export default function AppLayout({ title, subtitle, children, actions, bottomBa
       <aside className="fixed left-0 top-0 z-50 hidden h-screen w-sidebar-width flex-col bg-primary text-on-primary md:flex">
         <div className="flex items-center gap-3 border-b border-white/10 p-container-padding">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15">
-            <Shield className="h-6 w-6" />
+            <img src={logo} alt="Logo" className="h-6 w-6 object-contain" />
           </div>
           <div>
-            <h1 className="font-headline-sm text-headline-sm font-bold">UBND Cấp Xã</h1>
+            <h1 className="font-headline-sm text-headline-sm font-bold">PHÒNG VĂN HÓA - XÃ HỘI</h1>
             <p className="text-xs text-white/70">Hệ thống quản lý báo cáo</p>
           </div>
         </div>
@@ -167,8 +168,8 @@ export default function AppLayout({ title, subtitle, children, actions, bottomBa
           >
             <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
               <div className="flex items-center gap-3">
-                <Shield className="h-6 w-6" />
-                <span className="font-bold">UBND Cấp Xã</span>
+                <img src={logo} alt="Logo" className="h-6 w-6 object-contain" />
+                <span className="font-bold">PHÒNG VĂN HÓA - XÃ HỘI</span>
               </div>
               <button onClick={() => setDrawerOpen(false)} className="rounded-full p-1 hover:bg-white/10">
                 <X className="h-5 w-5" />

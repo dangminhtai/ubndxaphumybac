@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Lock as LockIcon, EyeOff, Eye } from 'lucide-react';
 import { login } from '../api/authApi';
+import logo from '../assets/logo.png';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -47,7 +48,7 @@ export default function Login() {
             <img 
               className="w-14 h-14 object-contain mb-3 md:w-20 md:h-20 md:mb-stack-md" 
               alt="National Emblem" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEhm2fau82Ii0foaFdx-SjHvfINraH_03XWpDeiwu4J2CqNawLVjC4141WkgKoj_IrShqIDB-ih2as9s0xv8NC8Pjutk93N6REvZrD6aObknMiPnswLEFTsFRZ-7iu-UrxkOzEHpKt8wupxvFW2g9OUqB1Bx7zmwLUnvI04YpMHLfjBJUEMGdECqvWUUm-tRC-FAzdmiPk54tq3NsdLyBHXtauTnefXwby14y1jheOMEAJSsN9scPC7Yrl88Cg_NMz2GwsNcd_vFSg"
+              src={logo}
             />
             <h1 className="font-headline-sm text-base md:text-headline-sm text-primary text-center uppercase tracking-wide">
               HỆ THỐNG QUẢN LÝ
