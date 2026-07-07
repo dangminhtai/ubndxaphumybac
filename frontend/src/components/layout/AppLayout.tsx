@@ -12,7 +12,6 @@ import {
   LogOut,
   Menu,
   Search,
-  Shield,
   UserPen,
   Users,
   X,
@@ -107,13 +106,13 @@ export default function AppLayout({ title, subtitle, children, actions, bottomBa
     <div className="min-h-screen bg-background text-on-surface font-body-md">
       {/* ─── Desktop Sidebar (hidden on mobile) ─── */}
       <aside className="fixed left-0 top-0 z-50 hidden h-screen w-sidebar-width flex-col bg-primary text-on-primary md:flex">
-        <div className="flex items-center gap-3 border-b border-white/10 p-container-padding">
+        <div className="flex items-center gap-2 border-b border-white/10 p-4">
           <div className="flex shrink-0">
-            <img src={logo} alt="Logo" className="h-10 w-auto object-contain" />
+            <img src={logo} alt="Logo" className="h-8 w-auto object-contain" />
           </div>
-          <div>
-            <h1 className="font-headline-sm text-headline-sm font-bold">PHÒNG VĂN HÓA - XÃ HỘI</h1>
-            <p className="text-xs text-white/70">Hệ thống quản lý báo cáo</p>
+          <div className="min-w-0">
+            <h1 className="text-[15px] font-bold whitespace-nowrap truncate">PHÒNG VĂN HÓA - XÃ HỘI</h1>
+            <p className="text-xs text-white/70 whitespace-nowrap truncate">Hệ thống quản lý báo cáo</p>
           </div>
         </div>
 
@@ -166,10 +165,10 @@ export default function AppLayout({ title, subtitle, children, actions, bottomBa
             onClick={(e) => e.stopPropagation()}
             style={{ animation: 'slideIn .2s ease-out' }}
           >
-            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-              <div className="flex items-center gap-3">
-                <img src={logo} alt="Logo" className="h-8 w-auto object-contain" />
-                <span className="font-bold">PHÒNG VĂN HÓA - XÃ HỘI</span>
+            <div className="flex items-center justify-between border-b border-white/10 px-3 py-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <img src={logo} alt="Logo" className="h-7 w-auto shrink-0 object-contain" />
+                <span className="text-[14px] font-bold whitespace-nowrap truncate">PHÒNG VĂN HÓA - XÃ HỘI</span>
               </div>
               <button onClick={() => setDrawerOpen(false)} className="rounded-full p-1 hover:bg-white/10">
                 <X className="h-5 w-5" />
