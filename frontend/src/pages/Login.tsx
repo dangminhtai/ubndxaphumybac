@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Lock as LockIcon, EyeOff, Eye } from 'lucide-react';
 import { login } from '../api/authApi';
+import logo from '../assets/logo.png';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -45,15 +46,15 @@ export default function Login() {
           {/* Card Header */}
           <div className="p-5 pb-4 flex flex-col items-center border-b border-surface-container md:p-8 md:pb-6">
             <img 
-              className="w-14 h-14 object-contain mb-3 md:w-20 md:h-20 md:mb-stack-md" 
+              className="h-16 w-auto object-contain mb-3 md:h-24 md:mb-stack-md" 
               alt="National Emblem" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEhm2fau82Ii0foaFdx-SjHvfINraH_03XWpDeiwu4J2CqNawLVjC4141WkgKoj_IrShqIDB-ih2as9s0xv8NC8Pjutk93N6REvZrD6aObknMiPnswLEFTsFRZ-7iu-UrxkOzEHpKt8wupxvFW2g9OUqB1Bx7zmwLUnvI04YpMHLfjBJUEMGdECqvWUUm-tRC-FAzdmiPk54tq3NsdLyBHXtauTnefXwby14y1jheOMEAJSsN9scPC7Yrl88Cg_NMz2GwsNcd_vFSg"
+              src={logo}
             />
             <h1 className="font-headline-sm text-base md:text-headline-sm text-primary text-center uppercase tracking-wide">
-              HỆ THỐNG QUẢN LÝ BÁO CÁO ĐIỆN TỬ
+              HỆ THỐNG QUẢN LÝ
             </h1>
             <p className="font-body-md text-body-md text-on-surface-variant mt-unit text-center">
-              UBND Cấp Xã
+              Phòng Văn hóa - Xã hội xã Phù Mỹ Bắc
             </p>
           </div>
           
@@ -126,21 +127,11 @@ export default function Login() {
             </form>
           </div>
           
-          {/* Technical/Security Notice */}
-          <div className="bg-surface-container-low px-5 py-3 border-t border-surface-container text-center md:px-8 md:py-4">
-            <p className="font-body-md text-body-md text-on-surface-variant flex items-center justify-center gap-2">
-              Hệ thống yêu cầu đăng nhập bằng tài khoản nội bộ.
-            </p>
-            <p className="font-body-md text-body-md text-on-surface-variant mt-unit">
-              Tài khoản do admin cơ quan cấp.
-            </p>
-          </div>
         </div>
         
         {/* Footer */}
         <div className="mt-stack-lg text-center font-body-md text-body-md text-on-surface-variant opacity-80">
-          <p>Phiên bản 2.0.1 - © 2024 UBND Cấp Xã</p>
-          <p className="text-xs mt-unit">Được phát triển để đảm bảo tính minh bạch và hiệu quả</p>
+          <p>@UBND Phù Mỹ Bắc</p>
         </div>
       </div>
     </div>
