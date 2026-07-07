@@ -102,15 +102,7 @@ function escapeRegex(value: string) {
 }
 
 function visibilityFilter(user: AuthUser) {
-  if (isViewAll(user)) return {};
-
-  const userId = new mongoose.Types.ObjectId(user.id);
-  return {
-    $or: [
-      { createdBy: userId },
-      { executorIds: userId },
-    ],
-  };
+  return {};
 }
 
 function buildQueryFilter(query: WorkScheduleQuery, user: AuthUser) {
