@@ -46,7 +46,7 @@ export default function Login() {
           {/* Card Header */}
           <div className="p-5 pb-4 flex flex-col items-center border-b border-surface-container md:p-8 md:pb-6">
             <img 
-              className="w-14 h-14 object-contain mb-3 md:w-20 md:h-20 md:mb-stack-md" 
+              className="h-16 w-auto object-contain mb-3 md:h-24 md:mb-stack-md" 
               alt="National Emblem" 
               src={logo}
             />

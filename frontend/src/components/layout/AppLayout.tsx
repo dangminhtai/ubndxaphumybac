@@ -108,8 +108,8 @@ export default function AppLayout({ title, subtitle, children, actions, bottomBa
       {/* ─── Desktop Sidebar (hidden on mobile) ─── */}
       <aside className="fixed left-0 top-0 z-50 hidden h-screen w-sidebar-width flex-col bg-primary text-on-primary md:flex">
         <div className="flex items-center gap-3 border-b border-white/10 p-container-padding">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15">
-            <img src={logo} alt="Logo" className="h-6 w-6 object-contain" />
+          <div className="flex shrink-0">
+            <img src={logo} alt="Logo" className="h-10 w-auto object-contain" />
           </div>
           <div>
             <h1 className="font-headline-sm text-headline-sm font-bold">PHÒNG VĂN HÓA - XÃ HỘI</h1>
@@ -168,7 +168,7 @@ export default function AppLayout({ title, subtitle, children, actions, bottomBa
           >
             <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
               <div className="flex items-center gap-3">
-                <img src={logo} alt="Logo" className="h-6 w-6 object-contain" />
+                <img src={logo} alt="Logo" className="h-8 w-auto object-contain" />
                 <span className="font-bold">PHÒNG VĂN HÓA - XÃ HỘI</span>
               </div>
               <button onClick={() => setDrawerOpen(false)} className="rounded-full p-1 hover:bg-white/10">

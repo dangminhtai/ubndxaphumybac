@@ -14,8 +14,10 @@ XX giờ YY phút ZZ giây, Thứ A ngày BB tháng CC năm DDDD
 BP02
 "Được phát triển để đảm bảo tính minh bạch và hiệu quả" xóa đi
 
-Tất cả BP yêu cầu tính responsive cho tất cả thiết bị
+
 
 BP03
 Thay logo thành logo được cấp ![alt text](../image.png) nên đưa vào thư mục assets riêng cho chuyên nghiệp
 sửa "UBND cấp xã" thành "PHÒNG VĂN HÓA - XÃ HỘI"
+
+Tất cả BP yêu cầu tính responsive cho tất cả thiết bị
