@@ -1,11 +1,20 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 import path from 'path';
 
-const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_SECRET_KEY || '';
+let _supabase: SupabaseClient | null = null;
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+function getSupabase(): SupabaseClient {
+  if (!_supabase) {
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_SECRET_KEY;
+    if (!url || !key) {
+      throw new Error('SUPABASE_URL và SUPABASE_SECRET_KEY phải được cấu hình trong .env');
+    }
+    _supabase = createClient(url, key);
+  }
+  return _supabase;
+}
 
 export class UploadService {
   /**
@@ -17,7 +26,7 @@ export class UploadService {
     const year = new Date().getFullYear();
     const filePath = `work-schedules/${year}/${safeName}${fileExt}`;
 
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await getSupabase().storage
       .from('documents')
       .upload(filePath, fileBuffer, {
         contentType: mimeType,
@@ -35,7 +44,7 @@ export class UploadService {
    * Get a short-lived signed URL for downloading/viewing a file
    */
   static async getSignedUrl(filePath: string): Promise<string> {
-    const { data, error } = await supabase.storage
+    const { data, error } = await getSupabase().storage
       .from('documents')
       .createSignedUrl(filePath, 5 * 60); // 5 minutes expiry
 
