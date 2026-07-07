@@ -28,3 +28,14 @@ Mô tả:
 Tiêu chí hoàn thành:
 - Logo hiển thị đúng từ file ảnh mới.
 - Tiêu đề header hiển thị đúng chữ "PHÒNG VĂN HÓA - XÃ HỘI".
+
+## REQ004 - Bổ sung SEO và Open Graph Meta Tags
+
+Mô tả:
+- Thay đổi thông tin thẻ `<title>` và thêm `<meta description>` trong file `index.html`.
+- Bổ sung các thẻ Open Graph (`og:title`, `og:description`, `og:image`, `og:url`, `og:type`) để hiển thị preview link đẹp và minh bạch khi chia sẻ qua Zalo, Messenger.
+- Copy file logo vào thư mục `public` để làm icon tab và hình ảnh thumbnail khi chia sẻ link.
+
+Tiêu chí hoàn thành:
+- `index.html` có đầy đủ các thẻ meta mới.
+- `logo.png` tồn tại ở đường dẫn gốc `/logo.png`.
