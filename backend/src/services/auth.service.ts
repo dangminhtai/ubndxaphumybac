@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User';
 import { env } from '../config/env';
 import { writeAuditLog } from './audit.service';
+import { generateOnboardingNotifications } from './notification.service';
 
 const SALT_ROUNDS = 10;
 
@@ -100,6 +101,8 @@ export async function createUser(input: RegisterInput, options: { mustChangePass
     targetId: String(user._id),
     details: `Tạo tài khoản: ${username} (${normalizeRole(role)})`,
   });
+
+  void generateOnboardingNotifications(String(user._id));
 
   return buildAuthResponse(user);
 }

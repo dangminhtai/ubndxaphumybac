@@ -1,4 +1,5 @@
 import Notification, { INotification } from '../models/Notification';
+import GlobalNotification from '../models/GlobalNotification';
 import User from '../models/User';
 
 export async function createNotification(payload: {
@@ -35,6 +36,16 @@ export async function notifyAllUsers(payload: {
   }));
 
   await Notification.insertMany(notifications);
+
+  // Save to GlobalNotification for future users
+  if (!payload.excludeRoles || payload.excludeRoles.length === 0) {
+    await GlobalNotification.create({
+      title: payload.title,
+      message: payload.message,
+      type: payload.type || 'system',
+      link: payload.link,
+    });
+  }
 }
 export async function notifyUsersByRole(payload: {
   roles: string[];
@@ -87,4 +98,27 @@ export async function markAllAsRead(userId: string) {
     { isRead: true }
   );
   return { success: true };
+}
+
+export async function generateOnboardingNotifications(userId: string) {
+  // Fetch global notifications from the last 30 days
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const globalNotifs = await GlobalNotification.find({
+    createdAt: { $gte: thirtyDaysAgo }
+  });
+
+  if (globalNotifs.length === 0) return;
+
+  const notifications = globalNotifs.map(gn => ({
+    recipientId: userId,
+    title: gn.title,
+    message: gn.message,
+    type: gn.type,
+    link: gn.link,
+    createdAt: gn.createdAt,
+  }));
+
+  await Notification.insertMany(notifications);
 }
