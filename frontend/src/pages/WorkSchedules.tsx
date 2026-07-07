@@ -13,9 +13,12 @@ import {
   Eye,
   Building,
   Contact,
+  Edit,
+  Trash2,
 } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
-import { getWorkSchedules } from '../api/workScheduleApi';
+import Dialog from '../components/ui/Dialog';
+import { deleteWorkSchedule, getWorkSchedules } from '../api/workScheduleApi';
 import type { WorkSchedule, WorkScheduleListResponse, WorkScheduleStatus, WorkScheduleUser } from '../types/workSchedule';
 import type { User as CurrentUser } from '../types/user';
 
@@ -117,6 +120,8 @@ export default function WorkSchedules() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [field, setField] = useState('');
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState('');
 
   const fields = useMemo(() => {
     const values = data?.data.map((item) => item.field) ?? [];
@@ -151,6 +156,19 @@ export default function WorkSchedules() {
     void fetchSchedules();
   };
 
+  const handleDelete = async () => {
+    if (!deletingId) return;
+    try {
+      await deleteWorkSchedule(deletingId);
+      setIsDeleteDialogOpen(false);
+      setDeletingId('');
+      void fetchSchedules();
+    } catch (err) {
+      console.error(err);
+      alert('Không xóa được lịch công tác');
+    }
+  };
+
   const groupedData = useMemo(() => {
     if (!data?.data) return [];
     return groupSchedules(data.data);
@@ -172,6 +190,19 @@ export default function WorkSchedules() {
         ) : null
       }
     >
+      <Dialog
+        isOpen={isDeleteDialogOpen}
+        type="confirm"
+        title="Xóa lịch công tác"
+        message="Bạn có chắc chắn muốn xóa lịch công tác này không?"
+        confirmText="Xóa"
+        isDanger={true}
+        onConfirm={() => void handleDelete()}
+        onCancel={() => {
+          setIsDeleteDialogOpen(false);
+          setDeletingId('');
+        }}
+      />
       <section className="mb-5 rounded-xl border border-outline-variant bg-white p-3 shadow-level-1 md:p-4">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_220px_220px_auto]">
           <div className="relative">
@@ -236,6 +267,7 @@ export default function WorkSchedules() {
                     <th className="border border-[#144272] px-4 py-3 font-semibold uppercase w-[120px] text-center">CQCB NỘI DUNG</th>
                     <th className="border border-[#144272] px-4 py-3 font-semibold uppercase w-[180px]">THÀNH PHẦN</th>
                     <th className="border border-[#144272] px-4 py-3 font-semibold uppercase w-[120px] text-center">LDVP/CV THEO DÕI</th>
+                    {canManage && <th className="border border-[#144272] px-4 py-3 font-semibold uppercase w-[100px] text-center">THAO TÁC</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-outline-variant">
@@ -303,6 +335,26 @@ export default function WorkSchedules() {
                             <td className="border border-outline-variant px-4 py-3 align-top text-center text-on-surface">
                               {event.monitoringOfficer}
                             </td>
+                            {canManage && (
+                              <td className="border border-outline-variant px-4 py-3 align-top text-center">
+                                <div className="flex items-center justify-center gap-2">
+                                  <Link to={`/work-schedules/${event._id}/edit`} className="text-primary hover:text-primary/80" title="Sửa">
+                                    <Edit className="h-4 w-4" />
+                                  </Link>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setDeletingId(event._id);
+                                      setIsDeleteDialogOpen(true);
+                                    }}
+                                    className="text-error hover:text-error/80"
+                                    title="Xóa"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            )}
                           </tr>
                         );
                       });
@@ -340,6 +392,23 @@ export default function WorkSchedules() {
                                     <a href={event.attachmentUrl} target="_blank" rel="noreferrer" className="flex-shrink-0 text-primary p-1 bg-primary/10 rounded-full">
                                       <Paperclip className="h-4 w-4" />
                                     </a>
+                                  )}
+                                  {canManage && (
+                                    <div className="flex flex-shrink-0 items-center gap-1">
+                                      <Link to={`/work-schedules/${event._id}/edit`} className="p-1 text-primary hover:bg-surface-container-low rounded-md">
+                                        <Edit className="h-4 w-4" />
+                                      </Link>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setDeletingId(event._id);
+                                          setIsDeleteDialogOpen(true);
+                                        }}
+                                        className="p-1 text-error hover:bg-error-container rounded-md"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </button>
+                                    </div>
                                   )}
                                 </div>
                                 {event.content && <p className="mt-2 text-sm text-on-surface-variant line-clamp-2">{event.content}</p>}

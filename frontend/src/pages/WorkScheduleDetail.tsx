@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   CalendarDays,
@@ -10,9 +10,11 @@ import {
   Save,
   User,
   Users,
+  Trash2,
 } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
-import { getWorkSchedule, updateWorkScheduleStatus } from '../api/workScheduleApi';
+import Dialog from '../components/ui/Dialog';
+import { deleteWorkSchedule, getWorkSchedule, updateWorkScheduleStatus } from '../api/workScheduleApi';
 import type { User as CurrentUser } from '../types/user';
 import type { WorkSchedule, WorkScheduleStatus, WorkScheduleUser } from '../types/workSchedule';
 
@@ -82,6 +84,8 @@ export default function WorkScheduleDetail() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const navigate = useNavigate();
 
   const executorIds = useMemo(() => schedule?.executorIds.map(getUserId) ?? [], [schedule]);
   const isExecutor = executorIds.includes(user.id);
@@ -127,6 +131,17 @@ export default function WorkScheduleDetail() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!id) return;
+    try {
+      await deleteWorkSchedule(id);
+      navigate('/work-schedules');
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Không xóa được lịch công tác');
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
   const executorNames = schedule?.executorIds.map(getUserName).join(', ');
   const timeRange = schedule ? `${schedule.startTime}${schedule.endTime ? ` - ${schedule.endTime}` : ''}` : '';
 
@@ -144,17 +159,37 @@ export default function WorkScheduleDetail() {
             Quay lại
           </Link>
           {canManage && schedule && (
-            <Link
-              to={`/work-schedules/${schedule._id}/edit`}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-level-1 transition-colors hover:bg-primary/90"
-            >
-              <Edit className="h-4 w-4" />
-              Sửa
-            </Link>
+            <>
+              <Link
+                to={`/work-schedules/${schedule._id}/edit`}
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-level-1 transition-colors hover:bg-primary/90"
+              >
+                <Edit className="h-4 w-4" />
+                Sửa
+              </Link>
+              <button
+                type="button"
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="inline-flex items-center gap-2 rounded-lg border border-error bg-white px-4 py-2 text-sm font-semibold text-error shadow-level-1 transition-colors hover:bg-error-container"
+              >
+                <Trash2 className="h-4 w-4" />
+                Xóa
+              </button>
+            </>
           )}
         </div>
       }
     >
+      <Dialog
+        isOpen={isDeleteDialogOpen}
+        type="confirm"
+        title="Xóa lịch công tác"
+        message="Bạn có chắc chắn muốn xóa lịch công tác này không? Thao tác này không thể hoàn tác."
+        confirmText="Xóa"
+        isDanger={true}
+        onConfirm={() => void handleDelete()}
+        onCancel={() => setIsDeleteDialogOpen(false)}
+      />
       {error && <div className="mb-4 rounded-lg border border-error-container bg-error-container px-4 py-3 text-sm text-error">{error}</div>}
       {message && <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div>}
 
