@@ -12,7 +12,6 @@ import {
   LogOut,
   Menu,
   Search,
-  Shield,
   UserPen,
   Users,
   X,
