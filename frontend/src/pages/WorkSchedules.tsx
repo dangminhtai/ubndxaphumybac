@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
 import Dialog from '../components/ui/Dialog';
+import WorkScheduleViewModal from '../components/work-schedule/WorkScheduleViewModal';
 import { deleteWorkSchedule, getWorkSchedules } from '../api/workScheduleApi';
 import type { WorkSchedule, WorkScheduleListResponse, WorkScheduleStatus } from '../types/workSchedule';
 import type { User as CurrentUser } from '../types/user';
@@ -117,6 +118,7 @@ export default function WorkSchedules() {
   const [field, setField] = useState('');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState('');
+  const [viewingSchedule, setViewingSchedule] = useState<WorkSchedule | null>(null);
 
   const fields = useMemo(() => {
     const values = data?.data.map((item) => item.field) ?? [];
@@ -129,7 +131,7 @@ export default function WorkSchedules() {
     try {
       const result = await getWorkSchedules({
         page,
-        limit: 50, // Tăng limit lên 50 để hiển thị được nhiều lịch hơn trong tuần
+        limit: 50,
         search: search.trim() || undefined,
         status: status ? (status as WorkScheduleStatus) : undefined,
         field: field || undefined,
@@ -198,6 +200,12 @@ export default function WorkSchedules() {
           setDeletingId('');
         }}
       />
+      <WorkScheduleViewModal 
+        isOpen={!!viewingSchedule}
+        schedule={viewingSchedule}
+        onClose={() => setViewingSchedule(null)}
+        onStatusChanged={fetchSchedules}
+      />
       <section className="mb-5 rounded-xl border border-outline-variant bg-white p-3 shadow-level-1 md:p-4">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_220px_220px_auto]">
           <div className="relative">
@@ -249,7 +257,6 @@ export default function WorkSchedules() {
           </div>
         ) : groupedData.length > 0 ? (
           <>
-            {/* Desktop View (Table) */}
             <div className="hidden overflow-x-auto rounded-xl border border-outline-variant bg-white shadow-level-1 lg:block">
               <table className="w-full min-w-[1000px] border-collapse text-left text-sm">
                 <thead>
@@ -287,9 +294,13 @@ export default function WorkSchedules() {
                           return (
                             <div className="flex flex-col gap-1">
                               <div className="flex items-start gap-1">
-                                <Link to={`/work-schedules/${event._id}`} className="font-semibold text-on-surface hover:text-primary hover:underline">
+                                <button
+                                  type="button"
+                                  onClick={() => setViewingSchedule(event)}
+                                  className="font-semibold text-on-surface hover:text-primary hover:underline text-left"
+                                >
                                   {event.startTime}. {event.title}
-                                </Link>
+                                </button>
                                 {renderAttachment()}
                               </div>
                               {event.content && <p className="text-xs text-on-surface-variant line-clamp-2">{event.content}</p>}
@@ -378,9 +389,13 @@ export default function WorkSchedules() {
                             return (
                               <div key={event._id} className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1">
                                 <div className="flex items-start justify-between gap-2">
-                                  <Link to={`/work-schedules/${event._id}`} className="font-bold text-on-surface hover:text-primary">
+                                  <button
+                                    type="button"
+                                    onClick={() => setViewingSchedule(event)}
+                                    className="font-bold text-on-surface hover:text-primary text-left bg-transparent border-none p-0 cursor-pointer"
+                                  >
                                     <span className="text-primary">{event.startTime}</span>. {event.title}
-                                  </Link>
+                                  </button>
                                   {event.attachmentUrl && (
                                     <a href={event.attachmentUrl} target="_blank" rel="noreferrer" className="flex-shrink-0 text-primary p-1 bg-primary/10 rounded-full">
                                       <Paperclip className="h-4 w-4" />

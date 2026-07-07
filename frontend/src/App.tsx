@@ -15,7 +15,6 @@ import Archive from './pages/Archive';
 import Notifications from './pages/Notifications';
 import WorkSchedules from './pages/WorkSchedules';
 import WorkScheduleForm from './pages/WorkScheduleForm';
-import WorkScheduleDetail from './pages/WorkScheduleDetail';
 import WorkScheduleStats from './pages/WorkScheduleStats';
 
 function App() {
@@ -40,7 +39,6 @@ function App() {
         <Route path="/work-schedules" element={<ProtectedRoute><WorkSchedules /></ProtectedRoute>} />
         <Route path="/work-schedules/new" element={<ProtectedRoute roles={['admin', 'department_lead']}><WorkScheduleForm /></ProtectedRoute>} />
         <Route path="/work-schedules/stats" element={<ProtectedRoute roles={['admin', 'department_lead']}><WorkScheduleStats /></ProtectedRoute>} />
-        <Route path="/work-schedules/:id" element={<ProtectedRoute><WorkScheduleDetail /></ProtectedRoute>} />
         <Route path="/work-schedules/:id/edit" element={<ProtectedRoute roles={['admin', 'department_lead']}><WorkScheduleForm /></ProtectedRoute>} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
