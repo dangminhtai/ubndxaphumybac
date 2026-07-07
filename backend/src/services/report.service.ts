@@ -51,9 +51,8 @@ export function listReportsForUser(user: AuthUser) {
 }
 
 function resolveWeeklyTemplatePath() {
-  const rootDir = path.resolve(process.cwd(), '..', '..');
-  const exactName = 'Báo cáo tuần 04 tháng 6, nhiệm vụ tuần 05 tháng 6 năm 2026 (CCHC-CĐS).docx';
-  return path.join(rootDir, exactName);
+  const rootDir = process.cwd();
+  return path.join(rootDir, 'src', 'templates', 'weekly_template.docx');
 }
 
 function validateWeeklyReportInput(input: WeeklyReportInput) {

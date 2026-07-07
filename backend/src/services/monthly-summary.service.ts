@@ -1,4 +1,6 @@
 import path from 'path';
+import os from 'os';
+import fs from 'fs';
 import { spawn } from 'child_process';
 import { MonthlySummary } from '../models/MonthlySummary';
 import Report, { IReport } from '../models/Report';
@@ -168,10 +170,16 @@ export async function exportMonthlySummaryDocx(periodId: string) {
     department: requireSummaryValue(author?.department, 'Bản tổng hợp thiếu đơn vị người tạo'),
   };
 
-  const templatePath = path.resolve(__dirname, '../../../../template_docx/Báo cáo tháng 6 và phương hướng, nhiệm vụ tháng 7.docx');
+  const templatePath = path.join(process.cwd(), 'src', 'templates', 'monthly_template.docx');
   const tempId = Math.random().toString(36).slice(2);
-  const outputPath = path.resolve(__dirname, `../../../../tmp/summary_${tempId}.docx`);
-  const scriptPath = path.resolve(__dirname, '../scripts/generate_monthly_summary_docx.py');
+  const outputPath = path.join(os.tmpdir(), `summary_${tempId}.docx`);
+  const scriptPath = path.join(process.cwd(), 'src', 'scripts', 'generate_monthly_summary_docx.py');
+  
+  if (!fs.existsSync(templatePath)) {
+    const error = new Error('Không tìm thấy file mẫu DOCX');
+    Object.assign(error, { statusCode: 500 });
+    throw error;
+  }
 
   return new Promise<string>((resolve, reject) => {
     const py = spawn('python', [scriptPath, templatePath, outputPath]);
