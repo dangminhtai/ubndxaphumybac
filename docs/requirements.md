@@ -83,3 +83,14 @@ Tiêu chí hoàn thành:
 - Bảng hiển thị chính xác theo yêu cầu trên Desktop, không bị vỡ bố cục.
 - Danh sách thẻ Card hiển thị đúng theo Ngày -> Buổi trên màn hình Mobile.
 - Có thể thêm/sửa/lưu thành công các trường dữ liệu mới.
+
+## REQ009 - Ẩn phần Người thực hiện ở form tạo Lịch Công Tác
+
+Mô tả:
+- Bỏ ô chọn "Người thực hiện" trong giao diện tạo / sửa lịch công tác.
+- Logic hệ thống cập nhật: mọi user đều có quyền xem mọi lịch công tác và nhận được thông báo khi có lịch công tác mới/cập nhật, không còn phân biệt ai là "người thực hiện".
+
+Tiêu chí hoàn thành:
+- Ẩn/xóa trường `executorIds` trên form `WorkScheduleForm.tsx`.
+- Cập nhật logic notification trong backend: gửi thông báo đến tất cả user khi lịch công tác được tạo/cập nhật (dùng `notifyAllUsers`).
+- Bỏ kiểm tra quyền `executor` ở phần chi tiết lịch và update status. Mọi người đều xem được chi tiết lịch, nhưng chỉ có role quản lý mới cập nhật được trạng thái.
