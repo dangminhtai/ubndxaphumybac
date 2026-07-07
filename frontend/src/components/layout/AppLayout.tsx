@@ -41,7 +41,7 @@ const NAV_ITEMS = [
   { to: '/work-schedules', label: 'Lịch công tác', icon: CalendarDays },
   { to: '/work-schedules/stats', label: 'Thống kê lịch', icon: BarChart3, roles: ['admin', 'department_lead'] },
   { to: '/admin/logs', label: 'Nhật ký hệ thống', icon: Activity, roles: ['admin', 'viewer'] },
-  { to: '/archive', label: 'Kho lưu trữ', icon: Archive },
+  { to: '/archive', label: 'Kho lưu trữ', icon: Archive, roles: ['admin', 'viewer', 'department_lead', 'office_clerk'] },
   { to: '/notifications', label: 'Thông báo', icon: Bell },
 ];
 

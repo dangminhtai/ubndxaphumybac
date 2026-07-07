@@ -35,7 +35,7 @@ function App() {
         <Route path="/admin/users" element={<ProtectedRoute roles={['admin']}><AdminUsers /></ProtectedRoute>} />
         <Route path="/admin/periods" element={<ProtectedRoute roles={['admin']}><AdminPeriods /></ProtectedRoute>} />
         <Route path="/admin/logs" element={<ProtectedRoute roles={['admin', 'viewer']}><AdminLogs /></ProtectedRoute>} />
-        <Route path="/archive" element={<ProtectedRoute><Archive /></ProtectedRoute>} />
+        <Route path="/archive" element={<ProtectedRoute roles={['admin', 'viewer', 'department_lead', 'office_clerk']}><Archive /></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
         <Route path="/work-schedules" element={<ProtectedRoute><WorkSchedules /></ProtectedRoute>} />
         <Route path="/work-schedules/new" element={<ProtectedRoute roles={['admin', 'department_lead']}><WorkScheduleForm /></ProtectedRoute>} />
