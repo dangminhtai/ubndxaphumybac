@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  CalendarDays,
   ChevronLeft,
   ChevronRight,
   Filter,
@@ -11,14 +10,13 @@ import {
   Paperclip,
   User,
   MapPin,
-  Clock,
   Eye,
   Building,
   Contact,
 } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
 import { getWorkSchedules } from '../api/workScheduleApi';
-import type { WorkSchedule, WorkScheduleListResponse, WorkSchedulePriority, WorkScheduleStatus, WorkScheduleUser } from '../types/workSchedule';
+import type { WorkSchedule, WorkScheduleListResponse, WorkScheduleStatus, WorkScheduleUser } from '../types/workSchedule';
 import type { User as CurrentUser } from '../types/user';
 
 const STATUS_LABELS: Record<WorkScheduleStatus, string> = {
