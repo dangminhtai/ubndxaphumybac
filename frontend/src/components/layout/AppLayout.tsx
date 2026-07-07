@@ -82,6 +82,13 @@ export default function AppLayout({ title, subtitle, children, actions, bottomBa
   const [drawerOpen, setDrawerOpen] = useState(false);
   const latestNotifIdRef = useRef<string | null>(null);
 
+  // Request system notification permission
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
   // Close drawer on route change
   useEffect(() => {
     setDrawerOpen(false);
@@ -101,6 +108,22 @@ export default function AppLayout({ title, subtitle, children, actions, bottomBa
                 const audio = new Audio('/notification.mp3');
                 audio.play().catch(() => {});
               } catch (e) {}
+
+              // Show System Desktop Notification
+              if ('Notification' in window && Notification.permission === 'granted') {
+                try {
+                  const notification = new Notification('🔔 Có thông báo mới', {
+                    body: latest.title,
+                    icon: '/logo.png'
+                  });
+                  notification.onclick = function() {
+                    window.focus();
+                    navigate('/notifications');
+                    notification.close();
+                  };
+                } catch (e) {}
+              }
+
               // Show toast
               toast((t) => (
                 <div onClick={() => { toast.dismiss(t.id); navigate('/notifications'); }} className="cursor-pointer">

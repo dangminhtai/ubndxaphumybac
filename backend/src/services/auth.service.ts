@@ -38,7 +38,7 @@ function buildAuthResponse(user: {
   const token = jwt.sign(
     { id: user._id, username: user.username, role: user.role },
     env.jwtSecret,
-    { expiresIn: '8h' }
+    { expiresIn: '90d' }
   );
 
   return {
