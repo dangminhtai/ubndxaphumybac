@@ -22,6 +22,9 @@ export interface WorkSchedule {
   chairPerson?: string;
   executorIds: Array<string | WorkScheduleUser>;
   participantText?: string;
+  preparingAgency?: string;
+  monitoringOfficer?: string;
+  attachmentUrl?: string;
   content?: string;
   notes?: string;
   cancelReason?: string;
@@ -44,6 +47,9 @@ export interface WorkSchedulePayload {
   chairPerson?: string;
   executorIds?: string[];
   participantText?: string;
+  preparingAgency?: string;
+  monitoringOfficer?: string;
+  attachmentUrl?: string;
   content?: string;
   notes?: string;
   cancelReason?: string;
