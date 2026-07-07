@@ -32,7 +32,28 @@ export default function Dashboard() {
   const [reports, setReports] = useState<Report[]>([]);
   const [overview, setOverview] = useState<DashboardOverview | null>(null);
   const [progress, setProgress] = useState<SubmissionProgress[]>([]);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const user = readUser();
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (date: Date) => {
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const seconds = date.getSeconds().toString().padStart(2, '0');
+    
+    const days = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+    const dayName = days[date.getDay()];
+    
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+
+    return `${hours} giờ ${minutes} phút ${seconds} giây, ${dayName} ngày ${day} tháng ${month} năm ${year}`;
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -113,7 +134,7 @@ export default function Dashboard() {
   return (
     <AppLayout
       title={`Xin chào, ${user.fullName}`}
-      subtitle="Chúc bạn một ngày làm việc hiệu quả."
+      subtitle={formatTime(currentTime)}
     >
       <div className="grid grid-cols-12 gap-gutter">
         <section className="col-span-12 lg:col-span-8">
