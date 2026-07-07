@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -16,7 +16,7 @@ import AppLayout from '../components/layout/AppLayout';
 import Dialog from '../components/ui/Dialog';
 import { deleteWorkSchedule, getWorkSchedule, updateWorkScheduleStatus } from '../api/workScheduleApi';
 import type { User as CurrentUser } from '../types/user';
-import type { WorkSchedule, WorkScheduleStatus, WorkScheduleUser } from '../types/workSchedule';
+import type { WorkSchedule, WorkScheduleStatus } from '../types/workSchedule';
 
 const STATUS_LABELS: Record<WorkScheduleStatus, string> = {
   not_started: 'Chưa thực hiện',
@@ -52,13 +52,7 @@ function formatDate(iso: string) {
   });
 }
 
-function getUserId(value: string | WorkScheduleUser) {
-  return typeof value === 'string' ? value : value._id;
-}
 
-function getUserName(value: string | WorkScheduleUser) {
-  return typeof value === 'string' ? value : value.fullName;
-}
 
 function InfoItem({ icon: Icon, label, value }: { icon: typeof CalendarDays; label: string; value?: string }) {
   if (!value) return null;
@@ -87,9 +81,7 @@ export default function WorkScheduleDetail() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const navigate = useNavigate();
 
-  const executorIds = useMemo(() => schedule?.executorIds.map(getUserId) ?? [], [schedule]);
-  const isExecutor = executorIds.includes(user.id);
-  const canChangeStatus = canManage || isExecutor;
+  const canChangeStatus = canManage;
 
   const loadSchedule = async () => {
     if (!id) return;
@@ -142,7 +134,6 @@ export default function WorkScheduleDetail() {
     }
   };
 
-  const executorNames = schedule?.executorIds.map(getUserName).join(', ');
   const timeRange = schedule ? `${schedule.startTime}${schedule.endTime ? ` - ${schedule.endTime}` : ''}` : '';
 
   return (
@@ -238,7 +229,6 @@ export default function WorkScheduleDetail() {
                 <InfoItem icon={Clock} label="Thời gian" value={timeRange} />
                 <InfoItem icon={MapPin} label="Địa điểm" value={schedule.location} />
                 <InfoItem icon={User} label="Người chủ trì" value={schedule.chairPerson} />
-                <InfoItem icon={Users} label="Người thực hiện" value={executorNames} />
                 <InfoItem icon={Users} label="Thành phần" value={schedule.participantText} />
               </div>
             </section>

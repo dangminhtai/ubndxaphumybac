@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Loader2, Save } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
 import { createWorkSchedule, getWorkSchedule, updateWorkSchedule } from '../api/workScheduleApi';
-import { getUsers } from '../api/authApi';
-import type { ManagedUser, User } from '../types/user';
+import type { User } from '../types/user';
 import type { WorkSchedulePayload, WorkSchedulePriority, WorkScheduleStatus, WorkScheduleUser } from '../types/workSchedule';
 
 const FIELDS = [
@@ -83,13 +82,10 @@ export default function WorkScheduleForm() {
   const isEdit = Boolean(id);
   const navigate = useNavigate();
   const [form, setForm] = useState<WorkSchedulePayload>(initialForm);
-  const [users, setUsers] = useState<ManagedUser[]>([]);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-
-  const activeUsers = useMemo(() => users.filter((item) => item.isActive !== false), [users]);
 
   useEffect(() => {
     if (!canManage) {
@@ -102,10 +98,7 @@ export default function WorkScheduleForm() {
       setLoading(true);
       setError('');
       try {
-        const userPromise = user.role === 'admin' ? getUsers().catch(() => []) : Promise.resolve([]);
-        const schedulePromise = id ? getWorkSchedule(id) : Promise.resolve(null);
-        const [userData, schedule] = await Promise.all([userPromise, schedulePromise]);
-        setUsers(userData);
+        const schedule = id ? await getWorkSchedule(id) : null;
 
         if (schedule) {
           setForm({
@@ -140,16 +133,6 @@ export default function WorkScheduleForm() {
 
   const updateField = (fieldName: keyof WorkSchedulePayload, value: string | string[]) => {
     setForm((current) => ({ ...current, [fieldName]: value }));
-  };
-
-  const toggleExecutor = (executorId: string) => {
-    setForm((current) => {
-      const currentIds = current.executorIds ?? [];
-      const nextIds = currentIds.includes(executorId)
-        ? currentIds.filter((item) => item !== executorId)
-        : [...currentIds, executorId];
-      return { ...current, executorIds: nextIds };
-    });
   };
 
   const submit = async (event: React.FormEvent) => {
@@ -335,27 +318,6 @@ export default function WorkScheduleForm() {
               </label>
             </div>
 
-            {user.role === 'admin' && (
-              <div className="mt-4">
-                <span className="mb-2 block text-sm font-medium text-on-surface-variant">Người thực hiện</span>
-                <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                  {activeUsers.map((item) => {
-                    const userId = item._id ?? item.id;
-                    const checked = (form.executorIds ?? []).includes(userId);
-                    return (
-                      <label key={userId} className="flex items-center gap-2 rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => toggleExecutor(userId)}
-                        />
-                        <span>{item.fullName}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
 
             {form.status === 'cancelled' && (
               <label className="mt-4 block">

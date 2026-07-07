@@ -19,7 +19,7 @@ import {
 import AppLayout from '../components/layout/AppLayout';
 import Dialog from '../components/ui/Dialog';
 import { deleteWorkSchedule, getWorkSchedules } from '../api/workScheduleApi';
-import type { WorkSchedule, WorkScheduleListResponse, WorkScheduleStatus, WorkScheduleUser } from '../types/workSchedule';
+import type { WorkSchedule, WorkScheduleListResponse, WorkScheduleStatus } from '../types/workSchedule';
 import type { User as CurrentUser } from '../types/user';
 
 const STATUS_LABELS: Record<WorkScheduleStatus, string> = {
@@ -58,11 +58,6 @@ function formatDateHeader(iso: string) {
     dayName: days[dayOfWeek],
     dateStr: `${dd}/${mm}/${yyyy}`
   };
-}
-
-function getUserName(value: string | WorkScheduleUser) {
-  if (typeof value === 'string') return value;
-  return value.fullName;
 }
 
 interface GroupedSession {
@@ -302,8 +297,7 @@ export default function WorkSchedules() {
                           );
                         };
 
-                        const executorsText = event.executorIds.map(getUserName).join(', ');
-                        const fullParticipants = [executorsText, event.participantText].filter(Boolean).join('; ');
+                        const fullParticipants = [event.participantText].filter(Boolean).join('; ');
 
                         return (
                           <tr key={event._id} className="hover:bg-surface-container-low transition-colors">
@@ -379,8 +373,7 @@ export default function WorkSchedules() {
                         </h3>
                         <div className="space-y-3">
                           {session.events.map((event) => {
-                            const executorsText = event.executorIds.map(getUserName).join(', ');
-                            const fullParticipants = [executorsText, event.participantText].filter(Boolean).join('; ');
+                            const fullParticipants = [event.participantText].filter(Boolean).join('; ');
 
                             return (
                               <div key={event._id} className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1">

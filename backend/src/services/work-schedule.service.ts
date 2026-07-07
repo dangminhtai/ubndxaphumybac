@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import WorkSchedule, { WorkSchedulePriority, WorkScheduleStatus } from '../models/WorkSchedule';
 import type { AuthUser } from '../middleware/auth.middleware';
-import { createNotification, notifyUsersByRole } from './notification.service';
+import { notifyAllUsers } from './notification.service';
 
 export interface WorkScheduleQuery {
   from?: string;
@@ -206,30 +206,10 @@ async function ensureCanRead(scheduleId: string, user: AuthUser) {
   const schedule = await WorkSchedule.findOne({ _id: scheduleId, isDeleted: false });
   if (!schedule) throw makeError('Không tìm thấy lịch công tác', 404);
 
-  if (isViewAll(user)) return schedule;
-
-  const canRead = schedule.createdBy.toString() === user.id
-    || schedule.executorIds.some((id) => id.toString() === user.id);
-  if (!canRead) throw makeError('Bạn không có quyền xem lịch công tác này', 403);
-
   return schedule;
 }
 
-async function notifyExecutors(executorIds: mongoose.Types.ObjectId[], payload: {
-  title: string;
-  message: string;
-  link: string;
-}) {
-  await Promise.all(
-    executorIds.map((id) => createNotification({
-      recipientId: id.toString(),
-      title: payload.title,
-      message: payload.message,
-      type: 'work_schedule',
-      link: payload.link,
-    }))
-  );
-}
+
 
 export async function listWorkSchedules(query: WorkScheduleQuery, user: AuthUser) {
   const page = Math.max(1, query.page || 1);
@@ -272,13 +252,12 @@ export async function createWorkSchedule(input: WorkScheduleInput, user: AuthUse
     createdBy: user.id,
   });
 
-  if (schedule.executorIds.length > 0) {
-    void notifyExecutors(schedule.executorIds, {
-      title: 'Có lịch công tác mới',
-      message: `${user.fullName} vừa tạo lịch: ${schedule.title}`,
-      link: `/work-schedules/${schedule._id}`,
-    });
-  }
+  void notifyAllUsers({
+    title: 'Có lịch công tác mới',
+    message: `${user.fullName} vừa tạo lịch: ${schedule.title}`,
+    type: 'work_schedule',
+    link: `/work-schedules/${schedule._id}`,
+  });
 
   return schedule;
 }
@@ -290,21 +269,19 @@ export async function updateWorkSchedule(scheduleId: string, input: WorkSchedule
   Object.assign(schedule, payload);
   const saved = await schedule.save();
 
-  if (saved.executorIds.length > 0) {
-    void notifyExecutors(saved.executorIds, {
-      title: 'Lịch công tác được cập nhật',
-      message: `${user.fullName} vừa cập nhật lịch: ${saved.title}`,
-      link: `/work-schedules/${saved._id}`,
-    });
-  }
+  void notifyAllUsers({
+    title: 'Lịch công tác được cập nhật',
+    message: `${user.fullName} vừa cập nhật lịch: ${saved.title}`,
+    type: 'work_schedule',
+    link: `/work-schedules/${saved._id}`,
+  });
 
   return saved;
 }
 
 export async function updateWorkScheduleStatus(scheduleId: string, input: WorkScheduleStatusInput, user: AuthUser) {
   const schedule = await ensureCanRead(scheduleId, user);
-  const isExecutor = schedule.executorIds.some((id) => id.toString() === user.id);
-  if (!isManager(user) && !isExecutor) {
+  if (!isManager(user)) {
     throw makeError('Bạn không có quyền cập nhật trạng thái lịch này', 403);
   }
 
@@ -320,17 +297,6 @@ export async function updateWorkScheduleStatus(scheduleId: string, input: WorkSc
   schedule.cancelReason = trimText(input.cancelReason);
   schedule.completedAt = input.status === 'completed' ? new Date() : undefined;
   const saved = await schedule.save();
-
-  if (!isManager(user)) {
-    void notifyUsersByRole({
-      roles: ['admin', 'department_lead'],
-      title: 'Trạng thái lịch công tác thay đổi',
-      message: `${user.fullName} cập nhật lịch "${saved.title}" thành ${saved.status}.`,
-      type: 'work_schedule',
-      link: `/work-schedules/${saved._id}`,
-    });
-  }
-
   return saved;
 }
 
