@@ -26,6 +26,9 @@ export interface WorkScheduleInput {
   chairPerson?: string;
   executorIds?: string[];
   participantText?: string;
+  preparingAgency?: string;
+  monitoringOfficer?: string;
+  attachmentUrl?: string;
   content?: string;
   notes?: string;
   cancelReason?: string;
@@ -188,6 +191,9 @@ function validatePayload(input: WorkScheduleInput) {
     chairPerson: trimText(input.chairPerson),
     executorIds: parseExecutorIds(input.executorIds),
     participantText: trimText(input.participantText),
+    preparingAgency: trimText(input.preparingAgency),
+    monitoringOfficer: trimText(input.monitoringOfficer),
+    attachmentUrl: trimText(input.attachmentUrl),
     content: trimText(input.content),
     notes: trimText(input.notes),
     cancelReason: trimText(input.cancelReason),
