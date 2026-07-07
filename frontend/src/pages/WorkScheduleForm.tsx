@@ -52,6 +52,9 @@ const initialForm: WorkSchedulePayload = {
   chairPerson: '',
   executorIds: [],
   participantText: '',
+  preparingAgency: '',
+  monitoringOfficer: '',
+  attachmentUrl: '',
   content: '',
   notes: '',
   cancelReason: '',
@@ -117,6 +120,9 @@ export default function WorkScheduleForm() {
             chairPerson: schedule.chairPerson ?? '',
             executorIds: schedule.executorIds.map(getId),
             participantText: schedule.participantText ?? '',
+            preparingAgency: schedule.preparingAgency ?? '',
+            monitoringOfficer: schedule.monitoringOfficer ?? '',
+            attachmentUrl: schedule.attachmentUrl ?? '',
             content: schedule.content ?? '',
             notes: schedule.notes ?? '',
             cancelReason: schedule.cancelReason ?? '',
@@ -161,6 +167,9 @@ export default function WorkScheduleForm() {
         location: form.location?.trim(),
         chairPerson: form.chairPerson?.trim(),
         participantText: form.participantText?.trim(),
+        preparingAgency: form.preparingAgency?.trim(),
+        monitoringOfficer: form.monitoringOfficer?.trim(),
+        attachmentUrl: form.attachmentUrl?.trim(),
         content: form.content?.trim(),
         notes: form.notes?.trim(),
         cancelReason: form.cancelReason?.trim(),
@@ -308,6 +317,22 @@ export default function WorkScheduleForm() {
                   onChange={(event) => updateField('participantText', event.target.value)}
                 />
               </label>
+              <label>
+                <span className="mb-1 block text-sm font-medium text-on-surface-variant">CQCB Nội dung</span>
+                <input
+                  className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm outline-none focus:border-primary"
+                  value={form.preparingAgency}
+                  onChange={(event) => updateField('preparingAgency', event.target.value)}
+                />
+              </label>
+              <label>
+                <span className="mb-1 block text-sm font-medium text-on-surface-variant">Lãnh đạo / Chuyên viên theo dõi</span>
+                <input
+                  className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm outline-none focus:border-primary"
+                  value={form.monitoringOfficer}
+                  onChange={(event) => updateField('monitoringOfficer', event.target.value)}
+                />
+              </label>
             </div>
 
             {user.role === 'admin' && (
@@ -363,6 +388,15 @@ export default function WorkScheduleForm() {
                   className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm outline-none focus:border-primary"
                   value={form.notes}
                   onChange={(event) => updateField('notes', event.target.value)}
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-on-surface-variant">Link tài liệu đính kèm (URL)</span>
+                <input
+                  placeholder="https://..."
+                  className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm outline-none focus:border-primary"
+                  value={form.attachmentUrl}
+                  onChange={(event) => updateField('attachmentUrl', event.target.value)}
                 />
               </label>
             </div>

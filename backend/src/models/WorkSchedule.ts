@@ -15,6 +15,9 @@ export interface IWorkSchedule extends Document {
   chairPerson?: string;
   executorIds: mongoose.Types.ObjectId[];
   participantText?: string;
+  preparingAgency?: string;
+  monitoringOfficer?: string;
+  attachmentUrl?: string;
   content?: string;
   notes?: string;
   cancelReason?: string;
@@ -48,6 +51,9 @@ const workScheduleSchema = new Schema<IWorkSchedule>(
     chairPerson: { type: String, trim: true },
     executorIds: [{ type: Schema.Types.ObjectId, ref: 'User', index: true }],
     participantText: { type: String, trim: true },
+    preparingAgency: { type: String, trim: true },
+    monitoringOfficer: { type: String, trim: true },
+    attachmentUrl: { type: String, trim: true },
     content: { type: String, trim: true },
     notes: { type: String, trim: true },
     cancelReason: { type: String, trim: true },

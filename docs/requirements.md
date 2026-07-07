@@ -70,3 +70,16 @@ Mô tả:
 
 Tiêu chí hoàn thành:
 - Bổ sung `if (loading) return <Loading/>` trước khi báo lỗi `periodId`.
+
+## REQ008 - Thiết kế lại Lịch Công Tác (Weekly Schedule)
+
+Mô tả:
+- Dựa theo BP04, thiết kế lại giao diện hiển thị Lịch Công Tác.
+- Màn hình Desktop: Hiển thị dưới dạng Bảng (Table), gộp nhóm dữ liệu theo Ngày (`rowSpan` Thời gian) và theo Buổi (Sáng/Chiều/Tối). Hiển thị đầy đủ 8 cột như mẫu.
+- Màn hình Mobile: Hiển thị dạng Thẻ (Cards), gộp nhóm theo Ngày -> Buổi.
+- Thêm trường dữ liệu `preparingAgency` (CQCB Nội dung), `monitoringOfficer` (LDVP/CV Theo dõi), `attachmentUrl` (Link đính kèm) vào hệ thống Backend (schema, service validation) và Form nhập liệu.
+
+Tiêu chí hoàn thành:
+- Bảng hiển thị chính xác theo yêu cầu trên Desktop, không bị vỡ bố cục.
+- Danh sách thẻ Card hiển thị đúng theo Ngày -> Buổi trên màn hình Mobile.
+- Có thể thêm/sửa/lưu thành công các trường dữ liệu mới.
