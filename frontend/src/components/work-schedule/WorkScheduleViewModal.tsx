@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import Modal from '../ui/Modal';
 import type { WorkSchedule, WorkScheduleStatus } from '../../types/workSchedule';
-import { updateWorkScheduleStatus } from '../../api/workScheduleApi';
+import { updateWorkScheduleStatus, getWorkScheduleAttachmentUrl } from '../../api/workScheduleApi';
 import { useNavigate } from 'react-router-dom';
+import { Paperclip, Loader2 } from 'lucide-react';
 import type { User as CurrentUser } from '../../types/user';
 
 function readUser() {
@@ -35,6 +36,7 @@ export default function WorkScheduleViewModal({ isOpen, onClose, schedule, onSta
   const navigate = useNavigate();
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState('');
+  const [downloading, setDownloading] = useState(false);
 
   if (!schedule) return null;
 
@@ -53,6 +55,20 @@ export default function WorkScheduleViewModal({ isOpen, onClose, schedule, onSta
       setError(err.response?.data?.error || 'Không cập nhật được trạng thái');
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleDownloadAttachment = async () => {
+    if (!schedule.attachmentUrl) return;
+    setDownloading(true);
+    setError('');
+    try {
+      const url = await getWorkScheduleAttachmentUrl(schedule._id);
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Không tải được file đính kèm');
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -112,6 +128,23 @@ export default function WorkScheduleViewModal({ isOpen, onClose, schedule, onSta
           <InfoRow label="Thành phần" value={schedule.participantText} />
           <InfoRow label="CQCB nội dung" value={schedule.preparingAgency} />
           <InfoRow label="LDVP/CV theo dõi" value={schedule.monitoringOfficer} />
+          <InfoRow 
+            label="Tài liệu" 
+            value={
+              schedule.attachmentUrl ? (
+                <button
+                  onClick={handleDownloadAttachment}
+                  disabled={downloading}
+                  className="inline-flex items-center gap-1.5 text-primary hover:underline disabled:opacity-50 disabled:no-underline"
+                >
+                  {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
+                  <span>Tải về / Xem tài liệu</span>
+                </button>
+              ) : (
+                <span className="text-outline-variant italic">Không có đính kèm</span>
+              )
+            } 
+          />
           <InfoRow label="Người tạo" value={getCreatorName(schedule.createdBy)} />
           <InfoRow label="Đã tạo" value={schedule.createdAt ? formatDateTime(schedule.createdAt) : ''} />
           <InfoRow label="Đã sửa đổi" value={schedule.updatedAt ? formatDateTime(schedule.updatedAt) : ''} />

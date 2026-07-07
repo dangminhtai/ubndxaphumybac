@@ -284,9 +284,9 @@ export default function WorkSchedules() {
                         const renderAttachment = () => {
                           if (!event.attachmentUrl) return null;
                           return (
-                            <a href={event.attachmentUrl} target="_blank" rel="noreferrer" className="ml-2 inline-flex items-center text-primary hover:text-primary/80" title="Tài liệu đính kèm">
+                            <span className="ml-2 inline-flex items-center text-primary/70" title="Có tài liệu đính kèm (Nhấn vào tiêu đề để xem)">
                               <Paperclip className="h-4 w-4" />
-                            </a>
+                            </span>
                           );
                         };
 
@@ -397,9 +397,9 @@ export default function WorkSchedules() {
                                     <span className="text-primary">{event.startTime}</span>. {event.title}
                                   </button>
                                   {event.attachmentUrl && (
-                                    <a href={event.attachmentUrl} target="_blank" rel="noreferrer" className="flex-shrink-0 text-primary p-1 bg-primary/10 rounded-full">
+                                    <span className="flex-shrink-0 text-primary p-1 bg-primary/10 rounded-full" title="Có tài liệu đính kèm">
                                       <Paperclip className="h-4 w-4" />
-                                    </a>
+                                    </span>
                                   )}
                                   {canManage && (
                                     <div className="flex flex-shrink-0 items-center gap-1">

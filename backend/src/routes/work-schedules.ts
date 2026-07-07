@@ -7,8 +7,11 @@ import {
   patchWorkScheduleStatus,
   postWorkSchedule,
   removeWorkSchedule,
+  postUploadFile,
+  getAttachmentSignedUrl,
 } from '../controllers/work-schedule.controller';
 import { requireAuth, requirePasswordReady } from '../middleware/auth.middleware';
+import { upload } from '../middleware/upload.middleware';
 
 const router = Router();
 
@@ -22,5 +25,8 @@ router.post('/', postWorkSchedule);
 router.patch('/:id', patchWorkSchedule);
 router.patch('/:id/status', patchWorkScheduleStatus);
 router.delete('/:id', removeWorkSchedule);
+
+router.post('/upload', upload.single('file'), postUploadFile);
+router.get('/:id/attachment', getAttachmentSignedUrl);
 
 export default router;

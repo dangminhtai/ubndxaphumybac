@@ -10,6 +10,8 @@ import {
   updateWorkScheduleStatus,
 } from '../services/work-schedule.service';
 import { writeAuditLog } from '../services/audit.service';
+import { UploadService } from '../services/upload.service';
+import WorkSchedule from '../models/WorkSchedule';
 
 function requireUser(req: AuthenticatedRequest) {
   if (!req.user) {
@@ -135,6 +137,49 @@ export async function getWorkScheduleStatistics(req: AuthenticatedRequest, res: 
       to: req.query.to?.toString(),
     }, user);
     res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function postUploadFile(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    const user = requireUser(req);
+    // Only admin or department_lead can upload
+    if (user.role !== 'admin' && user.role !== 'department_lead') {
+      return res.status(403).json({ error: 'Không có quyền tải lên file' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'Không tìm thấy file' });
+    }
+
+    const filePath = await UploadService.uploadDocument(
+      req.file.buffer,
+      req.file.originalname,
+      req.file.mimetype
+    );
+
+    res.json({ path: filePath });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getAttachmentSignedUrl(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    requireUser(req); // Any authenticated user can view attachment if they can view schedule
+    
+    // First, verify the schedule exists and has this attachment
+    const schedule = await WorkSchedule.findById(req.params.id);
+    if (!schedule || !schedule.attachmentUrl) {
+      return res.status(404).json({ error: 'Không tìm thấy file đính kèm' });
+    }
+
+    // Get signed URL from Supabase
+    const signedUrl = await UploadService.getSignedUrl(schedule.attachmentUrl);
+    
+    res.json({ url: signedUrl });
   } catch (err) {
     next(err);
   }

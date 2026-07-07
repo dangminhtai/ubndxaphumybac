@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Loader2, Save } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
-import { createWorkSchedule, getWorkSchedule, updateWorkSchedule } from '../api/workScheduleApi';
+import { createWorkSchedule, getWorkSchedule, updateWorkSchedule, uploadWorkScheduleFile } from '../api/workScheduleApi';
 import type { User } from '../types/user';
 import type { WorkSchedulePayload, WorkSchedulePriority, WorkScheduleStatus, WorkScheduleUser } from '../types/workSchedule';
 
@@ -86,6 +86,7 @@ export default function WorkScheduleForm() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (!canManage) {
@@ -142,6 +143,12 @@ export default function WorkScheduleForm() {
     setMessage('');
 
     try {
+      let uploadedPath = form.attachmentUrl;
+      if (selectedFile) {
+        const uploadRes = await uploadWorkScheduleFile(selectedFile);
+        uploadedPath = uploadRes.path;
+      }
+
       const payload: WorkSchedulePayload = {
         ...form,
         title: form.title.trim(),
@@ -152,7 +159,7 @@ export default function WorkScheduleForm() {
         participantText: form.participantText?.trim(),
         preparingAgency: form.preparingAgency?.trim(),
         monitoringOfficer: form.monitoringOfficer?.trim(),
-        attachmentUrl: form.attachmentUrl?.trim(),
+        attachmentUrl: uploadedPath?.trim(),
         content: form.content?.trim(),
         notes: form.notes?.trim(),
         cancelReason: form.cancelReason?.trim(),
@@ -353,12 +360,31 @@ export default function WorkScheduleForm() {
                 />
               </label>
               <label className="block">
-                <span className="mb-1 block text-sm font-medium text-on-surface-variant">Link tài liệu đính kèm (URL)</span>
+                <span className="mb-1 block text-sm font-medium text-on-surface-variant">Tài liệu đính kèm (Tùy chọn)</span>
+                {form.attachmentUrl && !selectedFile && (
+                  <div className="mb-2 text-sm text-on-surface-variant flex flex-col gap-1">
+                    <span>Đã có tài liệu: <span className="font-semibold text-primary">Có đính kèm</span></span>
+                    <span className="text-xs text-on-surface-variant/70">Tải lên file mới sẽ ghi đè tài liệu cũ.</span>
+                  </div>
+                )}
                 <input
-                  placeholder="https://..."
-                  className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm outline-none focus:border-primary"
-                  value={form.attachmentUrl}
-                  onChange={(event) => updateField('attachmentUrl', event.target.value)}
+                  type="file"
+                  accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm outline-none focus:border-primary file:mr-4 file:rounded-full file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20"
+                  onChange={(event) => {
+                    if (event.target.files && event.target.files[0]) {
+                      const file = event.target.files[0];
+                      if (file.size > 20 * 1024 * 1024) {
+                        setError('File vượt quá dung lượng tối đa 20MB');
+                        event.target.value = '';
+                        setSelectedFile(null);
+                        return;
+                      }
+                      setSelectedFile(file);
+                    } else {
+                      setSelectedFile(null);
+                    }
+                  }}
                 />
               </label>
             </div>

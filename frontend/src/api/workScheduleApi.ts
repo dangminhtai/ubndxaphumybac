@@ -47,9 +47,23 @@ export async function updateWorkScheduleStatus(id: string, payload: { status: Wo
   return response.data;
 }
 
+export async function uploadWorkScheduleFile(file: File) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await apiClient.post<{ path: string }>('/work-schedules/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+}
+
 export async function deleteWorkSchedule(id: string) {
   const response = await apiClient.delete<{ success: boolean }>(`/work-schedules/${id}`);
   return response.data;
+}
+
+export async function getWorkScheduleAttachmentUrl(id: string) {
+  const response = await apiClient.get<{ url: string }>(`/work-schedules/${id}/attachment`);
+  return response.data.url;
 }
 
 export async function getWorkScheduleStats(query: Pick<WorkScheduleQuery, 'from' | 'to'> = {}) {
