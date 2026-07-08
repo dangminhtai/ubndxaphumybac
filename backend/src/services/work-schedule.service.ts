@@ -29,6 +29,7 @@ export interface WorkScheduleInput {
   preparingAgency?: string;
   monitoringOfficer?: string;
   attachmentUrl?: string;
+  attachmentName?: string;
   content?: string;
   notes?: string;
   cancelReason?: string;
@@ -186,6 +187,7 @@ function validatePayload(input: WorkScheduleInput) {
     preparingAgency: trimText(input.preparingAgency),
     monitoringOfficer: trimText(input.monitoringOfficer),
     attachmentUrl: trimText(input.attachmentUrl),
+    attachmentName: trimText(input.attachmentName),
     content: trimText(input.content),
     notes: trimText(input.notes),
     cancelReason: trimText(input.cancelReason),
@@ -263,12 +265,30 @@ export async function updateWorkSchedule(scheduleId: string, input: WorkSchedule
 
   void notifyAllUsers({
     title: 'Lịch công tác được cập nhật',
-    message: `${user.fullName} vừa cập nhật lịch: ${saved.title}`,
+    message: `${user.fullName} vừa cập nhật lịch: ${schedule.title}`,
     type: 'work_schedule',
-    link: `/work-schedules/${saved._id}`,
+    link: `/work-schedules/${schedule._id}`,
   });
 
-  return saved;
+  return getWorkScheduleById(schedule._id.toString(), user);
+}
+
+export async function removeWorkScheduleAttachment(scheduleId: string, user: AuthUser) {
+  requireManager(user);
+  const schedule = await ensureCanRead(scheduleId, user);
+  
+  if (!schedule.attachmentUrl) {
+    throw makeError('Lịch công tác không có tài liệu đính kèm', 400);
+  }
+
+  // Optional: We could delete the file from Supabase here using UploadService
+  // but keeping it simple for now and just removing the reference
+
+  schedule.attachmentUrl = '';
+  schedule.attachmentName = '';
+  await schedule.save();
+
+  return getWorkScheduleById(schedule._id.toString(), user);
 }
 
 export async function updateWorkScheduleStatus(scheduleId: string, input: WorkScheduleStatusInput, user: AuthUser) {

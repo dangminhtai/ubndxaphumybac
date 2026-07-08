@@ -50,7 +50,7 @@ export async function updateWorkScheduleStatus(id: string, payload: { status: Wo
 export async function uploadWorkScheduleFile(file: File) {
   const formData = new FormData();
   formData.append('file', file);
-  const response = await apiClient.post<{ path: string }>('/work-schedules/upload', formData, {
+  const response = await apiClient.post<{ path: string; name: string }>('/work-schedules/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   });
   return response.data;
@@ -58,6 +58,11 @@ export async function uploadWorkScheduleFile(file: File) {
 
 export async function deleteWorkSchedule(id: string) {
   const response = await apiClient.delete<{ success: boolean }>(`/work-schedules/${id}`);
+  return response.data;
+}
+
+export async function deleteWorkScheduleAttachment(id: string) {
+  const response = await apiClient.delete<WorkSchedule>(`/work-schedules/${id}/attachment`);
   return response.data;
 }
 

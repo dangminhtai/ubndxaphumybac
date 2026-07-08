@@ -25,6 +25,7 @@ export interface WorkSchedule {
   preparingAgency?: string;
   monitoringOfficer?: string;
   attachmentUrl?: string;
+  attachmentName?: string;
   content?: string;
   notes?: string;
   cancelReason?: string;
@@ -50,6 +51,7 @@ export interface WorkSchedulePayload {
   preparingAgency?: string;
   monitoringOfficer?: string;
   attachmentUrl?: string;
+  attachmentName?: string;
   content?: string;
   notes?: string;
   cancelReason?: string;

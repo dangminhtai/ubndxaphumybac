@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   ChevronLeft,
   ChevronRight,
@@ -19,7 +19,7 @@ import {
 import AppLayout from '../components/layout/AppLayout';
 import Dialog from '../components/ui/Dialog';
 import WorkScheduleViewModal from '../components/work-schedule/WorkScheduleViewModal';
-import { deleteWorkSchedule, getWorkSchedules } from '../api/workScheduleApi';
+import { deleteWorkSchedule, getWorkSchedules, getWorkSchedule } from '../api/workScheduleApi';
 import type { WorkSchedule, WorkScheduleListResponse, WorkScheduleStatus } from '../types/workSchedule';
 import type { User as CurrentUser } from '../types/user';
 
@@ -109,6 +109,8 @@ function groupSchedules(data: WorkSchedule[]): GroupedDate[] {
 export default function WorkSchedules() {
   const user = readUser();
   const canManage = user.role === 'admin' || user.role === 'department_lead';
+  const navigate = useNavigate();
+  const { id } = useParams();
   const [data, setData] = useState<WorkScheduleListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -119,6 +121,21 @@ export default function WorkSchedules() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState('');
   const [viewingSchedule, setViewingSchedule] = useState<WorkSchedule | null>(null);
+
+  useEffect(() => {
+    if (id) {
+      getWorkSchedule(id)
+        .then(schedule => {
+          setViewingSchedule(schedule);
+          // Remove ID from URL without refreshing the page
+          navigate('/work-schedules', { replace: true });
+        })
+        .catch(() => {
+          // If not found or error, just ignore and remove from URL
+          navigate('/work-schedules', { replace: true });
+        });
+    }
+  }, [id, navigate]);
 
   const fields = useMemo(() => {
     const values = data?.data.map((item) => item.field) ?? [];

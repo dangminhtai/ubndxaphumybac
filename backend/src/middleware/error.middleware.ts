@@ -11,7 +11,7 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ) {
-  const statusCode = err.statusCode || 500;
+  const statusCode = Number(err.statusCode) || 500;
   
   if (statusCode >= 500) {
     logger.error(`${err.message}\n${err.stack}`);

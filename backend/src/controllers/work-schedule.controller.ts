@@ -8,6 +8,7 @@ import {
   listWorkSchedules,
   updateWorkSchedule,
   updateWorkScheduleStatus,
+  removeWorkScheduleAttachment,
 } from '../services/work-schedule.service';
 import { writeAuditLog } from '../services/audit.service';
 import { UploadService } from '../services/upload.service';
@@ -160,7 +161,7 @@ export async function postUploadFile(req: AuthenticatedRequest, res: Response, n
       req.file.mimetype
     );
 
-    res.json({ path: filePath });
+    res.json({ path: filePath, name: req.file.originalname });
   } catch (err) {
     next(err);
   }
@@ -180,6 +181,24 @@ export async function getAttachmentSignedUrl(req: AuthenticatedRequest, res: Res
     const signedUrl = await UploadService.getSignedUrl(schedule.attachmentUrl);
     
     res.json({ url: signedUrl });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function removeAttachment(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    const user = requireUser(req);
+    const result = await removeWorkScheduleAttachment(String(req.params.id), user);
+    void writeAuditLog({
+      action: 'UPDATE',
+      category: 'schedule',
+      user,
+      targetType: 'WorkSchedule',
+      targetId: String(result._id),
+      details: `Xóa tài liệu đính kèm lịch công tác: ${result.title}`,
+    });
+    res.json(result);
   } catch (err) {
     next(err);
   }

@@ -12,3 +12,15 @@ Action đã làm:
 
 Giải pháp:
 - Đã xóa import thừa. Lần sau trước khi commit cần build và chú ý check kỹ code nếu có xóa các element UI sử dụng icon/type tương ứng.
+
+## ISS002 - Lỗi cú pháp JSX khi replace file
+
+Nguyên nhân:
+- Sử dụng tool tự động replace content làm mất thẻ đóng `</div>` và `<>` của React trong file `WorkScheduleViewModal.tsx`.
+
+Action đã làm:
+- Kiểm tra log lỗi Vite (`[PARSE_ERROR] Expected corresponding JSX closing tag`).
+- Tìm vị trí mất thẻ đóng và bổ sung đầy đủ.
+
+Giải pháp:
+- Khi dùng chức năng replace code nhiều dòng, cần quan sát kỹ điểm đầu và điểm cuối của đoạn mã thay thế, tránh cắt ngang giữa một cấu trúc thẻ lồng nhau.

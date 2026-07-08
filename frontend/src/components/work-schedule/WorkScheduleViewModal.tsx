@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import Modal from '../ui/Modal';
 import type { WorkSchedule, WorkScheduleStatus } from '../../types/workSchedule';
-import { updateWorkScheduleStatus, getWorkScheduleAttachmentUrl } from '../../api/workScheduleApi';
+import { updateWorkScheduleStatus, getWorkScheduleAttachmentUrl, deleteWorkScheduleAttachment } from '../../api/workScheduleApi';
 import { useNavigate } from 'react-router-dom';
-import { Paperclip, Loader2 } from 'lucide-react';
+import { Paperclip, Loader2, Trash2 } from 'lucide-react';
+import ConfirmModal from '../ui/ConfirmModal';
 import type { User as CurrentUser } from '../../types/user';
 
 function readUser() {
@@ -37,6 +38,8 @@ export default function WorkScheduleViewModal({ isOpen, onClose, schedule, onSta
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState('');
   const [downloading, setDownloading] = useState(false);
+  const [deletingAttachment, setDeletingAttachment] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   if (!schedule) return null;
 
@@ -69,6 +72,28 @@ export default function WorkScheduleViewModal({ isOpen, onClose, schedule, onSta
       setError(err.response?.data?.error || 'Không tải được file đính kèm');
     } finally {
       setDownloading(false);
+    }
+  };
+
+  const promptDeleteAttachment = () => {
+    if (!schedule.attachmentUrl || !canEdit) return;
+    setIsConfirmOpen(true);
+  };
+
+  const executeDeleteAttachment = async () => {
+    setDeletingAttachment(true);
+    setError('');
+    try {
+      await deleteWorkScheduleAttachment(schedule._id);
+      schedule.attachmentUrl = '';
+      schedule.attachmentName = '';
+      if (onStatusChanged) onStatusChanged(); // Refresh parent if needed
+      setIsConfirmOpen(false);
+      if (onStatusChanged) onStatusChanged(); // Refresh parent if needed
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Không xóa được file đính kèm');
+    } finally {
+      setDeletingAttachment(false);
     }
   };
 
@@ -111,8 +136,9 @@ export default function WorkScheduleViewModal({ isOpen, onClose, schedule, onSta
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Lịch công tác" maxWidth="max-w-3xl">
-      <div className="flex flex-col">
+    <>
+      <Modal isOpen={isOpen} onClose={onClose} title="Lịch công tác" maxWidth="max-w-3xl">
+        <div className="flex flex-col">
         {error && (
           <div className="mb-4 rounded-lg bg-error-container p-3 text-sm text-on-error-container">
             {error}
@@ -132,14 +158,26 @@ export default function WorkScheduleViewModal({ isOpen, onClose, schedule, onSta
             label="Tài liệu" 
             value={
               schedule.attachmentUrl ? (
-                <button
-                  onClick={handleDownloadAttachment}
-                  disabled={downloading}
-                  className="inline-flex items-center gap-1.5 text-primary hover:underline disabled:opacity-50 disabled:no-underline"
-                >
-                  {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
-                  <span>Tải về / Xem tài liệu</span>
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleDownloadAttachment}
+                    disabled={downloading || deletingAttachment}
+                    className="inline-flex items-center gap-1.5 text-primary hover:underline disabled:opacity-50 disabled:no-underline"
+                  >
+                    {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
+                    <span>{schedule.attachmentName || schedule.attachmentUrl.split('/').pop()}</span>
+                  </button>
+                  {canEdit && (
+                    <button
+                      onClick={promptDeleteAttachment}
+                      disabled={deletingAttachment}
+                      className="text-error hover:text-error/80 disabled:opacity-50 p-1 rounded-full hover:bg-error/10 transition-colors"
+                      title="Xóa tài liệu đính kèm"
+                    >
+                      {deletingAttachment ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                    </button>
+                  )}
+                </div>
               ) : (
                 <span className="text-outline-variant italic">Không có đính kèm</span>
               )
@@ -191,7 +229,19 @@ export default function WorkScheduleViewModal({ isOpen, onClose, schedule, onSta
             </button>
           </div>
         </div>
-      </div>
-    </Modal>
+        </div>
+      </Modal>
+
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={executeDeleteAttachment}
+        title="Xóa tài liệu đính kèm"
+        message="Bạn có chắc chắn muốn xóa tài liệu đính kèm này không? Hành động này không thể hoàn tác."
+        confirmText="Xóa tài liệu"
+        isDanger
+        isLoading={deletingAttachment}
+      />
+    </>
   );
 }

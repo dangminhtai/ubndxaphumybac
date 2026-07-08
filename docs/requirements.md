@@ -94,3 +94,16 @@ Tiêu chí hoàn thành:
 - Ẩn/xóa trường `executorIds` trên form `WorkScheduleForm.tsx`.
 - Cập nhật logic notification trong backend: gửi thông báo đến tất cả user khi lịch công tác được tạo/cập nhật (dùng `notifyAllUsers`).
 - Bỏ kiểm tra quyền `executor` ở phần chi tiết lịch và update status. Mọi người đều xem được chi tiết lịch, nhưng chỉ có role quản lý mới cập nhật được trạng thái.
+
+## REQ010 - Thêm chức năng xóa tài liệu đính kèm ở Lịch Công Tác
+
+Mô tả:
+- Hiển thị tên file đính kèm trên giao diện thay vì chữ "Tải về / Xem tài liệu".
+- Thêm biểu tượng thùng rác bên cạnh tên tài liệu đính kèm trong màn hình chi tiết.
+- Sử dụng popup xác nhận tùy chỉnh (ConfirmModal) thay vì alert mặc định của trình duyệt.
+- Xóa tham chiếu file trên Database khi người dùng xác nhận xóa.
+
+Tiêu chí hoàn thành:
+- Tên tài liệu đính kèm hiển thị chính xác.
+- Nhấn vào biểu tượng thùng rác hiện popup xác nhận UI/UX đẹp.
+- Xác nhận xóa thành công, API cập nhật trường `attachmentUrl` thành rỗng.

@@ -5,6 +5,7 @@ import AppLayout from '../components/layout/AppLayout';
 import { createWorkSchedule, getWorkSchedule, updateWorkSchedule, uploadWorkScheduleFile } from '../api/workScheduleApi';
 import type { User } from '../types/user';
 import type { WorkSchedulePayload, WorkSchedulePriority, WorkScheduleStatus, WorkScheduleUser } from '../types/workSchedule';
+import toast from 'react-hot-toast';
 
 const FIELDS = [
   'Văn hóa',
@@ -85,7 +86,6 @@ export default function WorkScheduleForm() {
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useEffect(() => {
@@ -117,6 +117,7 @@ export default function WorkScheduleForm() {
             preparingAgency: schedule.preparingAgency ?? '',
             monitoringOfficer: schedule.monitoringOfficer ?? '',
             attachmentUrl: schedule.attachmentUrl ?? '',
+            attachmentName: schedule.attachmentName ?? '',
             content: schedule.content ?? '',
             notes: schedule.notes ?? '',
             cancelReason: schedule.cancelReason ?? '',
@@ -138,15 +139,27 @@ export default function WorkScheduleForm() {
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
+    
+    if (!form.title || !form.date || !form.startTime || !form.field) {
+      toast.error('Vui lòng điền đầy đủ các trường bắt buộc (*)');
+      return;
+    }
+    
+    if (form.status === 'cancelled' && !form.cancelReason) {
+      toast.error('Vui lòng nhập lý do hủy lịch');
+      return;
+    }
+
     setSaving(true);
     setError('');
-    setMessage('');
 
     try {
       let uploadedPath = form.attachmentUrl;
+      let uploadedName = form.attachmentName;
       if (selectedFile) {
         const uploadRes = await uploadWorkScheduleFile(selectedFile);
         uploadedPath = uploadRes.path;
+        uploadedName = uploadRes.name;
       }
 
       const payload: WorkSchedulePayload = {
@@ -160,6 +173,7 @@ export default function WorkScheduleForm() {
         preparingAgency: form.preparingAgency?.trim(),
         monitoringOfficer: form.monitoringOfficer?.trim(),
         attachmentUrl: uploadedPath?.trim(),
+        attachmentName: uploadedName?.trim(),
         content: form.content?.trim(),
         notes: form.notes?.trim(),
         cancelReason: form.cancelReason?.trim(),
@@ -167,14 +181,17 @@ export default function WorkScheduleForm() {
 
       if (isEdit && id) {
         await updateWorkSchedule(id, payload);
-        setMessage('Đã cập nhật lịch công tác');
+        toast.success('Đã cập nhật lịch công tác thành công');
+        navigate('/work-schedules');
       } else {
-        const created = await createWorkSchedule(payload);
-        setMessage('Đã tạo lịch công tác');
-        navigate(`/work-schedules/${created._id}/edit`, { replace: true });
+        await createWorkSchedule(payload);
+        toast.success('Đã tạo lịch công tác thành công');
+        navigate('/work-schedules');
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Không lưu được lịch công tác');
+      const msg = err.response?.data?.error || 'Không lưu được lịch công tác';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -195,14 +212,13 @@ export default function WorkScheduleForm() {
       }
     >
       {error && <div className="mb-4 rounded-lg border border-error-container bg-error-container px-4 py-3 text-sm text-error">{error}</div>}
-      {message && <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div>}
 
       {loading ? (
         <div className="flex min-h-56 items-center justify-center rounded-xl border border-outline-variant bg-white">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       ) : (
-        <form onSubmit={submit} className="space-y-5">
+        <form onSubmit={submit} className="space-y-5" noValidate>
           <section className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-5">
             <h3 className="mb-4 text-base font-semibold text-on-surface">1. Thời gian và địa điểm</h3>
             <div className="grid gap-4 md:grid-cols-2">

@@ -18,6 +18,7 @@ export interface IWorkSchedule extends Document {
   preparingAgency?: string;
   monitoringOfficer?: string;
   attachmentUrl?: string;
+  attachmentName?: string;
   content?: string;
   notes?: string;
   cancelReason?: string;
@@ -54,6 +55,7 @@ const workScheduleSchema = new Schema<IWorkSchedule>(
     preparingAgency: { type: String, trim: true },
     monitoringOfficer: { type: String, trim: true },
     attachmentUrl: { type: String, trim: true },
+    attachmentName: { type: String, trim: true },
     content: { type: String, trim: true },
     notes: { type: String, trim: true },
     cancelReason: { type: String, trim: true },

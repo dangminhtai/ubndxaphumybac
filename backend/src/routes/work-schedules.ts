@@ -9,6 +9,7 @@ import {
   removeWorkSchedule,
   postUploadFile,
   getAttachmentSignedUrl,
+  removeAttachment,
 } from '../controllers/work-schedule.controller';
 import { requireAuth, requirePasswordReady } from '../middleware/auth.middleware';
 import { upload } from '../middleware/upload.middleware';
@@ -28,5 +29,6 @@ router.delete('/:id', removeWorkSchedule);
 
 router.post('/upload', upload.single('file'), postUploadFile);
 router.get('/:id/attachment', getAttachmentSignedUrl);
+router.delete('/:id/attachment', removeAttachment);
 
 export default router;
