@@ -11,7 +11,8 @@ import {
   getCurrentMonthlyStaffReport,
   createMonthlyStaffReport,
   submitMonthlyStaffReport,
-  returnReport
+  returnReport,
+  recallReport
 } from '../services/report.service';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import { writeAuditLog } from '../services/audit.service';
@@ -225,6 +226,28 @@ export async function exportWeeklyReportById(req: AuthenticatedRequest, res: Res
         next(err);
       }
     });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function postRecallReport(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    if (!req.user) {
+      const error = new Error('Bạn cần đăng nhập');
+      Object.assign(error, { statusCode: 401 });
+      throw error;
+    }
+    const result = await recallReport(String(req.params.id), req.user);
+    void writeAuditLog({
+      action: 'RECALL',
+      category: 'report',
+      user: req.user,
+      targetType: 'Report',
+      targetId: String(req.params.id),
+      details: `Thu hồi báo cáo: ${result.title}`,
+    });
+    res.json(result);
   } catch (err) {
     next(err);
   }

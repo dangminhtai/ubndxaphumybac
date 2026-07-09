@@ -6,11 +6,13 @@ import {
   Loader2,
   Save,
   Send,
+  Undo2,
 } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
-import { createWeeklyReport, exportWeeklyReportDocxById, getCurrentWeeklyReport, submitWeeklyReport } from '../api/reportApi';
+import { createWeeklyReport, exportWeeklyReportDocxById, getCurrentWeeklyReport, submitWeeklyReport, recallReport } from '../api/reportApi';
 import type { ReportPeriod, WeeklyReportPayload } from '../types/report';
 import type { User } from '../types/user';
+import ConfirmModal from '../components/ui/ConfirmModal';
 
 function readUser() {
   const rawUser = localStorage.getItem('user');
@@ -139,6 +141,23 @@ export default function EmployeeReport() {
   const [exporting, setExporting] = useState(false);
   const [message, setMessage] = useState('Bản nháp chưa lưu');
   const [error, setError] = useState('');
+  const [isRecallOpen, setIsRecallOpen] = useState(false);
+
+  const handleRecallReport = async () => {
+    if (!reportId) return;
+    setSaving(true);
+    setError('');
+    try {
+      const recalled = await recallReport(reportId);
+      setReportStatus(recalled.status);
+      setMessage('Đã thu hồi báo cáo. Trạng thái hiện tại: Nháp.');
+      setIsRecallOpen(false);
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Không thu hồi được báo cáo');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const sender = requireText(user.fullName, 'Thiếu họ tên người dùng trong phiên đăng nhập');
   const department = requireText(user.department, 'Thiếu đơn vị người dùng trong phiên đăng nhập');
@@ -313,6 +332,17 @@ export default function EmployeeReport() {
           >
             Hủy
           </button>
+          {reportStatus === 'pending' && period?.status === 'open' && (
+            <button
+              className="inline-flex items-center gap-2 rounded-lg bg-error px-5 py-2.5 font-semibold text-white shadow-level-1 transition-colors hover:bg-error/95 disabled:opacity-60"
+              type="button"
+              disabled={saving}
+              onClick={() => setIsRecallOpen(true)}
+            >
+              {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Undo2 className="h-5 w-5" />}
+              Thu hồi báo cáo
+            </button>
+          )}
           <button
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 font-semibold text-white shadow-level-1 transition-colors hover:bg-primary-container disabled:opacity-60"
             type="button"
@@ -345,9 +375,10 @@ export default function EmployeeReport() {
                 <input
                   type="text"
                   placeholder="Nhập lĩnh vực phụ trách (Ví dụ: Y TẾ, VĂN HÓA...)"
-                  className="mt-1 w-full text-center text-sm font-semibold uppercase text-primary outline-none border-b border-dashed border-outline-variant bg-transparent placeholder:text-outline-variant focus:border-primary md:text-base"
+                  className="mt-1 w-full text-center text-sm font-semibold uppercase text-primary outline-none border-b border-dashed border-outline-variant bg-transparent placeholder:text-outline-variant focus:border-primary md:text-base disabled:opacity-75"
                   value={form.field}
                   onChange={(e) => updateField('field', e.target.value)}
+                  disabled={loading || saving || (reportStatus !== '' && reportStatus !== 'draft')}
                 />
               </div>
               <div className="text-center text-sm md:text-base">
@@ -377,10 +408,11 @@ export default function EmployeeReport() {
               <div>
                 <label className="mb-2 block font-semibold text-on-surface">Kết quả thực hiện</label>
                 <textarea
-                  className="min-h-[120px] w-full resize-y rounded-md border border-outline-variant bg-surface p-3 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary md:min-h-[160px] md:p-4"
+                  className="min-h-[120px] w-full resize-y rounded-md border border-outline-variant bg-surface p-3 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary md:min-h-[160px] md:p-4 disabled:opacity-75"
                   placeholder="Nhập các nội dung theo từng dòng. Khi xuất Word, mỗi dòng sẽ thành một gạch đầu dòng."
                   value={form.content}
                   onChange={(event) => updateField('content', event.target.value)}
+                  disabled={loading || saving || (reportStatus !== '' && reportStatus !== 'draft')}
                 />
               </div>
             </div>
@@ -394,10 +426,11 @@ export default function EmployeeReport() {
               Trong {dynamicReportWindow.nextPeriod.toLowerCase()}, sẽ tập trung vào các nhiệm vụ cụ thể như sau:
             </p>
             <textarea
-              className="min-h-[100px] w-full resize-y rounded-md border border-outline-variant bg-surface p-3 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary md:min-h-[150px] md:p-4"
+              className="min-h-[100px] w-full resize-y rounded-md border border-outline-variant bg-surface p-3 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary md:min-h-[150px] md:p-4 disabled:opacity-75"
               placeholder="Nhập nhiệm vụ tuần sau theo từng dòng."
               value={form.nextTasks}
               onChange={(event) => updateField('nextTasks', event.target.value)}
+              disabled={loading || saving || (reportStatus !== '' && reportStatus !== 'draft')}
             />
           </section>
 
@@ -406,10 +439,11 @@ export default function EmployeeReport() {
               III. TỒN TẠI, HẠN CHẾ
             </h3>
             <textarea
-              className="min-h-[80px] w-full resize-y rounded-md border border-outline-variant bg-surface p-3 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary md:min-h-[120px] md:p-4"
+              className="min-h-[80px] w-full resize-y rounded-md border border-outline-variant bg-surface p-3 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary md:min-h-[120px] md:p-4 disabled:opacity-75"
               placeholder="Nhập các tồn tại, hạn chế (nếu có)."
               value={form.difficulties}
               onChange={(event) => updateField('difficulties', event.target.value)}
+              disabled={loading || saving || (reportStatus !== '' && reportStatus !== 'draft')}
             />
           </section>
 
@@ -418,10 +452,11 @@ export default function EmployeeReport() {
               IV. KIẾN NGHỊ ĐỀ XUẤT
             </h3>
             <textarea
-              className="min-h-[120px] w-full resize-y rounded-md border border-outline-variant bg-surface p-4 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary"
+              className="min-h-[120px] w-full resize-y rounded-md border border-outline-variant bg-surface p-4 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary disabled:opacity-75"
               placeholder="Nhập kiến nghị đề xuất (nếu có)."
               value={form.proposals}
               onChange={(event) => updateField('proposals', event.target.value)}
+              disabled={loading || saving || (reportStatus !== '' && reportStatus !== 'draft')}
             />
           </section>
 
@@ -438,6 +473,16 @@ export default function EmployeeReport() {
           </section>
         </form>
       </div>
+      <ConfirmModal
+        isOpen={isRecallOpen}
+        onClose={() => setIsRecallOpen(false)}
+        onConfirm={handleRecallReport}
+        title="Thu hồi báo cáo"
+        message="Bạn có chắc chắn muốn thu hồi báo cáo đã nộp? Trạng thái sẽ quay về Nháp để bạn chỉnh sửa."
+        confirmText="Thu hồi"
+        cancelText="Hủy"
+        isLoading={saving}
+      />
     </AppLayout>
   );
 }

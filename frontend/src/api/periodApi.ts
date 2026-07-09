@@ -30,3 +30,26 @@ export async function archivePeriod(id: string) {
   const response = await apiClient.patch<ReportPeriod>(`/periods/${id}/archive`);
   return response.data;
 }
+
+export async function deletePeriod(id: string) {
+  const response = await apiClient.delete<{ success: boolean }>(`/periods/${id}`);
+  return response.data;
+}
+
+export async function createPeriodManually(payload: {
+  type: 'weekly' | 'monthly';
+  title: string;
+  startDate: string;
+  dueDate: string;
+  weekNumber?: number;
+  month?: number;
+  year: number;
+}) {
+  const response = await apiClient.post<ReportPeriod>('/periods/manual', payload);
+  return response.data;
+}
+
+export async function forceGeneratePeriod(type: 'weekly' | 'monthly') {
+  const response = await apiClient.post<ReportPeriod>('/periods/auto-generate', { type });
+  return response.data;
+}

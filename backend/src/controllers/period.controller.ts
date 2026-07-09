@@ -1,6 +1,6 @@
 import { NextFunction, Response } from 'express';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
-import { getOpenPeriod, listPeriods, setPeriodStatus, updatePeriodDueDate, ensureCurrentWeekPeriod } from '../services/period.service';
+import { getOpenPeriod, listPeriods, setPeriodStatus, updatePeriodDueDate, ensureCurrentWeekPeriod, deletePeriod, createPeriodManually, forceGeneratePeriod } from '../services/period.service';
 import { writeAuditLog } from '../services/audit.service';
 
 export async function getPeriods(req: AuthenticatedRequest, res: Response, next: NextFunction) {
@@ -91,6 +91,67 @@ export async function archivePeriod(req: AuthenticatedRequest, res: Response, ne
       details: `Lưu trữ kỳ báo cáo: ${period.title}`,
     });
     res.json(period);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deletePeriodController(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    const period = await deletePeriod(String(req.params.id));
+    void writeAuditLog({
+      action: 'DELETE',
+      category: 'period',
+      user: req.user,
+      targetType: 'ReportPeriod',
+      targetId: String(req.params.id),
+      details: `Xóa kỳ báo cáo: ${period.title}`,
+    });
+    res.json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function postCreatePeriodManually(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    const creatorId = req.user ? req.user.id : null;
+    const period = await createPeriodManually({
+      ...req.body,
+      createdBy: creatorId,
+    });
+    void writeAuditLog({
+      action: 'CREATE',
+      category: 'period',
+      user: req.user,
+      targetType: 'ReportPeriod',
+      targetId: String(period._id),
+      details: `Tạo kỳ báo cáo thủ công: ${period.title}`,
+    });
+    res.status(201).json(period);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function postForceGeneratePeriod(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    const { type } = req.body;
+    if (type !== 'weekly' && type !== 'monthly') {
+      const error = new Error('Loại kỳ báo cáo không hợp lệ');
+      Object.assign(error, { statusCode: 400 });
+      throw error;
+    }
+    const period = await forceGeneratePeriod(type);
+    void writeAuditLog({
+      action: 'CREATE',
+      category: 'period',
+      user: req.user,
+      targetType: 'ReportPeriod',
+      targetId: String(period._id),
+      details: `Tự động tạo kỳ báo cáo (${type}): ${period.title}`,
+    });
+    res.status(201).json(period);
   } catch (err) {
     next(err);
   }

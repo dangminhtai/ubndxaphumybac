@@ -59,3 +59,8 @@ export async function returnReport(id: string, reason: string) {
   const response = await apiClient.post<Report>(`/reports/${id}/return`, { reason });
   return response.data;
 }
+
+export async function recallReport(id: string) {
+  const response = await apiClient.post<Report>(`/reports/${id}/recall`);
+  return response.data;
+}

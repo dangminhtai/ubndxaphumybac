@@ -11,11 +11,13 @@ import {
   Save,
   Send,
   Underline,
+  Undo2,
 } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
-import { createMonthlyStaffReport, getMonthlyStaffCurrent, submitMonthlyStaffReport } from '../api/reportApi';
+import { createMonthlyStaffReport, getMonthlyStaffCurrent, submitMonthlyStaffReport, recallReport } from '../api/reportApi';
 import type { ReportPeriod, MonthlyStaffPayload } from '../types/report';
 import type { User } from '../types/user';
+import ConfirmModal from '../components/ui/ConfirmModal';
 
 function readUser() {
   const rawUser = localStorage.getItem('user');
@@ -136,10 +138,12 @@ function ReportEditor({
   section,
   value,
   onChange,
+  disabled = false,
 }: {
   section: EditorSection;
   value: string;
   onChange: (val: string) => void;
+  disabled?: boolean;
 }) {
   return (
     <section>
@@ -153,10 +157,11 @@ function ReportEditor({
       <div className="overflow-hidden rounded-lg border border-outline-variant bg-surface focus-within:border-primary">
         <Toolbar orderedList={section.orderedList} />
         <textarea
-          className={`${section.heightClass} w-full resize-y border-none bg-transparent p-4 font-doc-preview text-doc-preview text-on-surface outline-none`}
+          className={`${section.heightClass} w-full resize-y border-none bg-transparent p-4 font-doc-preview text-doc-preview text-on-surface outline-none disabled:opacity-75`}
           placeholder={section.placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
         />
       </div>
     </section>
@@ -181,6 +186,23 @@ export default function MonthlyReport() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('Bản nháp chưa lưu');
   const [error, setError] = useState('');
+  const [isRecallOpen, setIsRecallOpen] = useState(false);
+
+  const handleRecallReport = async () => {
+    if (!reportId) return;
+    setSaving(true);
+    setError('');
+    try {
+      const recalled = await recallReport(reportId);
+      setReportStatus(recalled.status);
+      setMessage('Đã thu hồi báo cáo. Trạng thái hiện tại: Nháp.');
+      setIsRecallOpen(false);
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Không thu hồi được báo cáo');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const sender = requireText(user.fullName, 'Thiếu họ tên người dùng trong phiên đăng nhập');
   const department = requireText(user.department, 'Thiếu đơn vị người dùng trong phiên đăng nhập');
@@ -283,6 +305,17 @@ export default function MonthlyReport() {
           >
             Hủy bỏ
           </button>
+          {reportStatus === 'pending' && period?.status === 'open' && (
+            <button
+              className="inline-flex items-center gap-1.5 md:gap-2 rounded-lg bg-error px-4 py-2 text-sm md:text-base md:px-6 md:py-2.5 font-semibold text-white shadow-level-1 transition-colors hover:bg-error/95 disabled:opacity-60"
+              type="button"
+              disabled={saving}
+              onClick={() => setIsRecallOpen(true)}
+            >
+              {saving ? <Loader2 className="h-4 w-4 md:h-5 md:w-5 animate-spin" /> : <Undo2 className="h-4 w-4 md:h-5 md:w-5" />}
+              Thu hồi báo cáo
+            </button>
+          )}
           <button
             className="inline-flex items-center gap-1.5 md:gap-2 rounded-lg bg-surface-container-high px-4 py-2 text-sm md:text-base md:px-6 md:py-2.5 font-semibold text-primary transition-colors hover:bg-surface-container-highest disabled:opacity-60"
             type="button"
@@ -332,6 +365,7 @@ export default function MonthlyReport() {
                   section={section}
                   value={form[section.fieldKey as keyof typeof form] || ''}
                   onChange={(val) => updateField(section.fieldKey as keyof typeof form, val)}
+                  disabled={loading || saving || (reportStatus !== '' && reportStatus !== 'draft')}
                 />
               ))}
             </div>
@@ -359,6 +393,16 @@ export default function MonthlyReport() {
           </section>
         </form>
       </div>
+      <ConfirmModal
+        isOpen={isRecallOpen}
+        onClose={() => setIsRecallOpen(false)}
+        onConfirm={handleRecallReport}
+        title="Thu hồi báo cáo"
+        message="Bạn có chắc chắn muốn thu hồi báo cáo đã nộp? Trạng thái sẽ quay về Nháp để bạn chỉnh sửa."
+        confirmText="Thu hồi"
+        cancelText="Hủy"
+        isLoading={saving}
+      />
     </AppLayout>
   );
 }

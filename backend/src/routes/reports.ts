@@ -10,7 +10,8 @@ import {
   getMonthlyStaffCurrent,
   postMonthlyStaffReport,
   submitMonthlyStaff,
-  postReturnReport
+  postReturnReport,
+  postRecallReport
 } from '../controllers/report.controller';
 import { requireAuth, requirePasswordReady, requireRole } from '../middleware/auth.middleware';
 
@@ -31,5 +32,6 @@ router.get('/monthly-staff/current', getMonthlyStaffCurrent);
 router.post('/monthly-staff', postMonthlyStaffReport);
 router.post('/:id/submit-monthly', submitMonthlyStaff);
 router.post('/:id/return', requireRole('admin'), postReturnReport);
+router.post('/:id/recall', postRecallReport);
 
 export default router;

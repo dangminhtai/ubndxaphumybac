@@ -237,6 +237,42 @@ export async function returnReport(reportId: string, reason: string, adminUser: 
   return report;
 }
 
+export async function recallReport(reportId: string, user: AuthUser) {
+  const report = await Report.findById(reportId).populate('periodId');
+  if (!report) {
+    const error = new Error('Không tìm thấy báo cáo');
+    Object.assign(error, { statusCode: 404 });
+    throw error;
+  }
+
+  const period: any = report.periodId;
+  if (period && period.status !== 'open') {
+    const error = new Error('Kỳ báo cáo đã bị khóa hoặc lưu trữ, không thể thu hồi');
+    Object.assign(error, { statusCode: 400 });
+    throw error;
+  }
+
+  if (report.ownerId?.toString() !== user.id && user.role !== 'admin') {
+    const error = new Error('Bạn không có quyền thu hồi báo cáo này');
+    Object.assign(error, { statusCode: 403 });
+    throw error;
+  }
+
+  if (report.status !== 'pending') {
+    const error = new Error('Chỉ có thể thu hồi báo cáo ở trạng thái chờ duyệt (pending)');
+    Object.assign(error, { statusCode: 400 });
+    throw error;
+  }
+
+  report.status = 'draft';
+  if (report.submittedAt) {
+    report.submittedAt = undefined;
+  }
+  await report.save();
+
+  return report;
+}
+
 async function resolveMonthlyPeriod(periodId?: string) {
   const period = periodId
     ? await ReportPeriod.findById(periodId)

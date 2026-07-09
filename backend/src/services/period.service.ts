@@ -1,4 +1,5 @@
 import ReportPeriod from '../models/ReportPeriod';
+import Report from '../models/Report';
 import { notifyAllUsers } from './notification.service';
 
 /* ── helpers ── */
@@ -164,4 +165,82 @@ export async function updatePeriodDueDate(periodId: string, newDueDate: string) 
     throw error;
   }
   return period;
+}
+
+export async function deletePeriod(periodId: string) {
+  const period = await ReportPeriod.findById(periodId);
+  if (!period) {
+    const error = new Error('Không tìm thấy kỳ báo cáo');
+    Object.assign(error, { statusCode: 404 });
+    throw error;
+  }
+
+  // Delete all reports belonging to this period
+  await Report.deleteMany({ periodId });
+  
+  // Delete the period itself
+  await period.deleteOne();
+  return period;
+}
+
+export async function createPeriodManually(input: {
+  type: 'weekly' | 'monthly';
+  title: string;
+  startDate: string;
+  dueDate: string;
+  weekNumber?: number;
+  month?: number;
+  year: number;
+  createdBy?: any;
+}) {
+  if (!input.title || !input.startDate || !input.dueDate || !input.year) {
+    const error = new Error('Vui lòng điền đầy đủ tiêu đề, ngày bắt đầu, ngày kết thúc và năm');
+    Object.assign(error, { statusCode: 400 });
+    throw error;
+  }
+
+  // Check unique constraints (if not archived)
+  const existing = await ReportPeriod.findOne({
+    type: input.type,
+    year: input.year,
+    month: input.month,
+    weekNumber: input.weekNumber,
+    status: { $ne: 'archived' },
+  });
+
+  if (existing) {
+    const error = new Error('Kỳ báo cáo có cấu hình tương tự đã tồn tại và chưa được lưu trữ.');
+    Object.assign(error, { statusCode: 409 });
+    throw error;
+  }
+
+  const period = await ReportPeriod.create({
+    type: input.type,
+    title: input.title,
+    weekNumber: input.weekNumber || 0,
+    month: input.month || 0,
+    year: input.year,
+    startDate: new Date(input.startDate),
+    dueDate: new Date(input.dueDate),
+    status: 'open',
+    createdBy: input.createdBy,
+  });
+
+  void notifyAllUsers({
+    title: 'Kỳ báo cáo mới',
+    message: `Kỳ báo cáo "${period.title}" đã được tạo thủ công. Hạn nộp: ${new Date(period.dueDate).toLocaleDateString('vi-VN')}`,
+    type: 'period_opened',
+    link: period.type === 'weekly' ? '/weekly-report' : '/monthly-report',
+    excludeRoles: ['admin'],
+  });
+
+  return period;
+}
+
+export async function forceGeneratePeriod(type: 'weekly' | 'monthly') {
+  if (type === 'weekly') {
+    return ensureCurrentWeekPeriod();
+  } else {
+    return ensureCurrentMonthPeriod();
+  }
 }
