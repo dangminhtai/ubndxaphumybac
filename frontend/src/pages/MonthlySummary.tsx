@@ -156,6 +156,7 @@ export default function MonthlySummaryPage() {
 
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [totalStaff, setTotalStaff] = useState(0);
 
   useEffect(() => {
     const loadData = async () => {
@@ -186,6 +187,9 @@ export default function MonthlySummaryPage() {
         });
         if (data.employeeReports) {
           setEmployeeReports(data.employeeReports);
+        }
+        if (data.totalStaffUsers !== undefined) {
+          setTotalStaff(data.totalStaffUsers);
         }
       } catch (err: any) {
         setError('Lỗi tải bản tổng hợp: ' + err.message);
@@ -218,11 +222,17 @@ export default function MonthlySummaryPage() {
   const handleGenerate = async () => {
     if (!periodId) return;
     
+    const submittedCount = employeeReports.length;
+    const isEarly = totalStaff > 0 && submittedCount < totalStaff;
+    const message = isEarly
+      ? `Cảnh báo: Hiện mới chỉ có ${submittedCount}/${totalStaff} nhân viên nộp báo cáo. Bạn có chắc chắn muốn TỔNG HỢP SỚM không? Hệ thống sẽ chỉ tổng hợp dữ liệu từ các báo cáo đã nộp và ghi đè nội dung hiện tại.`
+      : 'Tạo tổng hợp tự động sẽ ghi đè nội dung hiện tại bằng dữ liệu từ các báo cáo chuyên viên đã nộp. Bạn có chắc chắn?';
+
     setDialogState({
       isOpen: true,
       type: 'confirm',
-      title: 'Tạo tổng hợp tự động',
-      message: 'Tạo tổng hợp tự động sẽ ghi đè nội dung hiện tại bằng dữ liệu từ các báo cáo chuyên viên đã nộp. Bạn có chắc chắn?',
+      title: isEarly ? 'Tổng hợp báo cáo sớm' : 'Tạo tổng hợp tự động',
+      message,
       confirmText: 'Đồng ý',
       onConfirm: async () => {
         closeDialog();

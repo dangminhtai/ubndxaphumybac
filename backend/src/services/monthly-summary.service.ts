@@ -35,6 +35,8 @@ export async function getMonthlySummaryByPeriod(periodId: string) {
   // Lọc bỏ những báo cáo của user đã bị xóa hoặc vô hiệu hóa
   const employeeReports = rawEmployeeReports.filter(r => r.ownerId && (r.ownerId as any).isActive);
 
+  const totalStaffUsers = await User.countDocuments({ role: 'staff', isActive: true });
+
   let summary = await MonthlySummary.findOne({ periodId });
   if (!summary) {
     // Return empty summary shape if it doesn't exist
@@ -47,10 +49,11 @@ export async function getMonthlySummaryByPeriod(periodId: string) {
       nextTasks: '',
       status: 'draft',
       employeeReports,
+      totalStaffUsers,
     };
   }
 
-  return { ...summary.toObject(), employeeReports };
+  return { ...summary.toObject(), employeeReports, totalStaffUsers };
 }
 
 export async function generateMonthlySummaryFromStaff(periodId: string, user: AuthUser) {
@@ -82,11 +85,8 @@ export async function generateMonthlySummaryFromStaff(periodId: string, user: Au
 
   const staffReports = rawStaffReports.filter(r => r.ownerId && (r.ownerId as any).isActive);
 
-  const totalStaffUsers = await User.countDocuments({ role: 'staff', isActive: true });
-  const uniqueSubmitters = new Set(staffReports.map(r => r.ownerId!.toString()));
-
-  if (uniqueSubmitters.size < totalStaffUsers) {
-    const error = new Error(`Chưa đủ báo cáo. Hiện có ${uniqueSubmitters.size}/${totalStaffUsers} nhân viên đã nộp báo cáo.`);
+  if (staffReports.length === 0) {
+    const error = new Error('Chưa có nhân viên nào nộp báo cáo để tổng hợp.');
     Object.assign(error, { statusCode: 400 });
     throw error;
   }

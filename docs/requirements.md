@@ -130,3 +130,14 @@ Tiêu chí hoàn thành:
 - Bấm xóa hiện thông báo cảnh báo và xóa thành công kỳ báo cáo lẫn các báo cáo con của kỳ đó.
 - Thêm nút "Tạo tự động tuần hiện tại", "Tạo tự động tháng hiện tại" hoạt động đúng.
 - Thêm nút "Tạo thủ công" mở modal cho phép Admin nhập đầy đủ thông tin kỳ báo cáo và lưu thành công vào Database.
+
+## REQ013 - Cho phép tổng hợp báo cáo sớm (không bắt buộc đủ 7/7 nhân viên)
+
+Mô tả:
+- Admin có thể thực hiện tổng hợp báo cáo tự động ngay cả khi chưa đầy đủ tất cả nhân viên (staff) nộp báo cáo.
+- Hệ thống sẽ hiển thị cảnh báo cho Admin khi tổng hợp sớm và chỉ tổng hợp dữ liệu từ những người đã nộp.
+
+Tiêu chí hoàn thành:
+- Backend không báo lỗi hay chặn tổng hợp khi số lượng nhân viên đã nộp ít hơn tổng số nhân viên hoạt động.
+- Frontend hiển thị cảnh báo ghi rõ "Hiện mới chỉ có X/Y nhân viên nộp báo cáo..." khi Admin bấm "Tạo tổng hợp tự động" trước khi đủ số lượng.
+- Tiến trình tổng hợp hoàn thành bình thường và chỉ gộp nội dung của những người đã nộp.

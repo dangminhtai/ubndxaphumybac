@@ -13,6 +13,7 @@ export interface MonthlySummary {
   createdAt: string;
   updatedAt: string;
   employeeReports?: any[];
+  totalStaffUsers?: number;
 }
 
 export async function getMonthlySummary(periodId: string) {
