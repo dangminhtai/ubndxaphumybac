@@ -107,3 +107,26 @@ Tiêu chí hoàn thành:
 - Tên tài liệu đính kèm hiển thị chính xác.
 - Nhấn vào biểu tượng thùng rác hiện popup xác nhận UI/UX đẹp.
 - Xác nhận xóa thành công, API cập nhật trường `attachmentUrl` thành rỗng.
+
+## REQ011 - Cho phép Chuyên viên tự thu hồi báo cáo tuần / tháng
+
+Mô tả:
+- Cho phép Chuyên viên tự thu hồi báo cáo đã gửi (trạng thái pending) về trạng thái nháp (draft) để tự chỉnh sửa khi còn hạn (kỳ báo cáo đang ở trạng thái open). Không nhất thiết phải đợi Admin từ chối/trả về.
+
+Tiêu chí hoàn thành:
+- Thêm nút "Thu hồi báo cáo" ở trang báo cáo tuần và báo cáo tháng khi báo cáo đang ở trạng thái pending và kỳ báo cáo đang open.
+- Nhấn thu hồi gọi API đổi trạng thái báo cáo về draft.
+- Sau khi thu hồi, mở khóa các ô nhập liệu cho phép chỉnh sửa và gửi lại.
+
+## REQ012 - Quản lý kỳ báo cáo (Xóa, Tạo tự động, Tạo thủ công)
+
+Mô tả:
+- Admin có quyền xóa kỳ báo cáo và toàn bộ báo cáo con đi kèm.
+- Admin có thể tự động tạo lại kỳ báo cáo tuần/tháng hiện tại.
+- Admin có thể tạo thủ công kỳ báo cáo với ngày bắt đầu, ngày hết hạn và tiêu đề tùy chỉnh.
+
+Tiêu chí hoàn thành:
+- Có nút "Xóa" kế bên nút "Lưu trữ" ở trang Quản lý kỳ báo cáo của Admin.
+- Bấm xóa hiện thông báo cảnh báo và xóa thành công kỳ báo cáo lẫn các báo cáo con của kỳ đó.
+- Thêm nút "Tạo tự động tuần hiện tại", "Tạo tự động tháng hiện tại" hoạt động đúng.
+- Thêm nút "Tạo thủ công" mở modal cho phép Admin nhập đầy đủ thông tin kỳ báo cáo và lưu thành công vào Database.
