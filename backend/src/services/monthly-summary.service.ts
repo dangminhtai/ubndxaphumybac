@@ -61,9 +61,9 @@ function formatReportHeading(r: IReport): string {
   const fieldStr = r.field ? r.field.trim() : '';
   if (fieldStr) {
     const capitalized = fieldStr.charAt(0).toUpperCase() + fieldStr.slice(1);
-    return `- Lĩnh vực ${capitalized}:`;
+    return `- ${capitalized}`;
   }
-  return `- Phòng ban ${departmentStr}:`;
+  return `- ${departmentStr}`;
 }
 
 export async function generateMonthlySummaryFromStaff(periodId: string, user: AuthUser) {

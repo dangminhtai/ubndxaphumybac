@@ -35,32 +35,60 @@ def format_place_date(today=None):
     return f"Phù Mỹ Bắc, ngày {today.day} tháng {today.month} năm {today.year}"
 
 
+def markdown_to_html(text):
+    import re
+    text = re.sub(r'\*\*\*(.*?)\*\*\*', r'<b><i>\1</i></b>', text)
+    text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
+    text = re.sub(r'\*(.*?)\*', r'<i>\1</i>', text)
+    return text
+
+def parse_html_to_lines(html_text):
+    import re
+    # Convert <br> and <br/> to newline
+    text = re.sub(r'<br\s*/?>', '\n', html_text)
+    # Convert closing block tags to newlines
+    text = re.sub(r'</(p|div|li|h1|h2|h3|h4|h5|h6)>', '\n', text)
+    # Remove opening block tags
+    text = re.sub(r'<(p|div|li|ul|ol|h1|h2|h3|h4|h5|h6)[^>]*>', '', text)
+    
+    raw_lines = text.splitlines()
+    lines = []
+    for line in raw_lines:
+        line_clean = line.strip()
+        if line_clean:
+            lines.append(line_clean)
+    return lines
+
 def parse_runs(text):
     import re
-    pattern = re.compile(r'(\*\*\*.*?\*\*\*|\*\*.*?\*\*|\*.*?\*|<u>.*?</u>)')
+    import html
+    pattern = re.compile(r'(<[a-zA-Z/]+[^>]*>)')
     parts = pattern.split(text)
     runs = []
+    bold = False
+    italic = False
+    underline = False
     for part in parts:
         if not part:
             continue
-        bold = False
-        italic = False
-        underline = False
-        clean_text = part
-        if part.startswith("***") and part.endswith("***"):
-            bold = True
-            italic = True
-            clean_text = part[3:-3]
-        elif part.startswith("**") and part.endswith("**"):
-            bold = True
-            clean_text = part[2:-2]
-        elif part.startswith("*") and part.endswith("*"):
-            italic = True
-            clean_text = part[1:-1]
-        elif part.startswith("<u>") and part.endswith("</u>"):
-            underline = True
-            clean_text = part[3:-4]
-        runs.append((clean_text, bold, italic, underline))
+        if part.startswith("<") and part.endswith(">"):
+            tag = part.lower()
+            if tag in ["<b>", "<strong>"]:
+                bold = True
+            elif tag in ["</b>", "</strong>"]:
+                bold = False
+            elif tag in ["<i>", "<i>", "<em>"]:
+                italic = True
+            elif tag in ["</i>", "</i>", "</em>"]:
+                italic = False
+            elif tag == "<u>":
+                underline = True
+            elif tag == "</u>":
+                underline = False
+        else:
+            clean_text = html.unescape(part)
+            if clean_text:
+                runs.append((clean_text, bold, italic, underline))
     return runs
 
 def paragraph_runs(runs, *, align=None, size=28, spacing_after=120, default_bold=False, default_italic=False):
@@ -93,7 +121,8 @@ def paragraph_runs(runs, *, align=None, size=28, spacing_after=120, default_bold
     """
 
 def paragraph(text="", *, bold=False, align=None, size=28, spacing_after=120, italic=False):
-    runs = parse_runs(text)
+    html_text = markdown_to_html(text)
+    runs = parse_runs(html_text)
     return paragraph_runs(runs, align=align, size=size, spacing_after=spacing_after, default_bold=bold, default_italic=italic)
 
 
@@ -107,16 +136,25 @@ def bullet(text):
         return ""
     if cleaned.startswith("-"):
         cleaned = cleaned[1:].strip()
-    return paragraph(f"- {cleaned}", size=28, spacing_after=80)
+    runs = parse_runs(cleaned)
+    if runs:
+        runs[0] = (f"- {runs[0][0]}", runs[0][1], runs[0][2], runs[0][3])
+    return paragraph_runs(runs, size=28, spacing_after=80)
 
 
 def multiline_block(text):
-    lines = [line.strip() for line in str(text or "").splitlines() if line.strip()]
+    html_text = markdown_to_html(str(text or ""))
+    lines = parse_html_to_lines(html_text)
     if not lines:
         return ""
-    if len(lines) == 1:
-        return paragraph(lines[0], size=28)
-    return "".join(bullet(line) for line in lines)
+    output = []
+    for line in lines:
+        if line.startswith("-"):
+            output.append(bullet(line))
+        else:
+            runs = parse_runs(line)
+            output.append(paragraph_runs(runs, size=28, spacing_after=120))
+    return "".join(output)
 
 
 def get_section_properties(template_path):

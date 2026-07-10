@@ -145,14 +145,14 @@ Tiêu chí hoàn thành:
 ## REQ014 - Thay đổi cấu trúc tiêu đề gộp trong Bản tổng hợp báo cáo tháng
 
 Mô tả:
-- Thay vì lấy tên nhân viên `[Tên nhân viên - Tên phòng ban]` làm tiêu đề phân tách khi tổng hợp báo cáo tự động, hệ thống sẽ sử dụng định dạng văn bản thường `- Lĩnh vực: [Tên lĩnh vực]` (nếu có lĩnh vực) hoặc `- Phòng ban: [Tên phòng ban]` (nếu không có lĩnh vực).
+- Thay vì lấy tên nhân viên `[Tên nhân viên - Tên phòng ban]` làm tiêu đề phân tách khi tổng hợp báo cáo tự động, hệ thống sẽ sử dụng định dạng văn bản thường `- [Tên lĩnh vực]` (nếu có lĩnh vực) hoặc `- [Tên phòng ban]` (nếu không có lĩnh vực).
 - Định dạng này không sử dụng cú pháp markdown (`###`) để tối ưu hóa trải nghiệm người dùng (UX) cho Admin (người không rành kỹ thuật), tránh gây bối rối khi chỉnh sửa trong ô soạn thảo văn bản thô.
 - Khi xuất file Word (DOCX), định dạng này sẽ hiển thị tương thích dưới dạng dòng gạch đầu dòng phân cấp rõ ràng.
 
 Tiêu chí hoàn thành:
 - Khi bấm "Tạo tổng hợp tự động", nội dung được gộp không chứa tên của nhân viên hay ký tự markdown `### `.
-- Tiêu đề phân tách chuyển thành dạng `- Lĩnh vực [Lĩnh vực]:` (ví dụ: `- Lĩnh vực Y tế:` hoặc `- Lĩnh vực Cải cách hành chính:`).
-- Nếu không có lĩnh vực thì tự động lấy `- Phòng ban [Tên phòng ban]:` làm tiêu đề phân tách.
+- Tiêu đề phân tách chuyển thành dạng `- [Lĩnh vực]` (ví dụ: `- Y tế` hoặc `- Cải cách hành chính`).
+- Nếu không có lĩnh vực thì tự động lấy `- [Tên phòng ban]` làm tiêu đề phân tách.
 - Áp dụng thành công cho cả 4 phần nội dung tổng hợp.
 
 ## REQ015 - Kích hoạt thanh công cụ định dạng và tích hợp vào file xuất Word (DOCX)
