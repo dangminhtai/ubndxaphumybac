@@ -59,7 +59,11 @@ export async function getMonthlySummaryByPeriod(periodId: string) {
 function formatReportHeading(r: IReport): string {
   const departmentStr = r.department ? r.department.trim() : 'Chưa phân phòng';
   const fieldStr = r.field ? r.field.trim() : '';
-  return fieldStr ? `### ${fieldStr}` : `### ${departmentStr}`;
+  if (fieldStr) {
+    const capitalized = fieldStr.charAt(0).toUpperCase() + fieldStr.slice(1);
+    return `- Lĩnh vực ${capitalized}:`;
+  }
+  return `- Phòng ban ${departmentStr}:`;
 }
 
 export async function generateMonthlySummaryFromStaff(periodId: string, user: AuthUser) {
