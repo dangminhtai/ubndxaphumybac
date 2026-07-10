@@ -201,7 +201,7 @@ def build_document_xml(payload, template_path):
     body.append(section_heading("IV. PHƯƠNG HƯỚNG, NHIỆM VỤ TỚI"))
     body.append(multiline_block(next_tasks))
 
-    body.append(paragraph("Kính báo cáo lãnh đạo Phòng biết và chỉ đạo./.", size=28, spacing_after=320))
+    body.append(paragraph("Kính báo cáo lãnh đạo Phòng biết và chỉ đạo.", size=28, spacing_after=320))
     body.append(paragraph("Trưởng phòng", bold=True, align="right", size=28, spacing_after=360))
 
     return f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
