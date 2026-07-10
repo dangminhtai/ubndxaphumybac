@@ -141,3 +141,15 @@ Tiêu chí hoàn thành:
 - Backend không báo lỗi hay chặn tổng hợp khi số lượng nhân viên đã nộp ít hơn tổng số nhân viên hoạt động.
 - Frontend hiển thị cảnh báo ghi rõ "Hiện mới chỉ có X/Y nhân viên nộp báo cáo..." khi Admin bấm "Tạo tổng hợp tự động" trước khi đủ số lượng.
 - Tiến trình tổng hợp hoàn thành bình thường và chỉ gộp nội dung của những người đã nộp.
+
+## REQ014 - Thay đổi cấu trúc tiêu đề gộp trong Bản tổng hợp báo cáo tháng
+
+Mô tả:
+- Thay vì lấy tên nhân viên `[Tên nhân viên - Tên phòng ban]` làm tiêu đề phân tách khi tổng hợp báo cáo tự động, hệ thống sẽ sử dụng định dạng tiêu đề `### [Tên phòng ban] - LĨNH VỰC: [Tên lĩnh vực]` (nếu có lĩnh vực) hoặc `### [Tên phòng ban]` (nếu không có).
+- Định dạng này được áp dụng đồng bộ cho tất cả các phần gộp (Kết quả thực hiện, Khó khăn vướng mắc, Kiến nghị đề xuất, Phương hướng nhiệm vụ).
+- Điều này giúp bản tổng hợp tự động có bố cục phân tách rõ ràng theo phòng ban và lĩnh vực chuyên môn của chuyên viên đã nhập, giúp Admin dễ dàng chỉnh lý và xuất văn bản hơn.
+
+Tiêu chí hoàn thành:
+- Khi bấm "Tạo tổng hợp tự động", nội dung được gộp không còn chứa tên của nhân viên (ví dụ: `Phan Thị Tú Quyên`) ở tiêu đề phân tách.
+- Tiêu đề phân tách chuyển thành dạng markdown `### PHÒNG VĂN HÓA - XÃ HỘI - LĨNH VỰC: [LĨNH VỰC]` (in hoa).
+- Áp dụng thành công cho cả 4 phần nội dung tổng hợp.

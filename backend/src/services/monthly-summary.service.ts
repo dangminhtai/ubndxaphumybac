@@ -56,6 +56,12 @@ export async function getMonthlySummaryByPeriod(periodId: string) {
   return { ...summary.toObject(), employeeReports, totalStaffUsers };
 }
 
+function formatReportHeading(r: IReport): string {
+  const departmentStr = r.department ? r.department.trim().toUpperCase() : 'CHƯA PHÂN PHÒNG';
+  const fieldStr = r.field ? r.field.trim().toUpperCase() : '';
+  return fieldStr ? `### ${departmentStr} - LĨNH VỰC: ${fieldStr}` : `### ${departmentStr}`;
+}
+
 export async function generateMonthlySummaryFromStaff(periodId: string, user: AuthUser) {
   if (user.role !== 'admin') {
     const error = new Error('Chỉ admin mới có quyền tổng hợp báo cáo');
@@ -91,10 +97,10 @@ export async function generateMonthlySummaryFromStaff(periodId: string, user: Au
     throw error;
   }
 
-  const combinedContent = staffReports.map((r: IReport) => `[${r.sender} - ${r.department}]\n${r.content}`).join('\n\n');
-  const combinedDifficulties = staffReports.filter((r: IReport) => r.difficulties).map((r: IReport) => `[${r.sender}]\n${r.difficulties}`).join('\n\n');
-  const combinedProposals = staffReports.filter((r: IReport) => r.proposals).map((r: IReport) => `[${r.sender}]\n${r.proposals}`).join('\n\n');
-  const combinedNextTasks = staffReports.filter((r: IReport) => r.nextTasks).map((r: IReport) => `[${r.sender}]\n${r.nextTasks}`).join('\n\n');
+  const combinedContent = staffReports.map((r: IReport) => `${formatReportHeading(r)}\n${r.content}`).join('\n\n');
+  const combinedDifficulties = staffReports.filter((r: IReport) => r.difficulties).map((r: IReport) => `${formatReportHeading(r)}\n${r.difficulties}`).join('\n\n');
+  const combinedProposals = staffReports.filter((r: IReport) => r.proposals).map((r: IReport) => `${formatReportHeading(r)}\n${r.proposals}`).join('\n\n');
+  const combinedNextTasks = staffReports.filter((r: IReport) => r.nextTasks).map((r: IReport) => `${formatReportHeading(r)}\n${r.nextTasks}`).join('\n\n');
 
   let summary = await MonthlySummary.findOne({ periodId });
   if (summary) {
