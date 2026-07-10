@@ -35,27 +35,66 @@ def format_place_date(today=None):
     return f"Phù Mỹ Bắc, ngày {today.day} tháng {today.month} năm {today.year}"
 
 
-def paragraph(text="", *, bold=False, align=None, size=28, spacing_after=120, italic=False):
+def parse_runs(text):
+    import re
+    pattern = re.compile(r'(\*\*\*.*?\*\*\*|\*\*.*?\*\*|\*.*?\*|<u>.*?</u>)')
+    parts = pattern.split(text)
+    runs = []
+    for part in parts:
+        if not part:
+            continue
+        bold = False
+        italic = False
+        underline = False
+        clean_text = part
+        if part.startswith("***") and part.endswith("***"):
+            bold = True
+            italic = True
+            clean_text = part[3:-3]
+        elif part.startswith("**") and part.endswith("**"):
+            bold = True
+            clean_text = part[2:-2]
+        elif part.startswith("*") and part.endswith("*"):
+            italic = True
+            clean_text = part[1:-1]
+        elif part.startswith("<u>") and part.endswith("</u>"):
+            underline = True
+            clean_text = part[3:-4]
+        runs.append((clean_text, bold, italic, underline))
+    return runs
+
+def paragraph_runs(runs, *, align=None, size=28, spacing_after=120, default_bold=False, default_italic=False):
     justify = f'<w:jc w:val="{align}"/>' if align else ""
-    bold_tag = "<w:b/>" if bold else ""
-    italic_tag = "<w:i/>" if italic else ""
+    runs_xml = []
+    for text, bold, italic, underline in runs:
+        b_tag = "<w:b/>" if (bold or default_bold) else ""
+        i_tag = "<w:i/>" if (italic or default_italic) else ""
+        u_tag = '<w:u w:val="single"/>' if underline else ""
+        runs_xml.append(f"""
+      <w:r>
+        <w:rPr>
+          {b_tag}
+          {i_tag}
+          {u_tag}
+          <w:sz w:val="{size}"/>
+          <w:szCs w:val="{size}"/>
+        </w:rPr>
+        <w:t xml:space="preserve">{esc(text)}</w:t>
+      </w:r>
+        """)
     return f"""
     <w:p>
       <w:pPr>
         {justify}
         <w:spacing w:after="{spacing_after}"/>
       </w:pPr>
-      <w:r>
-        <w:rPr>
-          {bold_tag}
-          {italic_tag}
-          <w:sz w:val="{size}"/>
-          <w:szCs w:val="{size}"/>
-        </w:rPr>
-        <w:t xml:space="preserve">{esc(text)}</w:t>
-      </w:r>
+      {"".join(runs_xml)}
     </w:p>
     """
+
+def paragraph(text="", *, bold=False, align=None, size=28, spacing_after=120, italic=False):
+    runs = parse_runs(text)
+    return paragraph_runs(runs, align=align, size=size, spacing_after=spacing_after, default_bold=bold, default_italic=italic)
 
 
 def section_heading(text):

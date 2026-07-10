@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import {
   Bold,
   CheckCircle2,
@@ -63,19 +63,19 @@ function getMonthlyReportWindow() {
 interface EditorSection {
   number: number;
   title: string;
-  description?: string;
   placeholder: string;
   heightClass: string;
-  orderedList?: boolean;
-  fieldKey: keyof MonthlyStaffPayload;
+  description?: string;
+  orderedList: boolean;
+  fieldKey: 'content' | 'difficulties' | 'proposals' | 'nextTasks';
 }
 
 const SECTIONS: EditorSection[] = [
   {
     number: 1,
     title: 'Kết quả thực hiện',
-    description: 'Mô tả chi tiết các công việc đã hoàn thành trong tháng, số liệu cụ thể nếu có.',
-    placeholder: 'Nhập nội dung báo cáo tại đây...',
+    description: 'Nhập các nội dung kết quả thực hiện theo từng dòng. Khi xuất Word, mỗi dòng sẽ thành một gạch đầu dòng.',
+    placeholder: 'Kết quả công tác nổi bật trong tháng...',
     heightClass: 'min-h-[160px]',
     orderedList: true,
     fieldKey: 'content',
@@ -85,6 +85,7 @@ const SECTIONS: EditorSection[] = [
     title: 'Khó khăn, vướng mắc',
     placeholder: 'Nêu rõ những khó khăn gặp phải trong quá trình thực hiện nhiệm vụ...',
     heightClass: 'min-h-[120px]',
+    orderedList: true,
     fieldKey: 'difficulties',
   },
   {
@@ -92,6 +93,7 @@ const SECTIONS: EditorSection[] = [
     title: 'Kiến nghị, đề xuất',
     placeholder: 'Các đề xuất giải quyết vướng mắc (nếu có)...',
     heightClass: 'min-h-[120px]',
+    orderedList: true,
     fieldKey: 'proposals',
   },
   {
@@ -99,33 +101,114 @@ const SECTIONS: EditorSection[] = [
     title: 'Nhiệm vụ trọng tâm thời gian tới',
     placeholder: 'Kế hoạch công tác cho tháng tiếp theo...',
     heightClass: 'min-h-[120px]',
+    orderedList: true,
     fieldKey: 'nextTasks',
   },
 ];
 
-function Toolbar({ orderedList = false }: { orderedList?: boolean }) {
+function Toolbar({
+  textareaRef,
+  onChange,
+  orderedList = false,
+  disabled = false,
+}: {
+  textareaRef: React.RefObject<HTMLTextAreaElement>;
+  onChange: (val: string) => void;
+  orderedList?: boolean;
+  disabled?: boolean;
+}) {
+  const handleFormat = (type: 'bold' | 'italic' | 'underline' | 'list' | 'ordered-list') => {
+    if (disabled) return;
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selectedText = text.substring(start, end);
+
+    let replacement = '';
+    switch (type) {
+      case 'bold':
+        replacement = `**${selectedText || 'in đậm'}**`;
+        break;
+      case 'italic':
+        replacement = `*${selectedText || 'in nghiêng'}*`;
+        break;
+      case 'underline':
+        replacement = `<u>${selectedText || 'gạch chân'}</u>`;
+        break;
+      case 'list': {
+        const lines = selectedText.split('\n');
+        replacement = lines.map(line => line.startsWith('- ') ? line : `- ${line}`).join('\n');
+        if (!selectedText) replacement = '- ';
+        break;
+      }
+      case 'ordered-list': {
+        const lines = selectedText.split('\n');
+        replacement = lines.map((line, idx) => {
+          const prefix = `${idx + 1}. `;
+          return line.startsWith(prefix) ? line : `${prefix}${line}`;
+        }).join('\n');
+        if (!selectedText) replacement = '1. ';
+        break;
+      }
+    }
+
+    const newValue = text.substring(0, start) + replacement + text.substring(end);
+    onChange(newValue);
+
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start, start + replacement.length);
+    }, 0);
+  };
+
   return (
     <div className="flex items-center gap-2 rounded-t-lg border-b border-outline-variant bg-surface-container-low p-2">
-      <button className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high" type="button" aria-label="In đậm">
+      <button
+        className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-50"
+        type="button"
+        title="In đậm (Bold)"
+        disabled={disabled}
+        onClick={() => handleFormat('bold')}
+      >
         <Bold className="h-4 w-4" />
       </button>
-      <button className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high" type="button" aria-label="In nghiêng">
+      <button
+        className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-50"
+        type="button"
+        title="In nghiêng (Italic)"
+        disabled={disabled}
+        onClick={() => handleFormat('italic')}
+      >
         <Italic className="h-4 w-4" />
       </button>
-      {orderedList && (
-        <button className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high" type="button" aria-label="Gạch chân">
-          <Underline className="h-4 w-4" />
-        </button>
-      )}
+      <button
+        className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-50"
+        type="button"
+        title="Gạch chân (Underline)"
+        disabled={disabled}
+        onClick={() => handleFormat('underline')}
+      >
+        <Underline className="h-4 w-4" />
+      </button>
       <div className="mx-1 h-5 w-px bg-outline-variant" />
-      <button className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high" type="button" aria-label="Danh sách">
+      <button
+        className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-50"
+        type="button"
+        title="Danh sách gạch đầu dòng"
+        disabled={disabled}
+        onClick={() => handleFormat('list')}
+      >
         <List className="h-4 w-4" />
       </button>
       {orderedList && (
         <button
-          className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high"
+          className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-50"
           type="button"
-          aria-label="Danh sách đánh số"
+          title="Danh sách đánh số"
+          disabled={disabled}
+          onClick={() => handleFormat('ordered-list')}
         >
           <ListOrdered className="h-4 w-4" />
         </button>
@@ -145,6 +228,8 @@ function ReportEditor({
   onChange: (val: string) => void;
   disabled?: boolean;
 }) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   return (
     <section>
       <div className="mb-stack-sm flex items-center gap-2">
@@ -155,8 +240,9 @@ function ReportEditor({
       </div>
       {section.description && <p className="mb-stack-md text-sm text-on-surface-variant">{section.description}</p>}
       <div className="overflow-hidden rounded-lg border border-outline-variant bg-surface focus-within:border-primary">
-        <Toolbar orderedList={section.orderedList} />
+        <Toolbar textareaRef={textareaRef} onChange={onChange} orderedList={section.orderedList} disabled={disabled} />
         <textarea
+          ref={textareaRef}
           className={`${section.heightClass} w-full resize-y border-none bg-transparent p-4 font-doc-preview text-doc-preview text-on-surface outline-none disabled:opacity-75`}
           placeholder={section.placeholder}
           value={value}

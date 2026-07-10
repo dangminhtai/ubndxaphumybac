@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   Bold,
@@ -66,25 +66,105 @@ const SECTIONS: EditorSection[] = [
   },
 ];
 
-function Toolbar() {
+function Toolbar({
+  textareaRef,
+  onChange,
+  orderedList = false,
+}: {
+  textareaRef: React.RefObject<HTMLTextAreaElement>;
+  onChange: (val: string) => void;
+  orderedList?: boolean;
+}) {
+  const handleFormat = (type: 'bold' | 'italic' | 'underline' | 'list' | 'ordered-list') => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selectedText = text.substring(start, end);
+
+    let replacement = '';
+    switch (type) {
+      case 'bold':
+        replacement = `**${selectedText || 'in đậm'}**`;
+        break;
+      case 'italic':
+        replacement = `*${selectedText || 'in nghiêng'}*`;
+        break;
+      case 'underline':
+        replacement = `<u>${selectedText || 'gạch chân'}</u>`;
+        break;
+      case 'list': {
+        const lines = selectedText.split('\n');
+        replacement = lines.map(line => line.startsWith('- ') ? line : `- ${line}`).join('\n');
+        if (!selectedText) replacement = '- ';
+        break;
+      }
+      case 'ordered-list': {
+        const lines = selectedText.split('\n');
+        replacement = lines.map((line, idx) => {
+          const prefix = `${idx + 1}. `;
+          return line.startsWith(prefix) ? line : `${prefix}${line}`;
+        }).join('\n');
+        if (!selectedText) replacement = '1. ';
+        break;
+      }
+    }
+
+    const newValue = text.substring(0, start) + replacement + text.substring(end);
+    onChange(newValue);
+
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start, start + replacement.length);
+    }, 0);
+  };
+
   return (
     <div className="flex items-center gap-2 rounded-t-lg border-b border-outline-variant bg-surface-container-low p-2">
-      <button className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high" type="button">
+      <button
+        className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors"
+        type="button"
+        title="In đậm (Bold)"
+        onClick={() => handleFormat('bold')}
+      >
         <Bold className="h-4 w-4" />
       </button>
-      <button className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high" type="button">
+      <button
+        className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors"
+        type="button"
+        title="In nghiêng (Italic)"
+        onClick={() => handleFormat('italic')}
+      >
         <Italic className="h-4 w-4" />
       </button>
-      <button className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high" type="button">
+      <button
+        className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors"
+        type="button"
+        title="Gạch chân (Underline)"
+        onClick={() => handleFormat('underline')}
+      >
         <Underline className="h-4 w-4" />
       </button>
       <div className="mx-1 h-5 w-px bg-outline-variant" />
-      <button className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high" type="button">
+      <button
+        className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors"
+        type="button"
+        title="Danh sách gạch đầu dòng"
+        onClick={() => handleFormat('list')}
+      >
         <List className="h-4 w-4" />
       </button>
-      <button className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high" type="button">
-        <ListOrdered className="h-4 w-4" />
-      </button>
+      {orderedList && (
+        <button
+          className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors"
+          type="button"
+          title="Danh sách đánh số"
+          onClick={() => handleFormat('ordered-list')}
+        >
+          <ListOrdered className="h-4 w-4" />
+        </button>
+      )}
     </div>
   );
 }
@@ -98,14 +178,17 @@ function ReportEditor({
   value: string;
   onChange: (val: string) => void;
 }) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   return (
     <section>
       <div className="mb-stack-sm flex items-center gap-2">
         <h3 className="font-headline-sm text-base text-on-surface font-semibold">{section.title}</h3>
       </div>
       <div className="overflow-hidden rounded-lg border border-outline-variant bg-surface focus-within:border-primary">
-        <Toolbar />
+        <Toolbar textareaRef={textareaRef} onChange={onChange} orderedList={true} />
         <textarea
+          ref={textareaRef}
           className={`${section.heightClass} w-full resize-y border-none bg-transparent p-4 font-doc-preview text-doc-preview text-on-surface outline-none`}
           placeholder={section.placeholder}
           value={value}
