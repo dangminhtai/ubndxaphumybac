@@ -112,7 +112,7 @@ function Toolbar({
   orderedList = false,
   disabled = false,
 }: {
-  textareaRef: React.RefObject<HTMLTextAreaElement>;
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   onChange: (val: string) => void;
   orderedList?: boolean;
   disabled?: boolean;

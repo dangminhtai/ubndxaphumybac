@@ -71,7 +71,7 @@ function Toolbar({
   onChange,
   orderedList = false,
 }: {
-  textareaRef: React.RefObject<HTMLTextAreaElement>;
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   onChange: (val: string) => void;
   orderedList?: boolean;
 }) {
