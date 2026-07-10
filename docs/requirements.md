@@ -154,3 +154,14 @@ Tiêu chí hoàn thành:
 - Tiêu đề phân tách chuyển thành dạng `- Lĩnh vực [Lĩnh vực]:` (ví dụ: `- Lĩnh vực Y tế:` hoặc `- Lĩnh vực Cải cách hành chính:`).
 - Nếu không có lĩnh vực thì tự động lấy `- Phòng ban [Tên phòng ban]:` làm tiêu đề phân tách.
 - Áp dụng thành công cho cả 4 phần nội dung tổng hợp.
+
+## REQ015 - Kích hoạt thanh công cụ định dạng và tích hợp vào file xuất Word (DOCX)
+
+Mô tả:
+- Kích hoạt các nút định dạng (In đậm, In nghiêng, Gạch chân, Danh sách gạch đầu dòng, Danh sách đánh số) trên thanh công cụ của Trình soạn thảo báo cáo (`MonthlyReport.tsx` và `MonthlySummary.tsx`).
+- Khi bôi đen văn bản và nhấn các nút trên thanh công cụ, nội dung sẽ được định dạng bằng các cú pháp markup tương ứng (`**`, `*`, `<u>`, `- `, `1. `).
+- Tích hợp bộ chuyển đổi định dạng này vào tập lệnh Python ở Backend để khi xuất file DOCX, các phần được định dạng trên Web (in đậm, in nghiêng, gạch chân) sẽ hiển thị đúng kiểu định dạng tương ứng trong Microsoft Word.
+
+Tiêu chí hoàn thành:
+- Các nút định dạng hoạt động đúng khi người dùng tương tác trong ô soạn thảo văn bản.
+- Xuất file Word (.docx) chuyển đổi thành công văn bản in đậm, in nghiêng, gạch chân tương ứng, thay vì hiển thị các ký tự code thô.
