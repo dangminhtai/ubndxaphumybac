@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "catalogVersion": "2026-05",
+  "generatedAt": "2026-07-14T02:25:33.888839+00:00",
+  "sourceFile": "1. Danh muc chung .pdf",
+  "sourceSha256": "9f86b7610fc1d8f8e47645b720ab20fb9c92ce8c428eaf101d567163dc37d021",
+  "total": 80,
+  "groupCounts": {
+    "CH.CC": 3,
+    "CH.KH": 5,
+    "CH.PC": 6,
+    "CH.TC": 7,
+    "CH.TH": 53,
+    "CH.VT": 6
+  },
+  "uniqueCodes": 80
+}

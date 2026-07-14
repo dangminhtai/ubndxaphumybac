@@ -5,7 +5,8 @@
   "scripts": {
     "start": "tsx src/index.ts",
     "dev": "tsx watch src/index.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "test:catalog": "npm run build && node scripts/test-document-catalog.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.1",

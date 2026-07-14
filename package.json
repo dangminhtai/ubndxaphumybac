@@ -6,6 +6,9 @@
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:backend": "cd backend && npm run dev",
+    "catalog:convert": "python scripts/convert-document-catalog.py",
+    "catalog:validate": "node scripts/validate-document-catalog.mjs",
+    "catalog:evaluate": "python scripts/evaluate-document-catalog.py --offline",
     "install:all": "npm install --include=dev && cd frontend && npm install --include=dev && cd ../backend && npm install --include=dev",
     "build": "cd frontend && npm run build && cd ../backend && npm run build",
     "start": "cd backend && npm start"

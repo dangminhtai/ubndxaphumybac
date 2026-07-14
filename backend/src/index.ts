@@ -11,6 +11,7 @@ import auditLogsRouter from './routes/audit-logs';
 import archiveRouter from './routes/archive';
 import notificationRouter from './routes/notifications';
 import workScheduleRouter from './routes/work-schedules';
+import documentCatalogRouter from './routes/document-catalog';
 import { closeDatabase, connectDatabase, getDatabaseStatus } from './config/db';
 import { env } from './config/env';
 import { errorHandler } from './middleware/error.middleware';
@@ -41,6 +42,7 @@ app.use('/api/admin/logs', auditLogsRouter);
 app.use('/api/archive', archiveRouter);
 app.use('/api/notifications', notificationRouter);
 app.use('/api/work-schedules', workScheduleRouter);
+app.use('/api/document-catalog', documentCatalogRouter);
 
 app.get('/api/health', (_req, res) => {
   res.json({

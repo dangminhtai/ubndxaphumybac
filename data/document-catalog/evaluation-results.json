@@ -1,0 +1,2624 @@
+{
+  "schemaVersion": 1,
+  "catalogVersion": "2026-05",
+  "qrelsStatus": "provisional",
+  "queryCount": 35,
+  "documentCount": 80,
+  "k": 10,
+  "semanticModel": "intfloat/multilingual-e5-small",
+  "timingMs": {
+    "semanticModelLoad": 3888.359099997615,
+    "lexicalQueries": 6.876599996758159,
+    "semanticQueries": 104.47930000373162
+  },
+  "results": [
+    {
+      "system": "lexical",
+      "queryCount": 35,
+      "precisionAt10": 0.11428571428571428,
+      "mrrAt10": 0.9571428571428572,
+      "ndcgAt10": 0.96164163081306,
+      "details": [
+        {
+          "id": "Q01",
+          "query": "CHTH44",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.44",
+            "CH.TH.26",
+            "CH.PC.05",
+            "CH.VT.05",
+            "CH.PC.06",
+            "CH.TH.31",
+            "CH.TH.24",
+            "CH.CC.02",
+            "CH.PC.03",
+            "CH.TH.35"
+          ],
+          "relevantRanks": {
+            "CH.TH.44": 1
+          }
+        },
+        {
+          "id": "Q02",
+          "query": "văn bản góp ý dự thảo quy phạm pháp luật",
+          "precisionAt10": 0.1,
+          "mrrAt10": 0.5,
+          "ndcgAt10": 0.5787641110093001,
+          "top10": [
+            "CH.PC.02",
+            "CH.PC.04",
+            "CH.PC.01",
+            "CH.TH.52",
+            "CH.TH.47",
+            "CH.TH.48",
+            "CH.PC.03",
+            "CH.TH.01",
+            "CH.PC.06",
+            "CH.VT.02"
+          ],
+          "relevantRanks": {
+            "CH.PC.04": 2,
+            "CH.TH.44": null
+          }
+        },
+        {
+          "id": "Q03",
+          "query": "báo cáo tuần",
+          "precisionAt10": 0.2,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 0.9828422279067397,
+          "top10": [
+            "CH.TH.15",
+            "CH.TH.19",
+            "CH.TH.17",
+            "CH.TH.18",
+            "CH.TH.16",
+            "CH.VT.05",
+            "CH.TH.20",
+            "CH.CC.03",
+            "CH.TH.21",
+            "CH.TC.04"
+          ],
+          "relevantRanks": {
+            "CH.TH.15": 1,
+            "CH.TH.17": 3
+          }
+        },
+        {
+          "id": "Q04",
+          "query": "báo cáo khó khăn vướng mắc tiến độ dự án",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.16",
+            "CH.TH.13",
+            "CH.TH.45",
+            "CH.TH.19",
+            "CH.TH.15",
+            "CH.TH.17",
+            "CH.TH.18",
+            "CH.TH.35",
+            "CH.TH.34",
+            "CH.KH.05"
+          ],
+          "relevantRanks": {
+            "CH.TH.16": 1
+          }
+        },
+        {
+          "id": "Q05",
+          "query": "kế hoạch công tác tháng",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.21",
+            "CH.TH.22",
+            "CH.TH.24",
+            "CH.TH.23",
+            "CH.TH.29",
+            "CH.TH.16",
+            "CH.PC.03",
+            "CH.TC.05",
+            "CH.PC.02",
+            "CH.PC.05"
+          ],
+          "relevantRanks": {
+            "CH.TH.21": 1
+          }
+        },
+        {
+          "id": "Q06",
+          "query": "chuẩn bị slide hội nghị nội bộ",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.02",
+            "CH.TH.03",
+            "CH.TH.05",
+            "CH.TH.04",
+            "CH.KH.02",
+            "CH.TH.21",
+            "CH.TH.28",
+            "CH.PC.05",
+            "CH.TH.27",
+            "CH.CC.02"
+          ],
+          "relevantRanks": {
+            "CH.TH.02": 1
+          }
+        },
+        {
+          "id": "Q07",
+          "query": "bài phát biểu cho hội nghị cấp tỉnh",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.03",
+            "CH.TH.02",
+            "CH.TH.27",
+            "CH.KH.02",
+            "CH.TH.31",
+            "CH.TH.04",
+            "CH.TH.42",
+            "CH.TH.28",
+            "CH.TH.49",
+            "CH.TH.50"
+          ],
+          "relevantRanks": {
+            "CH.TH.03": 1
+          }
+        },
+        {
+          "id": "Q08",
+          "query": "thông báo nghỉ lễ",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.06",
+            "CH.TH.07",
+            "CH.TH.10",
+            "CH.TH.09",
+            "CH.TH.08",
+            "CH.TH.19",
+            "CH.TH.17",
+            "CH.TH.28",
+            "CH.TH.15",
+            "CH.TH.27"
+          ],
+          "relevantRanks": {
+            "CH.TH.06": 1
+          }
+        },
+        {
+          "id": "Q09",
+          "query": "thông báo kết quả tuyển dụng",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.07",
+            "CH.TH.10",
+            "CH.TH.09",
+            "CH.TH.08",
+            "CH.TH.06",
+            "CH.TH.12",
+            "CH.TH.17",
+            "CH.TH.19",
+            "CH.TH.20",
+            "CH.TH.18"
+          ],
+          "relevantRanks": {
+            "CH.TH.07": 1
+          }
+        },
+        {
+          "id": "Q10",
+          "query": "biên bản họp giao ban",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.12",
+            "CH.TH.11",
+            "CH.TH.13",
+            "CH.TH.14",
+            "CH.TH.25",
+            "CH.TH.16",
+            "CH.VT.01",
+            "CH.TH.53",
+            "CH.VT.02",
+            "CH.TH.01"
+          ],
+          "relevantRanks": {
+            "CH.TH.12": 1
+          }
+        },
+        {
+          "id": "Q11",
+          "query": "biên bản thanh tra kiểm tra",
+          "precisionAt10": 0.2,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.13",
+            "CH.TH.12",
+            "CH.KH.02",
+            "CH.TH.11",
+            "CH.TC.04",
+            "CH.TC.02",
+            "CH.TH.39",
+            "CH.VT.04",
+            "CH.KH.01",
+            "CH.TH.14"
+          ],
+          "relevantRanks": {
+            "CH.TH.13": 1,
+            "CH.TH.12": 2
+          }
+        },
+        {
+          "id": "Q12",
+          "query": "đề án vị trí việc làm",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.29",
+            "CH.TH.43",
+            "CH.TH.40",
+            "CH.TH.31",
+            "CH.TH.30",
+            "CH.TH.32",
+            "CH.TH.33",
+            "CH.TH.13",
+            "CH.TH.38",
+            "CH.TH.34"
+          ],
+          "relevantRanks": {
+            "CH.TH.29": 1
+          }
+        },
+        {
+          "id": "Q13",
+          "query": "phương án phòng chống dịch tại địa phương",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.32",
+            "CH.TH.33",
+            "CH.TH.40",
+            "CH.TH.30",
+            "CH.TH.34",
+            "CH.TH.02",
+            "CH.PC.06",
+            "CH.TH.18",
+            "CH.TH.11",
+            "CH.CC.01"
+          ],
+          "relevantRanks": {
+            "CH.TH.32": 1
+          }
+        },
+        {
+          "id": "Q14",
+          "query": "quyết định nâng bậc lương",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.39",
+            "CH.TH.36",
+            "CH.CC.02",
+            "CH.PC.03",
+            "CH.PC.02",
+            "CH.TH.40",
+            "CH.TH.42",
+            "CH.TH.41",
+            "CH.CC.01",
+            "CH.TH.12"
+          ],
+          "relevantRanks": {
+            "CH.TH.39": 1
+          }
+        },
+        {
+          "id": "Q15",
+          "query": "triển khai rà soát thủ tục hành chính nội bộ",
+          "precisionAt10": 0.2,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.43",
+            "CH.CC.03",
+            "CH.CC.02",
+            "CH.TH.47",
+            "CH.VT.06",
+            "CH.CC.01",
+            "CH.TC.07",
+            "CH.TH.48",
+            "CH.TH.08",
+            "CH.TH.02"
+          ],
+          "relevantRanks": {
+            "CH.TH.43": 1,
+            "CH.CC.03": 2
+          }
+        },
+        {
+          "id": "Q16",
+          "query": "xin hướng dẫn nghiệp vụ của UBND tỉnh",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.46",
+            "CH.TH.44",
+            "CH.TH.45",
+            "CH.TH.19",
+            "CH.TH.48",
+            "CH.TH.27",
+            "CH.TH.07",
+            "CH.TH.33",
+            "CH.TH.14",
+            "CH.TH.25"
+          ],
+          "relevantRanks": {
+            "CH.TH.46": 1
+          }
+        },
+        {
+          "id": "Q17",
+          "query": "triển khai văn bản quy phạm pháp luật",
+          "precisionAt10": 0.2,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.47",
+            "CH.TH.48",
+            "CH.PC.02",
+            "CH.PC.04",
+            "CH.PC.01",
+            "CH.TH.52",
+            "CH.TH.43",
+            "CH.TH.23",
+            "CH.TH.14",
+            "CH.PC.06"
+          ],
+          "relevantRanks": {
+            "CH.TH.47": 1,
+            "CH.TH.48": 2
+          }
+        },
+        {
+          "id": "Q18",
+          "query": "viết tin bài đăng trang thông tin điện tử",
+          "precisionAt10": 0.2,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 0.8339912323981488,
+          "top10": [
+            "CH.TH.50",
+            "CH.TH.49",
+            "CH.KH.05",
+            "CH.KH.03",
+            "CH.KH.04",
+            "CH.KH.01",
+            "CH.TH.47",
+            "CH.TH.22",
+            "CH.VT.01",
+            "CH.TH.06"
+          ],
+          "relevantRanks": {
+            "CH.TH.49": 2,
+            "CH.TH.50": 1
+          }
+        },
+        {
+          "id": "Q19",
+          "query": "hợp đồng mua văn phòng phẩm",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.51",
+            "CH.TH.52",
+            "CH.VT.01",
+            "CH.TC.06",
+            "CH.TH.01",
+            "CH.TH.36",
+            "CH.TH.47",
+            "CH.TH.27",
+            "CH.TH.28",
+            "CH.TH.02"
+          ],
+          "relevantRanks": {
+            "CH.TH.51": 1
+          }
+        },
+        {
+          "id": "Q20",
+          "query": "rút kinh phí tại ngân hàng",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TC.01",
+            "CH.TC.07",
+            "CH.TC.05",
+            "CH.KH.02",
+            "CH.TH.29",
+            "CH.TH.31",
+            "CH.TC.04",
+            "CH.TH.04",
+            "CH.TC.03",
+            "CH.TH.03"
+          ],
+          "relevantRanks": {
+            "CH.TC.01": 1
+          }
+        },
+        {
+          "id": "Q21",
+          "query": "nhập chứng từ vào phần mềm kế toán",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TC.02",
+            "CH.KH.01",
+            "CH.KH.04",
+            "CH.TC.07",
+            "CH.TC.03",
+            "CH.TC.04",
+            "CH.TC.05",
+            "CH.KH.02",
+            "CH.VT.04",
+            "CH.TC.01"
+          ],
+          "relevantRanks": {
+            "CH.TC.02": 1
+          }
+        },
+        {
+          "id": "Q22",
+          "query": "lập dự toán ngân sách năm sau",
+          "precisionAt10": 0.1,
+          "mrrAt10": 0.5,
+          "ndcgAt10": 0.6309297535714575,
+          "top10": [
+            "CH.TC.04",
+            "CH.TC.03",
+            "CH.TC.05",
+            "CH.TC.02",
+            "CH.TC.01",
+            "CH.TH.14",
+            "CH.TC.07",
+            "CH.TH.38",
+            "CH.TH.18",
+            "CH.KH.03"
+          ],
+          "relevantRanks": {
+            "CH.TC.03": 2
+          }
+        },
+        {
+          "id": "Q23",
+          "query": "quyết toán gói mua sắm nội bộ",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TC.07",
+            "CH.TC.06",
+            "CH.TH.51",
+            "CH.TC.04",
+            "CH.CC.02",
+            "CH.TH.36",
+            "CH.TC.02",
+            "CH.TH.02",
+            "CH.TH.40",
+            "CH.TC.03"
+          ],
+          "relevantRanks": {
+            "CH.TC.07": 1
+          }
+        },
+        {
+          "id": "Q24",
+          "query": "xây dựng quy chế nội bộ cơ quan",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.PC.05",
+            "CH.PC.06",
+            "CH.TH.02",
+            "CH.PC.01",
+            "CH.TH.43",
+            "CH.CC.02",
+            "CH.PC.02",
+            "CH.PC.03",
+            "CH.PC.04",
+            "CH.TH.34"
+          ],
+          "relevantRanks": {
+            "CH.PC.05": 1
+          }
+        },
+        {
+          "id": "Q25",
+          "query": "công bố thủ tục hành chính mới",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.CC.01",
+            "CH.CC.02",
+            "CH.CC.03",
+            "CH.TH.43",
+            "CH.TC.06",
+            "CH.VT.06",
+            "CH.TC.07",
+            "CH.TH.01",
+            "CH.VT.05",
+            "CH.KH.01"
+          ],
+          "relevantRanks": {
+            "CH.CC.01": 1
+          }
+        },
+        {
+          "id": "Q26",
+          "query": "quy trình giải quyết thủ tục hành chính nội bộ",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.CC.02",
+            "CH.CC.01",
+            "CH.TC.07",
+            "CH.TH.43",
+            "CH.CC.03",
+            "CH.PC.05",
+            "CH.TH.36",
+            "CH.TH.13",
+            "CH.TH.02",
+            "CH.TH.38"
+          ],
+          "relevantRanks": {
+            "CH.CC.02": 1
+          }
+        },
+        {
+          "id": "Q27",
+          "query": "tiếp nhận hồ sơ trên phần mềm dịch vụ công",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.KH.01",
+            "CH.TC.02",
+            "CH.KH.04",
+            "CH.VT.01",
+            "CH.VT.02",
+            "CH.VT.04",
+            "CH.TH.11",
+            "CH.KH.02",
+            "CH.KH.03",
+            "CH.TH.32"
+          ],
+          "relevantRanks": {
+            "CH.KH.01": 1
+          }
+        },
+        {
+          "id": "Q28",
+          "query": "tham dự tập huấn hội thảo",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.KH.02",
+            "CH.TH.05",
+            "CH.TH.04",
+            "CH.PC.02",
+            "CH.PC.04",
+            "CH.PC.03",
+            "CH.TH.52",
+            "CH.TH.35",
+            "CH.TH.01",
+            "CH.TH.34"
+          ],
+          "relevantRanks": {
+            "CH.KH.02": 1
+          }
+        },
+        {
+          "id": "Q29",
+          "query": "tuyên truyền vận động người dân",
+          "precisionAt10": 0.1,
+          "mrrAt10": 0.5,
+          "ndcgAt10": 0.6309297535714575,
+          "top10": [
+            "CH.TH.44",
+            "CH.KH.03",
+            "CH.TH.50",
+            "CH.TH.21",
+            "CH.TH.45",
+            "CH.TH.47",
+            "CH.TH.28",
+            "CH.TH.27",
+            "CH.TH.07",
+            "CH.TH.46"
+          ],
+          "relevantRanks": {
+            "CH.KH.03": 2
+          }
+        },
+        {
+          "id": "Q30",
+          "query": "kê khai giá trên phần mềm cơ sở dữ liệu",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.KH.04",
+            "CH.KH.01",
+            "CH.TC.02",
+            "CH.TH.09",
+            "CH.KH.02",
+            "CH.TH.49",
+            "CH.TH.47",
+            "CH.TC.03",
+            "CH.TH.43",
+            "CH.TH.23"
+          ],
+          "relevantRanks": {
+            "CH.KH.04": 1
+          }
+        },
+        {
+          "id": "Q31",
+          "query": "theo dõi tiến độ dự án đầu tư công",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.KH.05",
+            "CH.TC.07",
+            "CH.KH.03",
+            "CH.TH.16",
+            "CH.TH.35",
+            "CH.TH.38",
+            "CH.TH.34",
+            "CH.TC.05",
+            "CH.TH.23",
+            "CH.TH.08"
+          ],
+          "relevantRanks": {
+            "CH.KH.05": 1
+          }
+        },
+        {
+          "id": "Q32",
+          "query": "phát hành văn bản mật",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.VT.02",
+            "CH.VT.01",
+            "CH.TH.01",
+            "CH.TH.48",
+            "CH.PC.04",
+            "CH.TH.47",
+            "CH.TH.03",
+            "CH.CC.03",
+            "CH.TH.02",
+            "CH.TH.28"
+          ],
+          "relevantRanks": {
+            "CH.VT.02": 1
+          }
+        },
+        {
+          "id": "Q33",
+          "query": "tiêu hủy tài liệu hết thời hạn bảo quản",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.VT.06",
+            "CH.TH.05",
+            "CH.TH.04",
+            "CH.VT.05",
+            "CH.TH.20",
+            "CH.TH.17",
+            "CH.TH.02",
+            "CH.TH.03",
+            "CH.TH.15",
+            "CH.TH.08"
+          ],
+          "relevantRanks": {
+            "CH.VT.06": 1
+          }
+        },
+        {
+          "id": "Q34",
+          "query": "báo cáo tổng kết giai đoạn 5 năm",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.20",
+            "CH.TH.17",
+            "CH.TH.19",
+            "CH.TH.18",
+            "CH.TH.15",
+            "CH.TC.04",
+            "CH.TH.16",
+            "CH.TH.10",
+            "CH.TH.23",
+            "CH.CC.03"
+          ],
+          "relevantRanks": {
+            "CH.TH.20": 1
+          }
+        },
+        {
+          "id": "Q35",
+          "query": "tờ trình phê duyệt dự án đầu tư",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.38",
+            "CH.TH.35",
+            "CH.TH.34",
+            "CH.TC.07",
+            "CH.TH.36",
+            "CH.KH.05",
+            "CH.TH.37",
+            "CH.TH.42",
+            "CH.TH.40",
+            "CH.TC.03"
+          ],
+          "relevantRanks": {
+            "CH.TH.38": 1
+          }
+        }
+      ]
+    },
+    {
+      "system": "semantic",
+      "queryCount": 35,
+      "precisionAt10": 0.11428571428571428,
+      "mrrAt10": 0.9342857142857144,
+      "ndcgAt10": 0.9386874899977422,
+      "details": [
+        {
+          "id": "Q01",
+          "query": "CHTH44",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.44",
+            "CH.TH.42",
+            "CH.TH.46",
+            "CH.TH.41",
+            "CH.TH.34",
+            "CH.TH.04",
+            "CH.TH.45",
+            "CH.TH.47",
+            "CH.TH.19",
+            "CH.TH.35"
+          ],
+          "relevantRanks": {
+            "CH.TH.44": 1
+          }
+        },
+        {
+          "id": "Q02",
+          "query": "văn bản góp ý dự thảo quy phạm pháp luật",
+          "precisionAt10": 0.2,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 0.9552000951006567,
+          "top10": [
+            "CH.PC.04",
+            "CH.PC.01",
+            "CH.TH.47",
+            "CH.PC.02",
+            "CH.TH.48",
+            "CH.TH.16",
+            "CH.TH.46",
+            "CH.TH.45",
+            "CH.TH.51",
+            "CH.TH.44"
+          ],
+          "relevantRanks": {
+            "CH.PC.04": 1,
+            "CH.TH.44": 10
+          }
+        },
+        {
+          "id": "Q03",
+          "query": "báo cáo tuần",
+          "precisionAt10": 0.2,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 0.9737576937588317,
+          "top10": [
+            "CH.TH.15",
+            "CH.TH.20",
+            "CH.TH.19",
+            "CH.TH.17",
+            "CH.TH.18",
+            "CH.TH.10",
+            "CH.TH.36",
+            "CH.TH.09",
+            "CH.TH.06",
+            "CH.TH.07"
+          ],
+          "relevantRanks": {
+            "CH.TH.15": 1,
+            "CH.TH.17": 4
+          }
+        },
+        {
+          "id": "Q04",
+          "query": "báo cáo khó khăn vướng mắc tiến độ dự án",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.16",
+            "CH.TH.38",
+            "CH.TH.20",
+            "CH.TH.37",
+            "CH.TH.09",
+            "CH.TH.13",
+            "CH.TH.35",
+            "CH.TH.45",
+            "CH.KH.05",
+            "CH.TH.34"
+          ],
+          "relevantRanks": {
+            "CH.TH.16": 1
+          }
+        },
+        {
+          "id": "Q05",
+          "query": "kế hoạch công tác tháng",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.21",
+            "CH.TH.22",
+            "CH.TH.23",
+            "CH.TH.24",
+            "CH.KH.03",
+            "CH.KH.02",
+            "CH.TH.43",
+            "CH.TC.03",
+            "CH.TH.17",
+            "CH.TH.38"
+          ],
+          "relevantRanks": {
+            "CH.TH.21": 1
+          }
+        },
+        {
+          "id": "Q06",
+          "query": "chuẩn bị slide hội nghị nội bộ",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.02",
+            "CH.TH.03",
+            "CH.TH.04",
+            "CH.TH.01",
+            "CH.TH.05",
+            "CH.CC.02",
+            "CH.TH.21",
+            "CH.TH.38",
+            "CH.KH.02",
+            "CH.TH.36"
+          ],
+          "relevantRanks": {
+            "CH.TH.02": 1
+          }
+        },
+        {
+          "id": "Q07",
+          "query": "bài phát biểu cho hội nghị cấp tỉnh",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.03",
+            "CH.TH.31",
+            "CH.TH.24",
+            "CH.TH.10",
+            "CH.TH.27",
+            "CH.TH.33",
+            "CH.TH.19",
+            "CH.PC.03",
+            "CH.TH.35",
+            "CH.TH.42"
+          ],
+          "relevantRanks": {
+            "CH.TH.03": 1
+          }
+        },
+        {
+          "id": "Q08",
+          "query": "thông báo nghỉ lễ",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.06",
+            "CH.TH.07",
+            "CH.TH.10",
+            "CH.TH.09",
+            "CH.KH.03",
+            "CH.TH.03",
+            "CH.TH.08",
+            "CH.TH.51",
+            "CH.TH.46",
+            "CH.TH.49"
+          ],
+          "relevantRanks": {
+            "CH.TH.06": 1
+          }
+        },
+        {
+          "id": "Q09",
+          "query": "thông báo kết quả tuyển dụng",
+          "precisionAt10": 0.1,
+          "mrrAt10": 0.5,
+          "ndcgAt10": 0.6309297535714575,
+          "top10": [
+            "CH.TH.09",
+            "CH.TH.07",
+            "CH.TH.08",
+            "CH.TH.10",
+            "CH.TH.06",
+            "CH.KH.03",
+            "CH.TH.22",
+            "CH.TH.17",
+            "CH.KH.04",
+            "CH.TC.03"
+          ],
+          "relevantRanks": {
+            "CH.TH.07": 2
+          }
+        },
+        {
+          "id": "Q10",
+          "query": "biên bản họp giao ban",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.12",
+            "CH.TH.13",
+            "CH.TH.11",
+            "CH.TH.03",
+            "CH.TH.02",
+            "CH.KH.02",
+            "CH.TH.06",
+            "CH.CC.01",
+            "CH.TH.01",
+            "CH.TH.14"
+          ],
+          "relevantRanks": {
+            "CH.TH.12": 1
+          }
+        },
+        {
+          "id": "Q11",
+          "query": "biên bản thanh tra kiểm tra",
+          "precisionAt10": 0.2,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.13",
+            "CH.TH.12",
+            "CH.TH.37",
+            "CH.TH.14",
+            "CH.TH.47",
+            "CH.TC.04",
+            "CH.TH.11",
+            "CH.TH.36",
+            "CH.TC.02",
+            "CH.KH.03"
+          ],
+          "relevantRanks": {
+            "CH.TH.13": 1,
+            "CH.TH.12": 2
+          }
+        },
+        {
+          "id": "Q12",
+          "query": "đề án vị trí việc làm",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.29",
+            "CH.TH.40",
+            "CH.TH.43",
+            "CH.TH.30",
+            "CH.TH.31",
+            "CH.TH.37",
+            "CH.TH.38",
+            "CH.TH.42",
+            "CH.TH.36",
+            "CH.TH.46"
+          ],
+          "relevantRanks": {
+            "CH.TH.29": 1
+          }
+        },
+        {
+          "id": "Q13",
+          "query": "phương án phòng chống dịch tại địa phương",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.32",
+            "CH.TH.30",
+            "CH.TH.33",
+            "CH.TH.40",
+            "CH.TH.31",
+            "CH.CC.01",
+            "CH.TH.10",
+            "CH.TH.28",
+            "CH.TH.50",
+            "CH.TH.43"
+          ],
+          "relevantRanks": {
+            "CH.TH.32": 1
+          }
+        },
+        {
+          "id": "Q14",
+          "query": "quyết định nâng bậc lương",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.39",
+            "CH.TH.40",
+            "CH.TH.42",
+            "CH.TH.36",
+            "CH.TH.12",
+            "CH.TH.41",
+            "CH.TH.10",
+            "CH.TH.28",
+            "CH.KH.04",
+            "CH.TH.09"
+          ],
+          "relevantRanks": {
+            "CH.TH.39": 1
+          }
+        },
+        {
+          "id": "Q15",
+          "query": "triển khai rà soát thủ tục hành chính nội bộ",
+          "precisionAt10": 0.2,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 0.9073218002554915,
+          "top10": [
+            "CH.TH.43",
+            "CH.CC.02",
+            "CH.CC.01",
+            "CH.TH.47",
+            "CH.TH.02",
+            "CH.CC.03",
+            "CH.TH.45",
+            "CH.TH.36",
+            "CH.KH.01",
+            "CH.TH.50"
+          ],
+          "relevantRanks": {
+            "CH.TH.43": 1,
+            "CH.CC.03": 6
+          }
+        },
+        {
+          "id": "Q16",
+          "query": "xin hướng dẫn nghiệp vụ của UBND tỉnh",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.46",
+            "CH.TH.48",
+            "CH.TH.25",
+            "CH.TH.19",
+            "CH.TH.44",
+            "CH.TH.10",
+            "CH.TH.31",
+            "CH.TH.45",
+            "CH.TH.24",
+            "CH.TH.36"
+          ],
+          "relevantRanks": {
+            "CH.TH.46": 1
+          }
+        },
+        {
+          "id": "Q17",
+          "query": "triển khai văn bản quy phạm pháp luật",
+          "precisionAt10": 0.2,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.47",
+            "CH.TH.48",
+            "CH.TH.43",
+            "CH.PC.01",
+            "CH.PC.04",
+            "CH.PC.02",
+            "CH.TH.01",
+            "CH.TH.36",
+            "CH.VT.06",
+            "CH.TH.22"
+          ],
+          "relevantRanks": {
+            "CH.TH.47": 1,
+            "CH.TH.48": 2
+          }
+        },
+        {
+          "id": "Q18",
+          "query": "viết tin bài đăng trang thông tin điện tử",
+          "precisionAt10": 0.2,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.49",
+            "CH.TH.50",
+            "CH.TH.47",
+            "CH.KH.03",
+            "CH.KH.04",
+            "CH.TH.37",
+            "CH.TH.10",
+            "CH.TH.01",
+            "CH.TH.51",
+            "CH.TH.03"
+          ],
+          "relevantRanks": {
+            "CH.TH.49": 1,
+            "CH.TH.50": 2
+          }
+        },
+        {
+          "id": "Q19",
+          "query": "hợp đồng mua văn phòng phẩm",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.51",
+            "CH.TH.01",
+            "CH.TH.52",
+            "CH.VT.06",
+            "CH.VT.03",
+            "CH.TC.06",
+            "CH.VT.04",
+            "CH.VT.05",
+            "CH.TH.47",
+            "CH.PC.04"
+          ],
+          "relevantRanks": {
+            "CH.TH.51": 1
+          }
+        },
+        {
+          "id": "Q20",
+          "query": "rút kinh phí tại ngân hàng",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TC.01",
+            "CH.KH.03",
+            "CH.VT.06",
+            "CH.TC.05",
+            "CH.TC.03",
+            "CH.TC.04",
+            "CH.VT.05",
+            "CH.KH.05",
+            "CH.TH.51",
+            "CH.VT.04"
+          ],
+          "relevantRanks": {
+            "CH.TC.01": 1
+          }
+        },
+        {
+          "id": "Q21",
+          "query": "nhập chứng từ vào phần mềm kế toán",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TC.02",
+            "CH.TC.01",
+            "CH.TC.05",
+            "CH.TC.07",
+            "CH.TC.04",
+            "CH.KH.04",
+            "CH.TC.06",
+            "CH.TC.03",
+            "CH.KH.01",
+            "CH.TH.01"
+          ],
+          "relevantRanks": {
+            "CH.TC.02": 1
+          }
+        },
+        {
+          "id": "Q22",
+          "query": "lập dự toán ngân sách năm sau",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TC.03",
+            "CH.TC.04",
+            "CH.TC.05",
+            "CH.TC.01",
+            "CH.TC.07",
+            "CH.TC.02",
+            "CH.TC.06",
+            "CH.KH.05",
+            "CH.TH.31",
+            "CH.TH.17"
+          ],
+          "relevantRanks": {
+            "CH.TC.03": 1
+          }
+        },
+        {
+          "id": "Q23",
+          "query": "quyết toán gói mua sắm nội bộ",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TC.07",
+            "CH.TC.06",
+            "CH.CC.02",
+            "CH.TC.04",
+            "CH.TH.51",
+            "CH.TH.02",
+            "CH.TH.03",
+            "CH.KH.03",
+            "CH.TH.36",
+            "CH.TH.13"
+          ],
+          "relevantRanks": {
+            "CH.TC.07": 1
+          }
+        },
+        {
+          "id": "Q24",
+          "query": "xây dựng quy chế nội bộ cơ quan",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.PC.05",
+            "CH.CC.02",
+            "CH.TH.43",
+            "CH.PC.06",
+            "CH.TH.02",
+            "CH.TH.21",
+            "CH.PC.02",
+            "CH.TH.13",
+            "CH.PC.01",
+            "CH.TH.32"
+          ],
+          "relevantRanks": {
+            "CH.PC.05": 1
+          }
+        },
+        {
+          "id": "Q25",
+          "query": "công bố thủ tục hành chính mới",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.CC.01",
+            "CH.TH.43",
+            "CH.TH.47",
+            "CH.CC.02",
+            "CH.TH.10",
+            "CH.TH.36",
+            "CH.TH.34",
+            "CH.TH.35",
+            "CH.CC.03",
+            "CH.TH.50"
+          ],
+          "relevantRanks": {
+            "CH.CC.01": 1
+          }
+        },
+        {
+          "id": "Q26",
+          "query": "quy trình giải quyết thủ tục hành chính nội bộ",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.CC.02",
+            "CH.TH.43",
+            "CH.CC.01",
+            "CH.TH.02",
+            "CH.TH.36",
+            "CH.TH.13",
+            "CH.TH.45",
+            "CH.TH.32",
+            "CH.CC.03",
+            "CH.TH.40"
+          ],
+          "relevantRanks": {
+            "CH.CC.02": 1
+          }
+        },
+        {
+          "id": "Q27",
+          "query": "tiếp nhận hồ sơ trên phần mềm dịch vụ công",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.KH.01",
+            "CH.KH.04",
+            "CH.TC.03",
+            "CH.KH.03",
+            "CH.VT.04",
+            "CH.KH.02",
+            "CH.TH.09",
+            "CH.VT.01",
+            "CH.TH.47",
+            "CH.TH.07"
+          ],
+          "relevantRanks": {
+            "CH.KH.01": 1
+          }
+        },
+        {
+          "id": "Q28",
+          "query": "tham dự tập huấn hội thảo",
+          "precisionAt10": 0.1,
+          "mrrAt10": 0.2,
+          "ndcgAt10": 0.38685280723454163,
+          "top10": [
+            "CH.TH.04",
+            "CH.TH.05",
+            "CH.TH.51",
+            "CH.TH.22",
+            "CH.KH.02",
+            "CH.TH.01",
+            "CH.TH.03",
+            "CH.PC.04",
+            "CH.TH.31",
+            "CH.TH.09"
+          ],
+          "relevantRanks": {
+            "CH.KH.02": 5
+          }
+        },
+        {
+          "id": "Q29",
+          "query": "tuyên truyền vận động người dân",
+          "precisionAt10": 0.0,
+          "mrrAt10": 0.0,
+          "ndcgAt10": 0.0,
+          "top10": [
+            "CH.TH.28",
+            "CH.TH.50",
+            "CH.TH.27",
+            "CH.TH.26",
+            "CH.TH.47",
+            "CH.TH.31",
+            "CH.TH.22",
+            "CH.TH.45",
+            "CH.TH.46",
+            "CH.TH.33"
+          ],
+          "relevantRanks": {
+            "CH.KH.03": null
+          }
+        },
+        {
+          "id": "Q30",
+          "query": "kê khai giá trên phần mềm cơ sở dữ liệu",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.KH.04",
+            "CH.KH.01",
+            "CH.TC.02",
+            "CH.KH.02",
+            "CH.TC.03",
+            "CH.TC.01",
+            "CH.KH.05",
+            "CH.KH.03",
+            "CH.TH.03",
+            "CH.TH.36"
+          ],
+          "relevantRanks": {
+            "CH.KH.04": 1
+          }
+        },
+        {
+          "id": "Q31",
+          "query": "theo dõi tiến độ dự án đầu tư công",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.KH.05",
+            "CH.TC.07",
+            "CH.TC.03",
+            "CH.TH.38",
+            "CH.KH.01",
+            "CH.TH.34",
+            "CH.TH.35",
+            "CH.PC.03",
+            "CH.TC.06",
+            "CH.TH.31"
+          ],
+          "relevantRanks": {
+            "CH.KH.05": 1
+          }
+        },
+        {
+          "id": "Q32",
+          "query": "phát hành văn bản mật",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.VT.02",
+            "CH.VT.01",
+            "CH.TH.47",
+            "CH.TH.01",
+            "CH.VT.04",
+            "CH.VT.03",
+            "CH.VT.05",
+            "CH.VT.06",
+            "CH.TH.03",
+            "CH.TH.49"
+          ],
+          "relevantRanks": {
+            "CH.VT.02": 1
+          }
+        },
+        {
+          "id": "Q33",
+          "query": "tiêu hủy tài liệu hết thời hạn bảo quản",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.VT.06",
+            "CH.VT.05",
+            "CH.VT.04",
+            "CH.VT.03",
+            "CH.KH.03",
+            "CH.VT.01",
+            "CH.TC.06",
+            "CH.VT.02",
+            "CH.TH.36",
+            "CH.TH.47"
+          ],
+          "relevantRanks": {
+            "CH.VT.06": 1
+          }
+        },
+        {
+          "id": "Q34",
+          "query": "báo cáo tổng kết giai đoạn 5 năm",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.20",
+            "CH.TH.17",
+            "CH.TH.19",
+            "CH.KH.05",
+            "CH.TH.18",
+            "CH.TH.10",
+            "CH.TH.35",
+            "CH.TH.31",
+            "CH.TH.42",
+            "CH.TH.22"
+          ],
+          "relevantRanks": {
+            "CH.TH.20": 1
+          }
+        },
+        {
+          "id": "Q35",
+          "query": "tờ trình phê duyệt dự án đầu tư",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.38",
+            "CH.TH.34",
+            "CH.TH.35",
+            "CH.TC.07",
+            "CH.TH.36",
+            "CH.TH.37",
+            "CH.TC.03",
+            "CH.TH.31",
+            "CH.TH.42",
+            "CH.TH.40"
+          ],
+          "relevantRanks": {
+            "CH.TH.38": 1
+          }
+        }
+      ]
+    },
+    {
+      "system": "hybrid_rrf",
+      "queryCount": 35,
+      "precisionAt10": 0.11142857142857143,
+      "mrrAt10": 0.9523809523809524,
+      "ndcgAt10": 0.9530283494275965,
+      "details": [
+        {
+          "id": "Q01",
+          "query": "CHTH44",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.44",
+            "CH.TH.24",
+            "CH.TH.35",
+            "CH.TH.34",
+            "CH.TH.26",
+            "CH.TH.46",
+            "CH.TH.31",
+            "CH.TH.47",
+            "CH.VT.05",
+            "CH.TH.43"
+          ],
+          "relevantRanks": {
+            "CH.TH.44": 1
+          }
+        },
+        {
+          "id": "Q02",
+          "query": "văn bản góp ý dự thảo quy phạm pháp luật",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 0.9173194127129571,
+          "top10": [
+            "CH.PC.04",
+            "CH.PC.02",
+            "CH.PC.01",
+            "CH.TH.47",
+            "CH.TH.48",
+            "CH.TH.52",
+            "CH.PC.03",
+            "CH.TH.51",
+            "CH.PC.06",
+            "CH.TH.43"
+          ],
+          "relevantRanks": {
+            "CH.PC.04": 1,
+            "CH.TH.44": null
+          }
+        },
+        {
+          "id": "Q03",
+          "query": "báo cáo tuần",
+          "precisionAt10": 0.2,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 0.9828422279067397,
+          "top10": [
+            "CH.TH.15",
+            "CH.TH.19",
+            "CH.TH.17",
+            "CH.TH.20",
+            "CH.TH.18",
+            "CH.TH.10",
+            "CH.TH.16",
+            "CH.TH.06",
+            "CH.TH.21",
+            "CH.TC.04"
+          ],
+          "relevantRanks": {
+            "CH.TH.15": 1,
+            "CH.TH.17": 3
+          }
+        },
+        {
+          "id": "Q04",
+          "query": "báo cáo khó khăn vướng mắc tiến độ dự án",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.16",
+            "CH.TH.13",
+            "CH.TH.45",
+            "CH.TH.20",
+            "CH.TH.35",
+            "CH.KH.05",
+            "CH.TH.34",
+            "CH.TH.38",
+            "CH.TH.08",
+            "CH.TH.19"
+          ],
+          "relevantRanks": {
+            "CH.TH.16": 1
+          }
+        },
+        {
+          "id": "Q05",
+          "query": "kế hoạch công tác tháng",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.21",
+            "CH.TH.22",
+            "CH.TH.23",
+            "CH.TH.24",
+            "CH.KH.02",
+            "CH.KH.03",
+            "CH.TH.16",
+            "CH.TC.03",
+            "CH.TH.38",
+            "CH.KH.04"
+          ],
+          "relevantRanks": {
+            "CH.TH.21": 1
+          }
+        },
+        {
+          "id": "Q06",
+          "query": "chuẩn bị slide hội nghị nội bộ",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.02",
+            "CH.TH.03",
+            "CH.TH.04",
+            "CH.TH.05",
+            "CH.TH.21",
+            "CH.KH.02",
+            "CH.CC.02",
+            "CH.TH.01",
+            "CH.TH.43",
+            "CH.TC.07"
+          ],
+          "relevantRanks": {
+            "CH.TH.02": 1
+          }
+        },
+        {
+          "id": "Q07",
+          "query": "bài phát biểu cho hội nghị cấp tỉnh",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.03",
+            "CH.TH.31",
+            "CH.TH.27",
+            "CH.TH.10",
+            "CH.TH.42",
+            "CH.TH.33",
+            "CH.TH.02",
+            "CH.TH.19",
+            "CH.TH.35",
+            "CH.TH.28"
+          ],
+          "relevantRanks": {
+            "CH.TH.03": 1
+          }
+        },
+        {
+          "id": "Q08",
+          "query": "thông báo nghỉ lễ",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.06",
+            "CH.TH.07",
+            "CH.TH.10",
+            "CH.TH.09",
+            "CH.TH.08",
+            "CH.KH.03",
+            "CH.TH.19",
+            "CH.TH.17",
+            "CH.TH.49",
+            "CH.KH.02"
+          ],
+          "relevantRanks": {
+            "CH.TH.06": 1
+          }
+        },
+        {
+          "id": "Q09",
+          "query": "thông báo kết quả tuyển dụng",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.07",
+            "CH.TH.09",
+            "CH.TH.10",
+            "CH.TH.08",
+            "CH.TH.06",
+            "CH.TH.17",
+            "CH.KH.03",
+            "CH.TH.19",
+            "CH.TH.12",
+            "CH.TH.22"
+          ],
+          "relevantRanks": {
+            "CH.TH.07": 1
+          }
+        },
+        {
+          "id": "Q10",
+          "query": "biên bản họp giao ban",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.12",
+            "CH.TH.11",
+            "CH.TH.13",
+            "CH.TH.14",
+            "CH.TH.16",
+            "CH.TH.01",
+            "CH.KH.02",
+            "CH.TH.03",
+            "CH.TH.02",
+            "CH.TH.53"
+          ],
+          "relevantRanks": {
+            "CH.TH.12": 1
+          }
+        },
+        {
+          "id": "Q11",
+          "query": "biên bản thanh tra kiểm tra",
+          "precisionAt10": 0.2,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.13",
+            "CH.TH.12",
+            "CH.TH.11",
+            "CH.TC.04",
+            "CH.TH.14",
+            "CH.TC.02",
+            "CH.VT.04",
+            "CH.KH.02",
+            "CH.TH.03",
+            "CH.TH.44"
+          ],
+          "relevantRanks": {
+            "CH.TH.13": 1,
+            "CH.TH.12": 2
+          }
+        },
+        {
+          "id": "Q12",
+          "query": "đề án vị trí việc làm",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.29",
+            "CH.TH.40",
+            "CH.TH.43",
+            "CH.TH.30",
+            "CH.TH.31",
+            "CH.TH.38",
+            "CH.TH.42",
+            "CH.TH.34",
+            "CH.TH.36",
+            "CH.TH.35"
+          ],
+          "relevantRanks": {
+            "CH.TH.29": 1
+          }
+        },
+        {
+          "id": "Q13",
+          "query": "phương án phòng chống dịch tại địa phương",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.32",
+            "CH.TH.33",
+            "CH.TH.30",
+            "CH.TH.40",
+            "CH.CC.01",
+            "CH.TH.02",
+            "CH.TH.31",
+            "CH.TH.34",
+            "CH.TH.03",
+            "CH.TH.45"
+          ],
+          "relevantRanks": {
+            "CH.TH.32": 1
+          }
+        },
+        {
+          "id": "Q14",
+          "query": "quyết định nâng bậc lương",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.39",
+            "CH.TH.36",
+            "CH.TH.40",
+            "CH.TH.42",
+            "CH.TH.41",
+            "CH.TH.12",
+            "CH.TH.28",
+            "CH.PC.03",
+            "CH.TH.14",
+            "CH.CC.01"
+          ],
+          "relevantRanks": {
+            "CH.TH.39": 1
+          }
+        },
+        {
+          "id": "Q15",
+          "query": "triển khai rà soát thủ tục hành chính nội bộ",
+          "precisionAt10": 0.2,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 0.95583058934618,
+          "top10": [
+            "CH.TH.43",
+            "CH.CC.02",
+            "CH.CC.03",
+            "CH.TH.47",
+            "CH.CC.01",
+            "CH.TH.02",
+            "CH.TH.48",
+            "CH.TC.07",
+            "CH.TH.45",
+            "CH.KH.01"
+          ],
+          "relevantRanks": {
+            "CH.TH.43": 1,
+            "CH.CC.03": 3
+          }
+        },
+        {
+          "id": "Q16",
+          "query": "xin hướng dẫn nghiệp vụ của UBND tỉnh",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.46",
+            "CH.TH.44",
+            "CH.TH.48",
+            "CH.TH.19",
+            "CH.TH.45",
+            "CH.TH.25",
+            "CH.TH.33",
+            "CH.TH.27",
+            "CH.TH.36",
+            "CH.TH.26"
+          ],
+          "relevantRanks": {
+            "CH.TH.46": 1
+          }
+        },
+        {
+          "id": "Q17",
+          "query": "triển khai văn bản quy phạm pháp luật",
+          "precisionAt10": 0.2,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.47",
+            "CH.TH.48",
+            "CH.PC.02",
+            "CH.PC.01",
+            "CH.PC.04",
+            "CH.TH.43",
+            "CH.TH.52",
+            "CH.TH.36",
+            "CH.PC.06",
+            "CH.TH.01"
+          ],
+          "relevantRanks": {
+            "CH.TH.47": 1,
+            "CH.TH.48": 2
+          }
+        },
+        {
+          "id": "Q18",
+          "query": "viết tin bài đăng trang thông tin điện tử",
+          "precisionAt10": 0.2,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.49",
+            "CH.TH.50",
+            "CH.KH.03",
+            "CH.TH.47",
+            "CH.KH.04",
+            "CH.KH.05",
+            "CH.TH.10",
+            "CH.TH.06",
+            "CH.TH.17",
+            "CH.KH.01"
+          ],
+          "relevantRanks": {
+            "CH.TH.49": 1,
+            "CH.TH.50": 2
+          }
+        },
+        {
+          "id": "Q19",
+          "query": "hợp đồng mua văn phòng phẩm",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.51",
+            "CH.TH.52",
+            "CH.TH.01",
+            "CH.TC.06",
+            "CH.VT.01",
+            "CH.TH.47",
+            "CH.TH.28",
+            "CH.TH.03",
+            "CH.TH.27",
+            "CH.PC.04"
+          ],
+          "relevantRanks": {
+            "CH.TH.51": 1
+          }
+        },
+        {
+          "id": "Q20",
+          "query": "rút kinh phí tại ngân hàng",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TC.01",
+            "CH.TC.05",
+            "CH.TC.04",
+            "CH.KH.03",
+            "CH.TC.07",
+            "CH.TC.03",
+            "CH.VT.06",
+            "CH.KH.05",
+            "CH.KH.02",
+            "CH.VT.05"
+          ],
+          "relevantRanks": {
+            "CH.TC.01": 1
+          }
+        },
+        {
+          "id": "Q21",
+          "query": "nhập chứng từ vào phần mềm kế toán",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TC.02",
+            "CH.TC.07",
+            "CH.KH.04",
+            "CH.TC.05",
+            "CH.KH.01",
+            "CH.TC.04",
+            "CH.TC.01",
+            "CH.TC.03",
+            "CH.TC.06",
+            "CH.VT.04"
+          ],
+          "relevantRanks": {
+            "CH.TC.02": 1
+          }
+        },
+        {
+          "id": "Q22",
+          "query": "lập dự toán ngân sách năm sau",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TC.03",
+            "CH.TC.04",
+            "CH.TC.05",
+            "CH.TC.01",
+            "CH.TC.02",
+            "CH.TC.07",
+            "CH.KH.03",
+            "CH.TH.31",
+            "CH.TH.20",
+            "CH.TH.17"
+          ],
+          "relevantRanks": {
+            "CH.TC.03": 1
+          }
+        },
+        {
+          "id": "Q23",
+          "query": "quyết toán gói mua sắm nội bộ",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TC.07",
+            "CH.TC.06",
+            "CH.CC.02",
+            "CH.TH.51",
+            "CH.TC.04",
+            "CH.TH.02",
+            "CH.TH.36",
+            "CH.TH.40",
+            "CH.TC.03",
+            "CH.TH.03"
+          ],
+          "relevantRanks": {
+            "CH.TC.07": 1
+          }
+        },
+        {
+          "id": "Q24",
+          "query": "xây dựng quy chế nội bộ cơ quan",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.PC.05",
+            "CH.PC.06",
+            "CH.CC.02",
+            "CH.TH.02",
+            "CH.TH.43",
+            "CH.PC.01",
+            "CH.PC.02",
+            "CH.TH.21",
+            "CH.PC.04",
+            "CH.PC.03"
+          ],
+          "relevantRanks": {
+            "CH.PC.05": 1
+          }
+        },
+        {
+          "id": "Q25",
+          "query": "công bố thủ tục hành chính mới",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.CC.01",
+            "CH.CC.02",
+            "CH.TH.43",
+            "CH.CC.03",
+            "CH.TH.01",
+            "CH.TH.44",
+            "CH.TH.10",
+            "CH.TH.35",
+            "CH.TH.47",
+            "CH.TH.34"
+          ],
+          "relevantRanks": {
+            "CH.CC.01": 1
+          }
+        },
+        {
+          "id": "Q26",
+          "query": "quy trình giải quyết thủ tục hành chính nội bộ",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.CC.02",
+            "CH.CC.01",
+            "CH.TH.43",
+            "CH.TH.36",
+            "CH.TH.02",
+            "CH.CC.03",
+            "CH.TH.13",
+            "CH.TH.32",
+            "CH.TH.40",
+            "CH.TC.07"
+          ],
+          "relevantRanks": {
+            "CH.CC.02": 1
+          }
+        },
+        {
+          "id": "Q27",
+          "query": "tiếp nhận hồ sơ trên phần mềm dịch vụ công",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.KH.01",
+            "CH.KH.04",
+            "CH.VT.04",
+            "CH.VT.01",
+            "CH.KH.03",
+            "CH.KH.02",
+            "CH.TC.02",
+            "CH.TC.03",
+            "CH.VT.02",
+            "CH.TH.09"
+          ],
+          "relevantRanks": {
+            "CH.KH.01": 1
+          }
+        },
+        {
+          "id": "Q28",
+          "query": "tham dự tập huấn hội thảo",
+          "precisionAt10": 0.1,
+          "mrrAt10": 0.3333333333333333,
+          "ndcgAt10": 0.5,
+          "top10": [
+            "CH.TH.04",
+            "CH.TH.05",
+            "CH.KH.02",
+            "CH.PC.04",
+            "CH.TH.01",
+            "CH.TH.51",
+            "CH.PC.02",
+            "CH.PC.03",
+            "CH.TH.09",
+            "CH.TH.03"
+          ],
+          "relevantRanks": {
+            "CH.KH.02": 3
+          }
+        },
+        {
+          "id": "Q29",
+          "query": "tuyên truyền vận động người dân",
+          "precisionAt10": 0.0,
+          "mrrAt10": 0.0,
+          "ndcgAt10": 0.0,
+          "top10": [
+            "CH.TH.50",
+            "CH.TH.28",
+            "CH.TH.27",
+            "CH.TH.47",
+            "CH.TH.44",
+            "CH.TH.45",
+            "CH.TH.46",
+            "CH.TH.26",
+            "CH.TH.22",
+            "CH.TH.33"
+          ],
+          "relevantRanks": {
+            "CH.KH.03": null
+          }
+        },
+        {
+          "id": "Q30",
+          "query": "kê khai giá trên phần mềm cơ sở dữ liệu",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.KH.04",
+            "CH.KH.01",
+            "CH.TC.02",
+            "CH.KH.02",
+            "CH.TC.03",
+            "CH.TC.01",
+            "CH.TH.47",
+            "CH.KH.05",
+            "CH.TH.49",
+            "CH.KH.03"
+          ],
+          "relevantRanks": {
+            "CH.KH.04": 1
+          }
+        },
+        {
+          "id": "Q31",
+          "query": "theo dõi tiến độ dự án đầu tư công",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.KH.05",
+            "CH.TC.07",
+            "CH.TH.38",
+            "CH.TH.35",
+            "CH.TH.34",
+            "CH.TH.16",
+            "CH.KH.01",
+            "CH.PC.04",
+            "CH.TH.31",
+            "CH.KH.03"
+          ],
+          "relevantRanks": {
+            "CH.KH.05": 1
+          }
+        },
+        {
+          "id": "Q32",
+          "query": "phát hành văn bản mật",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.VT.02",
+            "CH.VT.01",
+            "CH.TH.01",
+            "CH.TH.47",
+            "CH.TH.03",
+            "CH.PC.04",
+            "CH.VT.04",
+            "CH.TH.02",
+            "CH.TH.28",
+            "CH.TH.43"
+          ],
+          "relevantRanks": {
+            "CH.VT.02": 1
+          }
+        },
+        {
+          "id": "Q33",
+          "query": "tiêu hủy tài liệu hết thời hạn bảo quản",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.VT.06",
+            "CH.VT.05",
+            "CH.TH.05",
+            "CH.TH.04",
+            "CH.VT.04",
+            "CH.VT.03",
+            "CH.TH.20",
+            "CH.TH.03",
+            "CH.TH.17",
+            "CH.TH.02"
+          ],
+          "relevantRanks": {
+            "CH.VT.06": 1
+          }
+        },
+        {
+          "id": "Q34",
+          "query": "báo cáo tổng kết giai đoạn 5 năm",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.20",
+            "CH.TH.17",
+            "CH.TH.19",
+            "CH.TH.18",
+            "CH.TH.10",
+            "CH.TC.04",
+            "CH.TH.15",
+            "CH.TH.16",
+            "CH.TH.23",
+            "CH.TH.51"
+          ],
+          "relevantRanks": {
+            "CH.TH.20": 1
+          }
+        },
+        {
+          "id": "Q35",
+          "query": "tờ trình phê duyệt dự án đầu tư",
+          "precisionAt10": 0.1,
+          "mrrAt10": 1.0,
+          "ndcgAt10": 1.0,
+          "top10": [
+            "CH.TH.38",
+            "CH.TH.34",
+            "CH.TH.35",
+            "CH.TC.07",
+            "CH.TH.36",
+            "CH.TH.37",
+            "CH.TC.03",
+            "CH.TH.42",
+            "CH.TH.40",
+            "CH.KH.05"
+          ],
+          "relevantRanks": {
+            "CH.TH.38": 1
+          }
+        }
+      ]
+    }
+  ],
+  "queries": [
+    {
+      "id": "Q01",
+      "query": "CHTH44",
+      "relevance": {
+        "CH.TH.44": 3
+      }
+    },
+    {
+      "id": "Q02",
+      "query": "văn bản góp ý dự thảo quy phạm pháp luật",
+      "relevance": {
+        "CH.PC.04": 3,
+        "CH.TH.44": 1
+      }
+    },
+    {
+      "id": "Q03",
+      "query": "báo cáo tuần",
+      "relevance": {
+        "CH.TH.15": 3,
+        "CH.TH.17": 1
+      }
+    },
+    {
+      "id": "Q04",
+      "query": "báo cáo khó khăn vướng mắc tiến độ dự án",
+      "relevance": {
+        "CH.TH.16": 3
+      }
+    },
+    {
+      "id": "Q05",
+      "query": "kế hoạch công tác tháng",
+      "relevance": {
+        "CH.TH.21": 3
+      }
+    },
+    {
+      "id": "Q06",
+      "query": "chuẩn bị slide hội nghị nội bộ",
+      "relevance": {
+        "CH.TH.02": 3
+      }
+    },
+    {
+      "id": "Q07",
+      "query": "bài phát biểu cho hội nghị cấp tỉnh",
+      "relevance": {
+        "CH.TH.03": 3
+      }
+    },
+    {
+      "id": "Q08",
+      "query": "thông báo nghỉ lễ",
+      "relevance": {
+        "CH.TH.06": 3
+      }
+    },
+    {
+      "id": "Q09",
+      "query": "thông báo kết quả tuyển dụng",
+      "relevance": {
+        "CH.TH.07": 3
+      }
+    },
+    {
+      "id": "Q10",
+      "query": "biên bản họp giao ban",
+      "relevance": {
+        "CH.TH.12": 3
+      }
+    },
+    {
+      "id": "Q11",
+      "query": "biên bản thanh tra kiểm tra",
+      "relevance": {
+        "CH.TH.13": 3,
+        "CH.TH.12": 1
+      }
+    },
+    {
+      "id": "Q12",
+      "query": "đề án vị trí việc làm",
+      "relevance": {
+        "CH.TH.29": 3
+      }
+    },
+    {
+      "id": "Q13",
+      "query": "phương án phòng chống dịch tại địa phương",
+      "relevance": {
+        "CH.TH.32": 3
+      }
+    },
+    {
+      "id": "Q14",
+      "query": "quyết định nâng bậc lương",
+      "relevance": {
+        "CH.TH.39": 3
+      }
+    },
+    {
+      "id": "Q15",
+      "query": "triển khai rà soát thủ tục hành chính nội bộ",
+      "relevance": {
+        "CH.TH.43": 3,
+        "CH.CC.03": 2
+      }
+    },
+    {
+      "id": "Q16",
+      "query": "xin hướng dẫn nghiệp vụ của UBND tỉnh",
+      "relevance": {
+        "CH.TH.46": 3
+      }
+    },
+    {
+      "id": "Q17",
+      "query": "triển khai văn bản quy phạm pháp luật",
+      "relevance": {
+        "CH.TH.47": 3,
+        "CH.TH.48": 2
+      }
+    },
+    {
+      "id": "Q18",
+      "query": "viết tin bài đăng trang thông tin điện tử",
+      "relevance": {
+        "CH.TH.49": 3,
+        "CH.TH.50": 2
+      }
+    },
+    {
+      "id": "Q19",
+      "query": "hợp đồng mua văn phòng phẩm",
+      "relevance": {
+        "CH.TH.51": 3
+      }
+    },
+    {
+      "id": "Q20",
+      "query": "rút kinh phí tại ngân hàng",
+      "relevance": {
+        "CH.TC.01": 3
+      }
+    },
+    {
+      "id": "Q21",
+      "query": "nhập chứng từ vào phần mềm kế toán",
+      "relevance": {
+        "CH.TC.02": 3
+      }
+    },
+    {
+      "id": "Q22",
+      "query": "lập dự toán ngân sách năm sau",
+      "relevance": {
+        "CH.TC.03": 3
+      }
+    },
+    {
+      "id": "Q23",
+      "query": "quyết toán gói mua sắm nội bộ",
+      "relevance": {
+        "CH.TC.07": 3
+      }
+    },
+    {
+      "id": "Q24",
+      "query": "xây dựng quy chế nội bộ cơ quan",
+      "relevance": {
+        "CH.PC.05": 3
+      }
+    },
+    {
+      "id": "Q25",
+      "query": "công bố thủ tục hành chính mới",
+      "relevance": {
+        "CH.CC.01": 3
+      }
+    },
+    {
+      "id": "Q26",
+      "query": "quy trình giải quyết thủ tục hành chính nội bộ",
+      "relevance": {
+        "CH.CC.02": 3
+      }
+    },
+    {
+      "id": "Q27",
+      "query": "tiếp nhận hồ sơ trên phần mềm dịch vụ công",
+      "relevance": {
+        "CH.KH.01": 3
+      }
+    },
+    {
+      "id": "Q28",
+      "query": "tham dự tập huấn hội thảo",
+      "relevance": {
+        "CH.KH.02": 3
+      }
+    },
+    {
+      "id": "Q29",
+      "query": "tuyên truyền vận động người dân",
+      "relevance": {
+        "CH.KH.03": 3
+      }
+    },
+    {
+      "id": "Q30",
+      "query": "kê khai giá trên phần mềm cơ sở dữ liệu",
+      "relevance": {
+        "CH.KH.04": 3
+      }
+    },
+    {
+      "id": "Q31",
+      "query": "theo dõi tiến độ dự án đầu tư công",
+      "relevance": {
+        "CH.KH.05": 3
+      }
+    },
+    {
+      "id": "Q32",
+      "query": "phát hành văn bản mật",
+      "relevance": {
+        "CH.VT.02": 3
+      }
+    },
+    {
+      "id": "Q33",
+      "query": "tiêu hủy tài liệu hết thời hạn bảo quản",
+      "relevance": {
+        "CH.VT.06": 3
+      }
+    },
+    {
+      "id": "Q34",
+      "query": "báo cáo tổng kết giai đoạn 5 năm",
+      "relevance": {
+        "CH.TH.20": 3
+      }
+    },
+    {
+      "id": "Q35",
+      "query": "tờ trình phê duyệt dự án đầu tư",
+      "relevance": {
+        "CH.TH.38": 3
+      }
+    }
+  ]
+}
