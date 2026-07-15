@@ -8,6 +8,22 @@ interface EnvConfig {
   mongodbUri: string;
   jwtSecret: string;
   frontendOrigin: string;
+  geminiApiKeys: string[];
+}
+
+export function readNumberedGeminiApiKeys(source: NodeJS.ProcessEnv = process.env) {
+  const numberedKeys = Object.entries(source)
+    .map(([name, value]) => {
+      const match = /^GEMINI_(\d+)_KEY$/.exec(name);
+      return match && value?.trim()
+        ? { order: Number.parseInt(match[1], 10), value: value.trim() }
+        : null;
+    })
+    .filter((entry): entry is { order: number; value: string } => entry !== null)
+    .sort((left, right) => left.order - right.order)
+    .map((entry) => entry.value);
+
+  return [...new Set(numberedKeys)];
 }
 
 function requireEnv(name: string) {
@@ -28,4 +44,5 @@ export const env: EnvConfig = {
   mongodbUri: requireEnv('MONGODB_URI'),
   jwtSecret: requireEnv('JWT_SECRET'),
   frontendOrigin: requireEnv('FRONTEND_ORIGIN'),
+  geminiApiKeys: readNumberedGeminiApiKeys(),
 };

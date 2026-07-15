@@ -4,6 +4,8 @@ import type {
   DocumentCatalogMeta,
   DocumentCatalogSearchParams,
   DocumentCatalogSearchResponse,
+  DocumentCatalogSuggestParams,
+  DocumentCatalogSuggestResponse,
 } from '../types/documentCatalog';
 
 export async function searchDocumentCatalog(params: DocumentCatalogSearchParams) {
@@ -15,6 +17,11 @@ export async function searchDocumentCatalog(params: DocumentCatalogSearchParams)
       limit: params.limit ?? 20,
     },
   });
+  return response.data;
+}
+
+export async function suggestDocumentCatalog(params: DocumentCatalogSuggestParams) {
+  const response = await apiClient.post<DocumentCatalogSuggestResponse>('/document-catalog/suggest', params);
   return response.data;
 }
 

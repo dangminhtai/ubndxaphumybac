@@ -6,9 +6,11 @@
     "start": "tsx src/index.ts",
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
+    "test:database": "npm run build && node scripts/test-database-reconnect.cjs",
     "test:catalog": "npm run build && node scripts/test-document-catalog.cjs"
   },
   "dependencies": {
+    "@google/genai": "^2.11.0",
     "@supabase/supabase-js": "^2.110.1",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
@@ -17,7 +19,8 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.7.0",
     "multer": "^2.2.0",
-    "winston": "^3.19.0"
+    "winston": "^3.19.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

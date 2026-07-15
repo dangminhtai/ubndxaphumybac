@@ -32,3 +32,21 @@ export interface DocumentCatalogSearchQuery {
   outputProduct?: string;
   limit?: number;
 }
+
+export type DocumentScope = 'internal' | 'cross_agency' | 'province_central' | 'unknown';
+export type SuggestionPriority = 'high' | 'medium' | 'low';
+
+export interface DocumentCatalogSuggestQuery {
+  title: string;
+  group?: string;
+  outputProduct?: string;
+  scope?: DocumentScope;
+  legalBasis?: string;
+}
+
+export interface DocumentCatalogRankedCandidate extends DocumentCatalogItem {
+  rank: number;
+  priority: SuggestionPriority;
+  reason: string;
+  applicableWhen: string;
+}

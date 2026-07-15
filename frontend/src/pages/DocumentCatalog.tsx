@@ -8,16 +8,21 @@ import {
   Filter,
   Loader2,
   Search,
+  Sparkles,
 } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
 import {
   getDocumentCatalogMeta,
   searchDocumentCatalog,
+  suggestDocumentCatalog,
 } from '../api/documentCatalogApi';
 import type {
+  DocumentCatalogAiCandidate,
   DocumentCatalogMeta,
   DocumentCatalogSearchResponse,
   DocumentCatalogSearchResult,
+  DocumentCatalogSuggestResponse,
+  DocumentScope,
 } from '../types/documentCatalog';
 
 const MATCHED_FIELD_LABELS: Record<string, string> = {
@@ -115,13 +120,77 @@ function CatalogResultCard({ item }: { item: DocumentCatalogSearchResult }) {
   );
 }
 
+const PRIORITY_LABELS = {
+  high: 'Ưu tiên cao',
+  medium: 'Ưu tiên vừa',
+  low: 'Tham khảo',
+};
+
+function AiCandidateCard({ item }: { item: DocumentCatalogAiCandidate }) {
+  const [copied, setCopied] = useState(false);
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(item.code);
+      setCopied(true);
+      toast.success(`Đã sao chép ${item.code}`);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error('Không thể sao chép mã');
+    }
+  };
+
+  return (
+    <article className="rounded-lg border border-outline-variant bg-surface-container-lowest p-4 shadow-level-1 md:p-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-primary px-2 text-sm font-bold text-on-primary">
+              #{item.rank}
+            </span>
+            <span className="rounded-md bg-surface-container-high px-2.5 py-1 text-sm font-bold text-on-surface">
+              {item.code}
+            </span>
+            <span className="rounded-md bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
+              {PRIORITY_LABELS[item.priority]}
+            </span>
+          </div>
+          <h2 className="text-base font-semibold leading-6 text-on-surface md:text-lg">{item.taskName}</h2>
+          <p className="mt-1 text-sm text-on-surface-variant">{item.outputProduct} · {item.groupName}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => void copyCode()}
+          className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-primary px-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/5"
+          title="Sao chép mã"
+        >
+          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+          {copied ? 'Đã sao chép' : 'Sao chép mã'}
+        </button>
+      </div>
+      <div className="mt-4 grid gap-3 border-t border-outline-variant pt-4 md:grid-cols-2">
+        <div>
+          <p className="text-xs font-semibold uppercase text-on-surface-variant">Lý do xếp hạng</p>
+          <p className="mt-1 text-sm leading-6 text-on-surface">{item.reason}</p>
+        </div>
+        <div>
+          <p className="text-xs font-semibold uppercase text-on-surface-variant">Nên dùng khi</p>
+          <p className="mt-1 text-sm leading-6 text-on-surface">{item.applicableWhen}</p>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 export default function DocumentCatalog() {
   const [query, setQuery] = useState('');
   const [group, setGroup] = useState('');
   const [outputProduct, setOutputProduct] = useState('');
+  const [scope, setScope] = useState<DocumentScope>('unknown');
   const [meta, setMeta] = useState<DocumentCatalogMeta | null>(null);
   const [data, setData] = useState<DocumentCatalogSearchResponse | null>(null);
+  const [aiData, setAiData] = useState<DocumentCatalogSuggestResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
   const [metaLoading, setMetaLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -143,6 +212,7 @@ export default function DocumentCatalog() {
 
     setLoading(true);
     setError('');
+    setAiData(null);
     try {
       const response = await searchDocumentCatalog({
         query: trimmedQuery,
@@ -156,6 +226,33 @@ export default function DocumentCatalog() {
       setError(requestError.response?.data?.error || 'Không thể tra cứu danh mục');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAiSuggest = async () => {
+    const trimmedQuery = query.trim();
+    if (trimmedQuery.length < 5) {
+      setError('Nhập trích yếu ít nhất 5 ký tự để gợi ý bằng AI');
+      setAiData(null);
+      return;
+    }
+
+    setAiLoading(true);
+    setError('');
+    setData(null);
+    try {
+      const response = await suggestDocumentCatalog({
+        title: trimmedQuery,
+        group: group || undefined,
+        outputProduct: outputProduct || undefined,
+        scope,
+      });
+      setAiData(response);
+    } catch (requestError: any) {
+      setAiData(null);
+      setError(requestError.response?.data?.error || 'Không thể tạo gợi ý AI');
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -174,7 +271,7 @@ export default function DocumentCatalog() {
             Điều kiện tra cứu
           </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(280px,1fr)_220px_220px_auto]">
+          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[minmax(280px,1fr)_190px_190px_190px_auto]">
             <label className="relative block min-w-0">
               <span className="sr-only">Tên, mã hoặc mô tả công việc</span>
               <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-on-surface-variant" />
@@ -218,14 +315,39 @@ export default function DocumentCatalog() {
               </select>
             </label>
 
-            <button
-              type="submit"
-              disabled={loading || metaLoading}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-on-primary transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-              Tra cứu
-            </button>
+            <label>
+              <span className="sr-only">Phạm vi xử lý</span>
+              <select
+                value={scope}
+                onChange={(event) => setScope(event.target.value as DocumentScope)}
+                className="h-11 w-full rounded-lg border border-outline-variant bg-surface px-3 text-sm text-on-surface outline-none focus:border-primary"
+              >
+                <option value="unknown">Chưa rõ phạm vi</option>
+                <option value="internal">Nội bộ cơ quan</option>
+                <option value="cross_agency">Phối hợp nhiều đơn vị</option>
+                <option value="province_central">Theo tỉnh/Trung ương</option>
+              </select>
+            </label>
+
+            <div className="flex gap-2 md:col-span-2 xl:col-span-1">
+              <button
+                type="submit"
+                disabled={loading || aiLoading || metaLoading}
+                className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-primary px-4 text-sm font-semibold text-primary transition-colors hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                Tra cứu
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleAiSuggest()}
+                disabled={loading || aiLoading || metaLoading}
+                className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-on-primary transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                Gợi ý AI
+              </button>
+            </div>
           </div>
 
           {error && (
@@ -246,10 +368,39 @@ export default function DocumentCatalog() {
           </div>
         )}
 
+        {aiData && (
+          <div className="space-y-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="font-semibold text-on-surface">Top 3 mã được đề xuất</p>
+                <p className="mt-1 text-sm text-on-surface-variant">
+                  Mã ưu tiên: <strong className="text-primary">{aiData.recommendedCode}</strong>
+                </p>
+              </div>
+              <p className="text-xs text-on-surface-variant">
+                Model: {aiData.model} · Tập ứng viên: {aiData.candidatePoolSize}
+              </p>
+            </div>
+            {aiData.needsMoreContext && aiData.clarificationQuestion && (
+              <p role="status" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+                Cần làm rõ: {aiData.clarificationQuestion}
+              </p>
+            )}
+            {aiData.candidates.map((item) => <AiCandidateCard key={item.code} item={item} />)}
+          </div>
+        )}
+
         {loading && (
           <div className="flex min-h-48 items-center justify-center" aria-live="polite">
             <Loader2 className="h-7 w-7 animate-spin text-primary" />
             <span className="ml-3 text-sm text-on-surface-variant">Đang tra cứu...</span>
+          </div>
+        )}
+
+        {aiLoading && (
+          <div className="flex min-h-48 items-center justify-center" aria-live="polite">
+            <Loader2 className="h-7 w-7 animate-spin text-primary" />
+            <span className="ml-3 text-sm text-on-surface-variant">Đang xếp hạng Top 3...</span>
           </div>
         )}
 
@@ -267,7 +418,7 @@ export default function DocumentCatalog() {
           </div>
         )}
 
-        {!loading && !data && !error && (
+        {!loading && !aiLoading && !data && !aiData && !error && (
           <div className="flex min-h-52 flex-col items-center justify-center border-y border-outline-variant text-center">
             <BookOpenCheck className="h-9 w-9 text-primary" />
             <p className="mt-3 font-semibold text-on-surface">Danh mục có {meta?.total ?? 80} mã công việc</p>

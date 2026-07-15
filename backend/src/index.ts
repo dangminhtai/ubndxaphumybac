@@ -12,7 +12,12 @@ import archiveRouter from './routes/archive';
 import notificationRouter from './routes/notifications';
 import workScheduleRouter from './routes/work-schedules';
 import documentCatalogRouter from './routes/document-catalog';
-import { closeDatabase, connectDatabase, getDatabaseStatus } from './config/db';
+import {
+  closeDatabase,
+  connectDatabase,
+  getDatabaseStatus,
+  onDatabaseConnected,
+} from './config/db';
 import { env } from './config/env';
 import { errorHandler } from './middleware/error.middleware';
 import { seedDefaultAdmin } from './services/auth.service';
@@ -24,13 +29,11 @@ app.use(express.json());
 
 import { ensureCurrentWeekPeriod } from './services/period.service';
 
-void connectDatabase().then(async (connected) => {
-  if (connected) {
-    await seedDefaultAdmin();
-    await ensureCurrentWeekPeriod();
-  }
-  return undefined;
+onDatabaseConnected(async () => {
+  await seedDefaultAdmin();
+  await ensureCurrentWeekPeriod();
 });
+void connectDatabase();
 
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);

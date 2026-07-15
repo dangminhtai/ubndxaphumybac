@@ -14,7 +14,7 @@ import {
   tokenizeSearchText,
 } from '../utils/vietnamese-search';
 
-type SearchField = 'code' | 'taskName' | 'outputProduct' | 'description' | 'groupName';
+type SearchField = 'taskName' | 'outputProduct' | 'description' | 'groupName';
 
 interface IndexedItem {
   item: DocumentCatalogItem;
@@ -24,7 +24,6 @@ interface IndexedItem {
 }
 
 const FIELD_WEIGHTS: Record<SearchField, number> = {
-  code: 10,
   taskName: 6,
   outputProduct: 3,
   description: 2,
@@ -36,7 +35,6 @@ const catalogItems = getDocumentCatalogItems();
 
 const index: IndexedItem[] = catalogItems.map((item) => {
   const fields: Record<SearchField, string> = {
-    code: normalizeSearchText(item.code),
     taskName: normalizeSearchText(item.taskName),
     outputProduct: normalizeSearchText(item.outputProduct),
     description: normalizeSearchText(item.description),

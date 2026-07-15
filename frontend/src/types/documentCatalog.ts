@@ -42,3 +42,34 @@ export interface DocumentCatalogSearchParams {
   outputProduct?: string;
   limit?: number;
 }
+
+export type DocumentScope = 'internal' | 'cross_agency' | 'province_central' | 'unknown';
+export type SuggestionPriority = 'high' | 'medium' | 'low';
+
+export interface DocumentCatalogSuggestParams {
+  title: string;
+  group?: string;
+  outputProduct?: string;
+  scope?: DocumentScope;
+  legalBasis?: string;
+}
+
+export interface DocumentCatalogAiCandidate extends DocumentCatalogItem {
+  rank: number;
+  priority: SuggestionPriority;
+  reason: string;
+  applicableWhen: string;
+}
+
+export interface DocumentCatalogSuggestResponse {
+  query: string;
+  searchMode: 'gemini_rerank';
+  model: string;
+  attemptedModels: string[];
+  catalogVersion: string;
+  candidatePoolSize: number;
+  recommendedCode: string;
+  needsMoreContext: boolean;
+  clarificationQuestion: string | null;
+  candidates: DocumentCatalogAiCandidate[];
+}

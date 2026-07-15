@@ -5,6 +5,8 @@ import {
   getDocumentCatalogMeta,
   searchDocumentCatalog,
 } from '../services/document-catalog.service';
+import { suggestDocumentCatalog } from '../services/document-catalog-reranker.service';
+import type { DocumentScope } from '../types/document-catalog';
 
 export function searchCatalog(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
@@ -39,6 +41,21 @@ export function getCatalogMeta(_req: AuthenticatedRequest, res: Response, next: 
 export function getCatalogItem(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
     res.json(getDocumentCatalogItem(String(req.params.code)));
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function suggestCatalog(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    const result = await suggestDocumentCatalog({
+      title: typeof req.body.title === 'string' ? req.body.title : '',
+      group: typeof req.body.group === 'string' ? req.body.group : undefined,
+      outputProduct: typeof req.body.outputProduct === 'string' ? req.body.outputProduct : undefined,
+      scope: typeof req.body.scope === 'string' ? req.body.scope as DocumentScope : undefined,
+      legalBasis: typeof req.body.legalBasis === 'string' ? req.body.legalBasis : undefined,
+    });
+    res.json(result);
   } catch (error) {
     next(error);
   }
