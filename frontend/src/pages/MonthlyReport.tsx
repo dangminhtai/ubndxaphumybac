@@ -18,6 +18,7 @@ import { createMonthlyStaffReport, getMonthlyStaffCurrent, submitMonthlyStaffRep
 import type { ReportPeriod, MonthlyStaffPayload } from '../types/report';
 import type { User } from '../types/user';
 import ConfirmModal from '../components/ui/ConfirmModal';
+import { formatApiError } from '../utils/apiError';
 
 function readUser() {
   const rawUser = localStorage.getItem('user');
@@ -283,8 +284,8 @@ export default function MonthlyReport() {
       setReportStatus(recalled.status);
       setMessage('Đã thu hồi báo cáo. Trạng thái hiện tại: Nháp.');
       setIsRecallOpen(false);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Không thu hồi được báo cáo');
+    } catch (err) {
+      setError(formatApiError(err, 'Không thu hồi được báo cáo'));
     } finally {
       setSaving(false);
     }
@@ -311,8 +312,8 @@ export default function MonthlyReport() {
           });
           setMessage(data.report.status === 'draft' ? 'Đã tải bản nháp từ MongoDB' : 'Báo cáo kỳ này đã nộp');
         }
-      } catch (err: any) {
-        setError(err.response?.data?.error || 'Chưa có kỳ báo cáo tháng đang mở. Admin cần tạo và mở kỳ báo cáo trước.');
+      } catch (err) {
+        setError(formatApiError(err, 'Không tải được kỳ báo cáo tháng'));
       } finally {
         setLoading(false);
       }
@@ -347,7 +348,7 @@ export default function MonthlyReport() {
       setReportStatus(savedReport.status);
       setMessage(status === 'draft' ? 'Đã lưu nháp vào MongoDB' : 'Đã nộp báo cáo vào MongoDB');
     } catch (err) {
-      setError(status === 'draft' ? 'Không lưu được bản nháp' : 'Không nộp được báo cáo');
+      setError(formatApiError(err, status === 'draft' ? 'Không lưu được bản nháp' : 'Không nộp được báo cáo'));
       console.error(err);
     } finally {
       setSaving(false);
@@ -362,8 +363,8 @@ export default function MonthlyReport() {
         const report = await submitMonthlyStaffReport(reportId);
         setReportStatus(report.status);
         setMessage('Đã nộp báo cáo vào MongoDB');
-      } catch (err: any) {
-        setError(err.response?.data?.error || 'Không nộp được báo cáo');
+      } catch (err) {
+        setError(formatApiError(err, 'Không nộp được báo cáo'));
       } finally {
         setSaving(false);
       }
@@ -426,7 +427,7 @@ export default function MonthlyReport() {
       <div className="mx-auto max-w-4xl">
         {error && (
           <div className="mb-4 rounded-lg border border-error-container bg-error-container px-4 py-3 text-sm text-error">
-            {error}. Kiểm tra backend port 5002 và kết nối MongoDB.
+            {error}
           </div>
         )}
         {loading && (

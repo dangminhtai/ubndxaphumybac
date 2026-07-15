@@ -20,10 +20,12 @@ import {
 } from './config/db';
 import { env } from './config/env';
 import { errorHandler } from './middleware/error.middleware';
+import { requestContext } from './middleware/request-context.middleware';
 import { seedDefaultAdmin } from './services/auth.service';
 
 const app = express();
 
+app.use(requestContext);
 app.use(cors({ origin: env.frontendOrigin }));
 app.use(express.json());
 
@@ -48,11 +50,20 @@ app.use('/api/work-schedules', workScheduleRouter);
 app.use('/api/document-catalog', documentCatalogRouter);
 
 app.get('/api/health', (_req, res) => {
+  const mongodb = getDatabaseStatus();
   res.json({
-    status: 'ok',
+    status: mongodb === 'connected' ? 'ok' : 'degraded',
     message: 'API is running',
-    mongodb: getDatabaseStatus(),
+    mongodb,
     port: env.port,
+  });
+});
+
+app.get('/api/ready', (_req, res) => {
+  const mongodb = getDatabaseStatus();
+  res.status(mongodb === 'connected' ? 200 : 503).json({
+    ready: mongodb === 'connected',
+    mongodb,
   });
 });
 

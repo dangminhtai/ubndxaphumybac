@@ -32,6 +32,24 @@ export interface AuditLogQuery {
   endDate?: string;
 }
 
+export interface OperationalErrorEntry {
+  requestId: string;
+  timestamp: string;
+  code: string;
+  statusCode: number;
+  method: string;
+  path: string;
+  message: string;
+}
+
+export interface SystemDiagnostics {
+  status: 'healthy' | 'degraded';
+  mongodb: 'disconnected' | 'connected' | 'connecting' | 'disconnecting' | 'unknown';
+  uptimeSeconds: number;
+  timestamp: string;
+  recentErrors: OperationalErrorEntry[];
+}
+
 export async function getAuditLogs(query: AuditLogQuery = {}): Promise<AuditLogResponse> {
   const params = new URLSearchParams();
   if (query.page) params.set('page', String(query.page));
@@ -43,5 +61,10 @@ export async function getAuditLogs(query: AuditLogQuery = {}): Promise<AuditLogR
   if (query.endDate) params.set('endDate', query.endDate);
 
   const res = await apiClient.get<AuditLogResponse>(`/admin/logs?${params.toString()}`);
+  return res.data;
+}
+
+export async function getSystemDiagnostics(): Promise<SystemDiagnostics> {
+  const res = await apiClient.get<SystemDiagnostics>('/admin/diagnostics', { params: { limit: 10 } });
   return res.data;
 }

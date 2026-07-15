@@ -13,10 +13,12 @@ import {
   ClipboardList,
   CalendarClock,
   Search,
+  AlertTriangle,
+  Database,
 } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
-import { getAuditLogs } from '../api/auditLogApi';
-import type { AuditLogEntry, AuditLogResponse } from '../api/auditLogApi';
+import { getAuditLogs, getSystemDiagnostics } from '../api/auditLogApi';
+import type { AuditLogEntry, AuditLogResponse, SystemDiagnostics } from '../api/auditLogApi';
 
 const CATEGORIES = [
   { value: '', label: 'Tất cả' },
@@ -184,6 +186,8 @@ function LogCard({ log }: { log: AuditLogEntry }) {
 
 export default function AdminLogs() {
   const [data, setData] = useState<AuditLogResponse | null>(null);
+  const [diagnostics, setDiagnostics] = useState<SystemDiagnostics | null>(null);
+  const [diagnosticsError, setDiagnosticsError] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
@@ -214,6 +218,9 @@ export default function AdminLogs() {
 
   useEffect(() => {
     void fetchLogs();
+    getSystemDiagnostics()
+      .then(setDiagnostics)
+      .catch(() => setDiagnosticsError('Không kết nối được API chẩn đoán hệ thống'));
   }, [page]);
 
   const handleFilter = () => {
@@ -227,6 +234,42 @@ export default function AdminLogs() {
       subtitle="Theo dõi tất cả hoạt động trên hệ thống báo cáo"
     >
       <div className="space-y-4">
+        <section className="border-y border-outline-variant bg-surface-container-low px-4 py-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <Database className={`h-5 w-5 ${diagnostics?.mongodb === 'connected' ? 'text-emerald-600' : 'text-error'}`} />
+              <div>
+                <p className="text-sm font-semibold text-on-surface">Trạng thái vận hành</p>
+                <p className="text-xs text-on-surface-variant">
+                  MongoDB: {diagnostics?.mongodb || 'không xác định'}
+                  {diagnostics ? ` · Uptime: ${diagnostics.uptimeSeconds}s` : ''}
+                </p>
+              </div>
+            </div>
+            <span className={`w-fit rounded-md px-2.5 py-1 text-xs font-semibold ${diagnostics?.status === 'healthy' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+              {diagnostics?.status === 'healthy' ? 'HEALTHY' : 'DEGRADED'}
+            </span>
+          </div>
+          {diagnosticsError && <p className="mt-3 text-sm text-error">{diagnosticsError}</p>}
+          {diagnostics && diagnostics.recentErrors.length > 0 && (
+            <div className="mt-4 border-t border-outline-variant pt-3">
+              <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-on-surface">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                Lỗi backend gần nhất
+              </div>
+              <div className="space-y-2">
+                {diagnostics.recentErrors.slice(0, 5).map((item) => (
+                  <div key={item.requestId} className="grid gap-1 text-xs text-on-surface-variant sm:grid-cols-[160px_170px_1fr]">
+                    <span>{formatDateTime(item.timestamp)}</span>
+                    <span className="font-semibold text-error">{item.code} · {item.statusCode}</span>
+                    <span className="break-all">{item.method} {item.path} · ID: {item.requestId}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+
         {/* Filter bar */}
         <div className="rounded-xl border border-outline-variant bg-white p-3 shadow-level-1 md:p-4">
           <div className="flex items-center gap-2 mb-3">

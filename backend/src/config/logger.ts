@@ -2,7 +2,7 @@ import winston from 'winston';
 import fs from 'fs';
 import path from 'path';
 
-const logDir = path.join(process.cwd(), 'logs');
+const logDir = path.resolve(__dirname, '../../logs');
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir);
 }
