@@ -4,8 +4,9 @@ import shutil
 import sys
 import zipfile
 import xml.etree.ElementTree as ET
-from datetime import date, datetime
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 XML_SPACE = "http://www.w3.org/XML/1998/namespace"
@@ -31,8 +32,13 @@ def required(payload, key):
 
 def format_place_date(today=None):
     if not today:
-        today = date.today()
+        today = datetime.now(ZoneInfo("Asia/Ho_Chi_Minh")).date()
     return f"Phù Mỹ Bắc, ngày {today.day} tháng {today.month} năm {today.year}"
+
+
+def format_vietnam_date(value):
+    parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    return parsed.astimezone(ZoneInfo("Asia/Ho_Chi_Minh")).strftime("%d/%m/%Y")
 
 
 def markdown_to_html(text):
@@ -178,6 +184,8 @@ def build_document_xml(payload, template_path):
     difficulties = payload.get("difficulties") or ""
     proposals = payload.get("proposals") or ""
     next_tasks = payload.get("nextTasks") or ""
+    start_date = required(payload, "startDate")
+    due_date = required(payload, "dueDate")
 
     sect_pr = get_section_properties(template_path)
 
@@ -187,7 +195,14 @@ def build_document_xml(payload, template_path):
     body.append(paragraph("CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM", bold=True, align="center", size=26, spacing_after=0))
     body.append(paragraph("Độc lập - Tự do - Hạnh phúc", bold=True, align="center", size=26, spacing_after=240))
     body.append(paragraph(format_place_date(), align="right", size=26, italic=True, spacing_after=240))
-    body.append(paragraph(report_title, bold=True, align="center", size=32, spacing_after=240))
+    body.append(paragraph(report_title, bold=True, align="center", size=32, spacing_after=80))
+    body.append(paragraph(
+        f"(Từ ngày {format_vietnam_date(start_date)} đến ngày {format_vietnam_date(due_date)})",
+        align="center",
+        size=28,
+        italic=True,
+        spacing_after=240,
+    ))
 
     body.append(section_heading(f"I. TÌNH HÌNH HOẠT ĐỘNG {period.upper()}"))
     body.append(multiline_block(content))
@@ -216,7 +231,7 @@ def build_document_xml(payload, template_path):
 
 def main():
     if len(sys.argv) != 3:
-        print("Usage: generate_monthly_summary_docx.py <template.docx> <output.docx>", file=sys.stderr)
+        print("Usage: docx_summary_generator.py <template.docx> <output.docx>", file=sys.stderr)
         return 2
 
     template_path = Path(sys.argv[1])

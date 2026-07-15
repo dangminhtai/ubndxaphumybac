@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Bold,
   CheckCircle2,
@@ -17,14 +17,21 @@ import {
 } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
 import {
-  getMonthlySummary,
-  generateMonthlySummary,
-  updateMonthlySummary,
-  exportMonthlySummaryDocx,
-} from '../api/monthlySummaryApi';
-import type { MonthlySummary as IMonthlySummary } from '../api/monthlySummaryApi';
-import { getCurrentPeriod } from '../api/periodApi';
+  getWeeklySummary,
+  generateWeeklySummary,
+  updateWeeklySummary,
+  exportWeeklySummaryDocx,
+} from '../api/weeklySummaryApi';
+import type {
+  MissingEmployee,
+  WeeklyEmployeeReport,
+  WeeklySummary as IWeeklySummary,
+  WeeklySummaryResponse,
+} from '../api/weeklySummaryApi';
+import { getCurrentPeriod, getPeriods } from '../api/periodApi';
 import { returnReport } from '../api/reportApi';
+import { formatApiError } from '../utils/apiError';
+import type { ReportPeriod } from '../types/report';
 import Dialog from '../components/ui/Dialog';
 import type { DialogType } from '../components/ui/Dialog';
 
@@ -36,7 +43,7 @@ interface EditorSection {
   title: string;
   placeholder: string;
   heightClass: string;
-  fieldKey: keyof IMonthlySummary;
+  fieldKey: keyof IWeeklySummary;
 }
 
 const SECTIONS: EditorSection[] = [
@@ -199,17 +206,21 @@ function ReportEditor({
   );
 }
 
-export default function MonthlySummaryPage() {
+export default function WeeklySummaryPage() {
   const query = useQuery();
+  const navigate = useNavigate();
   const [periodId, setPeriodId] = useState(query.get('periodId') || '');
-  const [form, setForm] = useState<Partial<IMonthlySummary>>({
+  const [form, setForm] = useState<Partial<IWeeklySummary>>({
     content: '',
     difficulties: '',
     proposals: '',
     nextTasks: '',
     periodTitle: '',
   });
-  const [employeeReports, setEmployeeReports] = useState<any[]>([]);
+  const [employeeReports, setEmployeeReports] = useState<WeeklyEmployeeReport[]>([]);
+  const [missingEmployees, setMissingEmployees] = useState<MissingEmployee[]>([]);
+  const [periods, setPeriods] = useState<ReportPeriod[]>([]);
+  const [selectedPeriod, setSelectedPeriod] = useState<ReportPeriod | null>(null);
   const [expandedReportId, setExpandedReportId] = useState<string | null>(null);
   
   const [loading, setLoading] = useState(true);
@@ -239,7 +250,21 @@ export default function MonthlySummaryPage() {
 
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  const [totalStaff, setTotalStaff] = useState(0);
+  const [submissionStats, setSubmissionStats] = useState({ expected: 0, submitted: 0, missing: 0, late: 0, duplicateReports: 0 });
+
+  const applyResponse = (data: WeeklySummaryResponse) => {
+    setForm({
+      content: data.summary.content || '',
+      difficulties: data.summary.difficulties || '',
+      proposals: data.summary.proposals || '',
+      nextTasks: data.summary.nextTasks || '',
+      periodTitle: data.summary.periodTitle,
+    });
+    setEmployeeReports(data.employeeReports);
+    setMissingEmployees(data.missingEmployees);
+    setSubmissionStats(data.submissionStats);
+    setSelectedPeriod(data.period);
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -249,54 +274,49 @@ export default function MonthlySummaryPage() {
         let currentPeriodId = periodId;
 
         if (!currentPeriodId) {
-          const currentMonthly = await getCurrentPeriod('monthly');
-          if (currentMonthly && currentMonthly._id) {
-            currentPeriodId = currentMonthly._id;
+          const currentWeekly = await getCurrentPeriod('weekly');
+          if (currentWeekly && currentWeekly._id) {
+            currentPeriodId = currentWeekly._id;
             setPeriodId(currentPeriodId);
+            navigate(`/weekly-summary?periodId=${currentPeriodId}`, { replace: true });
           } else {
-            setError('Chưa có kỳ báo cáo tháng nào đang mở.');
+            setError('Chưa có kỳ báo cáo tuần nào đang mở.');
             setLoading(false);
             return;
           }
         }
 
-        const data = await getMonthlySummary(currentPeriodId);
-        setForm({
-          content: data.content || '',
-          difficulties: data.difficulties || '',
-          proposals: data.proposals || '',
-          nextTasks: data.nextTasks || '',
-          periodTitle: data.periodTitle,
-        });
-        if (data.employeeReports) {
-          setEmployeeReports(data.employeeReports);
-        }
-        if (data.totalStaffUsers !== undefined) {
-          setTotalStaff(data.totalStaffUsers);
-        }
-      } catch (err: any) {
-        setError('Lỗi tải bản tổng hợp: ' + err.message);
+        const [weeklyPeriods, summary] = await Promise.all([
+          getPeriods('weekly'),
+          getWeeklySummary(currentPeriodId),
+        ]);
+        setPeriods(weeklyPeriods);
+        applyResponse(summary);
+      } catch (err: unknown) {
+        setError(formatApiError(err, 'Không tải được bản tổng hợp tuần'));
       } finally {
         setLoading(false);
       }
     };
 
     void loadData();
-  }, [periodId]);
+  }, [navigate, periodId]);
 
   const updateField = (fieldName: keyof typeof form, value: string) => {
     setForm((current) => ({ ...current, [fieldName]: value }));
   };
 
   const handleSave = async () => {
-    if (!periodId) return;
+    if (!periodId) return false;
     setSaving(true);
     setError('');
     try {
-      await updateMonthlySummary(periodId, form);
+      applyResponse(await updateWeeklySummary(periodId, form));
       setMessage('Đã lưu bản tổng hợp');
-    } catch (err: any) {
-      setError('Lỗi khi lưu: ' + err.message);
+      return true;
+    } catch (err: unknown) {
+      setError(formatApiError(err, 'Không lưu được bản tổng hợp tuần'));
+      return false;
     } finally {
       setSaving(false);
     }
@@ -305,10 +325,10 @@ export default function MonthlySummaryPage() {
   const handleGenerate = async () => {
     if (!periodId) return;
     
-    const submittedCount = employeeReports.length;
-    const isEarly = totalStaff > 0 && submittedCount < totalStaff;
+    const submittedCount = submissionStats.submitted;
+    const isEarly = submissionStats.expected > 0 && submittedCount < submissionStats.expected;
     const message = isEarly
-      ? `Cảnh báo: Hiện mới chỉ có ${submittedCount}/${totalStaff} nhân viên nộp báo cáo. Bạn có chắc chắn muốn TỔNG HỢP SỚM không? Hệ thống sẽ chỉ tổng hợp dữ liệu từ các báo cáo đã nộp và ghi đè nội dung hiện tại.`
+      ? `Hiện có ${submittedCount}/${submissionStats.expected} nhân viên nộp đúng kỳ tuần này. Tổng hợp sẽ chỉ dùng các báo cáo đang hiển thị và ghi đè nội dung hiện tại.`
       : 'Tạo tổng hợp tự động sẽ ghi đè nội dung hiện tại bằng dữ liệu từ các báo cáo chuyên viên đã nộp. Bạn có chắc chắn?';
 
     setDialogState({
@@ -322,17 +342,10 @@ export default function MonthlySummaryPage() {
         setGenerating(true);
         setError('');
         try {
-          const data = await generateMonthlySummary(periodId);
-          setForm({
-            content: data.content || '',
-            difficulties: data.difficulties || '',
-            proposals: data.proposals || '',
-            nextTasks: data.nextTasks || '',
-            periodTitle: data.periodTitle,
-          });
+          applyResponse(await generateWeeklySummary(periodId));
           setMessage('Đã tổng hợp dữ liệu thành công');
-        } catch (err: any) {
-          setError('Lỗi khi tổng hợp: ' + (err.response?.data?.error || err.message));
+        } catch (err: unknown) {
+          setError(formatApiError(err, 'Không tạo được bản tổng hợp tuần'));
         } finally {
           setGenerating(false);
         }
@@ -345,27 +358,34 @@ export default function MonthlySummaryPage() {
     setExporting(true);
     setError('');
     try {
-      await handleSave(); // Save before export
-      const blob = await exportMonthlySummaryDocx(periodId);
+      if (!(await handleSave())) return;
+      const blob = await exportWeeklySummaryDocx(periodId);
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `tong-hop-bao-cao-${form.periodTitle?.replace(/\s+/g, '-').toLowerCase()}.docx`;
+      link.download = `tong-hop-bao-cao-tuan-${form.periodTitle?.replace(/\s+/g, '-').toLowerCase()}.docx`;
       document.body.appendChild(link);
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
       setMessage('Đã xuất file DOCX');
-    } catch (err: any) {
+    } catch (err: unknown) {
       let errorMessage = 'Không xuất được file DOCX';
-      if (err.response?.data instanceof Blob) {
+      if (typeof err === 'object' && err !== null && 'response' in err) {
+        const response = (err as { response?: { data?: unknown } }).response;
+        if (response?.data instanceof Blob) {
         try {
-          const text = await err.response.data.text();
+          const text = await response.data.text();
           const json = JSON.parse(text);
-          if (json.error) errorMessage = json.error;
+          if (json.error) {
+            errorMessage = `${json.error} · Mã lỗi: ${json.code || 'EXPORT_FAILED'}${json.requestId ? ` · Mã tra cứu: ${json.requestId}` : ''}`;
+          }
         } catch { /* ignore */ }
-      } else if (err.response?.data?.error) {
-        errorMessage = err.response.data.error;
+        } else {
+          errorMessage = formatApiError(err, errorMessage);
+        }
+      } else {
+        errorMessage = formatApiError(err, errorMessage);
       }
       setError(errorMessage);
     } finally {
@@ -395,8 +415,9 @@ export default function MonthlySummaryPage() {
           setMessage('Đã trả lại báo cáo cho nhân viên');
           // Remove from the list
           setEmployeeReports(current => current.filter(r => r._id !== reportId));
-        } catch (err: any) {
-          setError('Lỗi khi trả lại báo cáo: ' + (err.response?.data?.error || err.message));
+          applyResponse(await getWeeklySummary(periodId));
+        } catch (err: unknown) {
+          setError(formatApiError(err, 'Không trả lại được báo cáo'));
         } finally {
           setLoading(false);
         }
@@ -406,7 +427,7 @@ export default function MonthlySummaryPage() {
 
   if (loading) {
     return (
-      <AppLayout title="Tổng hợp báo cáo tháng" subtitle="Đang tải dữ liệu...">
+      <AppLayout title="Tổng hợp báo cáo tuần" subtitle="Đang tải dữ liệu...">
         <div className="flex justify-center p-8 text-outline">Đang tải...</div>
       </AppLayout>
     );
@@ -414,7 +435,7 @@ export default function MonthlySummaryPage() {
 
   if (!periodId) {
     return (
-      <AppLayout title="Tổng hợp báo cáo tháng" subtitle="Lỗi tham số">
+      <AppLayout title="Tổng hợp báo cáo tuần" subtitle="Lỗi tham số">
         <div className="p-4 bg-error-container text-error rounded-lg">Không tìm thấy kỳ báo cáo (thiếu periodId)</div>
       </AppLayout>
     );
@@ -423,7 +444,7 @@ export default function MonthlySummaryPage() {
   return (
     <AppLayout
       title={`Tổng hợp báo cáo - ${form.periodTitle || 'Đang tải...'}`}
-      subtitle="Quản lý và tổng hợp dữ liệu báo cáo tháng từ các chuyên viên."
+      subtitle="Chỉ tổng hợp báo cáo của chuyên viên thuộc đúng kỳ tuần đang chọn."
       bottomStatus={
         <span className="hidden items-center gap-2 text-sm text-on-surface-variant md:flex">
           {message && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
@@ -432,6 +453,20 @@ export default function MonthlySummaryPage() {
       }
       actions={
         <div className="flex flex-wrap gap-3">
+          <select
+            className="min-w-56 rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface outline-none focus:border-primary"
+            value={periodId}
+            onChange={(event) => {
+              const nextPeriodId = event.target.value;
+              setPeriodId(nextPeriodId);
+              navigate(`/weekly-summary?periodId=${nextPeriodId}`, { replace: true });
+            }}
+            aria-label="Chọn kỳ báo cáo tuần"
+          >
+            {periods.map((period) => (
+              <option key={period._id} value={period._id}>{period.title}</option>
+            ))}
+          </select>
           <button
             className="inline-flex items-center gap-2 rounded-lg bg-surface-container-high px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-surface-container-highest disabled:opacity-60"
             type="button"
@@ -495,6 +530,27 @@ export default function MonthlySummaryPage() {
           <span>Tổng hợp báo cáo</span>
           <span>/</span>
           <span className="font-semibold text-primary">{form.periodTitle}</span>
+          {selectedPeriod && (
+            <span>
+              ({new Date(selectedPeriod.startDate).toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}
+              {' - '}
+              {new Date(selectedPeriod.dueDate).toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })})
+            </span>
+          )}
+        </div>
+
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            ['Dự kiến', submissionStats.expected],
+            ['Đã nộp', submissionStats.submitted],
+            ['Chưa nộp', submissionStats.missing],
+            ['Nộp trễ', submissionStats.late],
+          ].map(([label, value]) => (
+            <div key={String(label)} className="rounded-lg border border-outline-variant bg-white px-4 py-3">
+              <div className="text-xs text-on-surface-variant">{label}</div>
+              <div className="mt-1 text-xl font-semibold text-on-surface">{value}</div>
+            </div>
+          ))}
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8 pb-8">
@@ -517,7 +573,7 @@ export default function MonthlySummaryPage() {
           <div className="w-full lg:w-80 flex-shrink-0">
             <div className="sticky top-24 rounded-xl border border-outline-variant bg-white p-4 shadow-level-1">
               <h3 className="mb-4 font-headline-sm text-base font-semibold text-on-surface">
-                Báo cáo nhân viên ({employeeReports.length})
+                Báo cáo đúng kỳ ({employeeReports.length})
               </h3>
               {employeeReports.length === 0 ? (
                 <p className="text-sm text-on-surface-variant">Chưa có báo cáo nào được nộp trong kỳ này.</p>
@@ -531,7 +587,10 @@ export default function MonthlySummaryPage() {
                         onClick={() => setExpandedReportId(expandedReportId === r._id ? null : r._id)}
                       >
                         <div>
-                          <div className="text-sm font-semibold text-primary">{r.sender}</div>
+                          <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                            {r.sender}
+                            {r.isLate && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-800">Nộp trễ</span>}
+                          </div>
                           <div className="text-xs text-on-surface-variant">{r.department}</div>
                         </div>
                         {expandedReportId === r._id ? (
@@ -581,6 +640,20 @@ export default function MonthlySummaryPage() {
                       )}
                     </div>
                   ))}
+                </div>
+              )}
+
+              {missingEmployees.length > 0 && (
+                <div className="mt-5 border-t border-outline-variant pt-4">
+                  <h4 className="mb-2 text-sm font-semibold text-on-surface">Chưa nộp ({missingEmployees.length})</h4>
+                  <ul className="space-y-2 text-sm text-on-surface-variant">
+                    {missingEmployees.map((employee) => (
+                      <li key={employee._id}>
+                        <div className="font-medium text-on-surface">{employee.fullName}</div>
+                        <div className="text-xs">{employee.department}</div>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </div>

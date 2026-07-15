@@ -15,13 +15,13 @@ import Dialog from '../components/ui/Dialog';
 import { getArchivedReports, getArchivedReportById } from '../api/archiveApi';
 import type { ArchivedReport, ArchiveResponse } from '../api/archiveApi';
 import { exportWeeklyReportDocxById } from '../api/reportApi';
-import { exportMonthlySummaryDocx } from '../api/monthlySummaryApi';
+import { exportWeeklySummaryDocx } from '../api/weeklySummaryApi';
 
 const REPORT_TYPES = [
   { value: '', label: 'Tất cả loại báo cáo' },
   { value: 'weekly', label: 'Báo cáo tuần' },
   { value: 'monthly_staff', label: 'Báo cáo tháng (Chuyên viên)' },
-  { value: 'monthly_summary', label: 'Tổng hợp tháng' },
+  { value: 'weekly_summary', label: 'Tổng hợp tuần' },
 ];
 
 function formatDateTime(iso: string) {
@@ -126,8 +126,8 @@ export default function Archive() {
   const handleDownload = async (report: ArchivedReport) => {
     try {
       let blob: Blob;
-      if (report.reportType === 'monthly_summary') {
-        blob = await exportMonthlySummaryDocx(report.periodId);
+      if (report.reportType === 'weekly_summary') {
+        blob = await exportWeeklySummaryDocx(report.periodId);
       } else {
         blob = await exportWeeklyReportDocxById(report._id);
       }

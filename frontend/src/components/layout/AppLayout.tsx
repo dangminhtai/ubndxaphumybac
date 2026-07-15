@@ -38,7 +38,7 @@ const NAV_ITEMS = [
   { to: '/monthly-report', label: 'Báo cáo tháng', icon: CalendarDays, roles: ['staff', 'department_lead', 'user'] },
   { to: '/admin/periods', label: 'Kỳ báo cáo', icon: CalendarDays, roles: ['admin'] },
   { to: '/admin/users', label: 'Tài khoản', icon: Users, roles: ['admin'] },
-  { to: '/monthly-summary', label: 'Tổng hợp tháng', icon: ClipboardList, roles: ['admin'] },
+  { to: '/weekly-summary', label: 'Tổng hợp tuần', icon: ClipboardList, roles: ['admin'] },
   { to: '/document-catalog', label: 'Tra cứu danh mục', icon: BookOpenCheck },
   { to: '/work-schedules', label: 'Lịch công tác', icon: CalendarDays },
   { to: '/work-schedules/stats', label: 'Thống kê lịch', icon: BarChart3, roles: ['admin', 'department_lead'] },
@@ -52,7 +52,7 @@ function getMobileNavItems(role: string | undefined) {
   if (role === 'admin') {
     return [
       { to: '/dashboard', label: 'Trang chủ', icon: Home },
-      { to: '/monthly-summary', label: 'Tổng hợp', icon: ClipboardList },
+      { to: '/weekly-summary', label: 'Tổng hợp', icon: ClipboardList },
       { to: '/work-schedules', label: 'Lịch', icon: CalendarDays },
       { to: '/notifications', label: 'Thông báo', icon: Bell },
     ];

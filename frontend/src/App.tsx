@@ -9,7 +9,7 @@ import AdminPeriods from './pages/AdminPeriods';
 import MyReports from './pages/MyReports';
 import ProtectedRoute from './components/ProtectedRoute';
 import ChangePassword from './pages/ChangePassword';
-import MonthlySummary from './pages/MonthlySummary';
+import WeeklySummary from './pages/WeeklySummary';
 import AdminLogs from './pages/AdminLogs';
 import Archive from './pages/Archive';
 import Notifications from './pages/Notifications';
@@ -31,7 +31,7 @@ function App() {
         <Route path="/my-reports" element={<ProtectedRoute roles={['staff', 'department_lead', 'user']}><MyReports /></ProtectedRoute>} />
         <Route path="/weekly-report" element={<Navigate to="/employee-report" replace />} />
         <Route path="/monthly-report" element={<ProtectedRoute roles={['staff', 'department_lead', 'user']}><MonthlyReport /></ProtectedRoute>} />
-        <Route path="/monthly-summary" element={<ProtectedRoute roles={['admin']}><MonthlySummary /></ProtectedRoute>} />
+        <Route path="/weekly-summary" element={<ProtectedRoute roles={['admin']}><WeeklySummary /></ProtectedRoute>} />
         <Route path="/admin/users" element={<ProtectedRoute roles={['admin']}><AdminUsers /></ProtectedRoute>} />
         <Route path="/admin/periods" element={<ProtectedRoute roles={['admin']}><AdminPeriods /></ProtectedRoute>} />
         <Route path="/admin/logs" element={<ProtectedRoute roles={['admin', 'viewer']}><AdminLogs /></ProtectedRoute>} />

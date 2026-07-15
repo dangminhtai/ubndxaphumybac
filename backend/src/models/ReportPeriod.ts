@@ -13,6 +13,7 @@ export interface IReportPeriod extends Document {
   dueDate: Date;
   status: ReportPeriodStatus;
   createdBy: mongoose.Types.ObjectId;
+  expectedReporterIds?: mongoose.Types.ObjectId[];
 }
 
 const ReportPeriodSchema = new Schema<IReportPeriod>({
@@ -25,6 +26,7 @@ const ReportPeriodSchema = new Schema<IReportPeriod>({
   dueDate: { type: Date, required: true },
   status: { type: String, required: true, enum: ['draft', 'open', 'locked', 'archived'], default: 'draft' },
   createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
+  expectedReporterIds: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 }, { timestamps: true });
 
 ReportPeriodSchema.index(

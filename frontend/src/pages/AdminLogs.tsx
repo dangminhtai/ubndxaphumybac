@@ -27,7 +27,7 @@ const CATEGORIES = [
   { value: 'period', label: 'Kỳ báo cáo' },
   { value: 'user', label: 'Tài khoản' },
   { value: 'export', label: 'DOCX' },
-  { value: 'summary', label: 'Tổng hợp tháng' },
+  { value: 'summary', label: 'Tổng hợp tuần' },
   { value: 'schedule', label: 'Lịch công tác' },
 ];
 

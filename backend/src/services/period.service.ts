@@ -1,16 +1,47 @@
 import ReportPeriod from '../models/ReportPeriod';
 import Report from '../models/Report';
+import WeeklySummary from '../models/WeeklySummary';
 import { notifyAllUsers } from './notification.service';
+import User from '../models/User';
+
+async function getExpectedWeeklyReporterIds() {
+  const users = await User.find({ role: 'staff', isActive: true }).select('_id').lean();
+  return users.map((user) => user._id);
+}
 
 /* ── helpers ── */
 
+function getVietnamCivilDate(d: Date) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(d);
+  const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return new Date(Date.UTC(Number(value.year), Number(value.month) - 1, Number(value.day)));
+}
+
 function getMonday(d: Date) {
-  const date = new Date(d);
-  date.setUTCHours(0, 0, 0, 0);
+  const date = getVietnamCivilDate(d);
   const day = date.getUTCDay();
   const diff = (day + 6) % 7;
   date.setUTCDate(date.getUTCDate() - diff);
   return date;
+}
+
+function endOfVietnamDay(civilDate: Date) {
+  const end = new Date(civilDate);
+  end.setUTCHours(16, 59, 59, 999);
+  return end;
+}
+
+export function parsePeriodDueDate(value: string) {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [year, month, day] = value.split('-').map(Number);
+    return endOfVietnamDay(new Date(Date.UTC(year, month - 1, day)));
+  }
+  return new Date(value);
 }
 
 function addDays(d: Date, n: number) {
@@ -24,12 +55,21 @@ function weekLabelFromThursday(thu: Date) {
   return `Tuần ${String(weekNum).padStart(2, '0')} tháng ${thu.getUTCMonth() + 1} năm ${thu.getUTCFullYear()}`;
 }
 
+export function getWeeklyPeriodWindow(now: Date) {
+  const startDate = getMonday(now);
+  const thursday = addDays(startDate, 3);
+  return {
+    startDate,
+    dueDate: endOfVietnamDay(thursday),
+    thursday,
+  };
+}
+
 /* ── auto-generate current week period ── */
 
 export async function ensureCurrentWeekPeriod() {
   const now = new Date();
-  const monday = getMonday(now);
-  const thursday = addDays(monday, 3);
+  const { startDate: monday, dueDate, thursday } = getWeeklyPeriodWindow(now);
 
   const weekNum = Math.floor((thursday.getUTCDate() - 1) / 7) + 1;
   const month = thursday.getUTCMonth() + 1;
@@ -41,7 +81,19 @@ export async function ensureCurrentWeekPeriod() {
     status: { $ne: 'archived' },
   });
 
-  if (existing) return existing;
+  if (existing) {
+    let shouldSave = false;
+    if (existing.dueDate.getTime() === thursday.getTime()) {
+      existing.dueDate = dueDate;
+      shouldSave = true;
+    }
+    if (!existing.expectedReporterIds?.length && existing.status === 'open') {
+      existing.expectedReporterIds = await getExpectedWeeklyReporterIds();
+      shouldSave = true;
+    }
+    if (shouldSave) await existing.save();
+    return existing;
+  }
 
   const title = weekLabelFromThursday(thursday);
 
@@ -52,14 +104,15 @@ export async function ensureCurrentWeekPeriod() {
     month,
     year,
     startDate: monday,
-    dueDate: thursday,
+    dueDate,
     status: 'open',
     createdBy: null as any,
+    expectedReporterIds: await getExpectedWeeklyReporterIds(),
   });
 
   void notifyAllUsers({
     title: 'Kỳ báo cáo mới',
-    message: `Kỳ báo cáo "${period.title}" đã tự động mở. Hạn nộp: ${thursday.toLocaleDateString('vi-VN')}`,
+    message: `Kỳ báo cáo "${period.title}" đã tự động mở. Hạn nộp: ${dueDate.toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}`,
     type: 'period_opened',
     link: '/weekly-report',
     excludeRoles: ['admin'],
@@ -141,6 +194,10 @@ export async function setPeriodStatus(periodId: string, status: 'open' | 'locked
   }
 
   if (status === 'open' && oldPeriod && oldPeriod.status !== 'open') {
+    if (period.type === 'weekly' && !period.expectedReporterIds?.length) {
+      period.expectedReporterIds = await getExpectedWeeklyReporterIds();
+      await period.save();
+    }
     void notifyAllUsers({
       title: 'Kỳ báo cáo đã mở lại',
       message: `Kỳ báo cáo "${period.title}" vừa được mở. Hạn nộp: ${period.dueDate.toLocaleDateString('vi-VN')}`,
@@ -156,7 +213,7 @@ export async function setPeriodStatus(periodId: string, status: 'open' | 'locked
 export async function updatePeriodDueDate(periodId: string, newDueDate: string) {
   const period = await ReportPeriod.findByIdAndUpdate(
     periodId,
-    { dueDate: new Date(newDueDate) },
+    { dueDate: parsePeriodDueDate(newDueDate) },
     { new: true },
   );
   if (!period) {
@@ -177,6 +234,7 @@ export async function deletePeriod(periodId: string) {
 
   // Delete all reports belonging to this period
   await Report.deleteMany({ periodId });
+  await WeeklySummary.deleteMany({ periodId });
   
   // Delete the period itself
   await period.deleteOne();
@@ -221,9 +279,10 @@ export async function createPeriodManually(input: {
     month: input.month || 0,
     year: input.year,
     startDate: new Date(input.startDate),
-    dueDate: new Date(input.dueDate),
+    dueDate: parsePeriodDueDate(input.dueDate),
     status: 'open',
     createdBy: input.createdBy,
+    expectedReporterIds: input.type === 'weekly' ? await getExpectedWeeklyReporterIds() : [],
   });
 
   void notifyAllUsers({

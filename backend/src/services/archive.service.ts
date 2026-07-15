@@ -1,6 +1,6 @@
 import Report from '../models/Report';
 import ReportPeriod from '../models/ReportPeriod';
-import { MonthlySummary } from '../models/MonthlySummary';
+import WeeklySummary from '../models/WeeklySummary';
 
 export interface ArchiveQuery {
   page?: number;
@@ -8,7 +8,7 @@ export interface ArchiveQuery {
   year?: number;
   month?: number;
   weekNumber?: number;
-  reportType?: string; // 'weekly' | 'monthly_staff' | 'monthly_summary'
+  reportType?: string; // 'weekly' | 'monthly_staff' | 'weekly_summary'
   sender?: string;
 }
 
@@ -34,22 +34,23 @@ export async function getArchivedReports(query: ArchiveQuery) {
 
   if (query.reportType === 'weekly') {
     periodFilter.type = 'weekly';
-  } else if (query.reportType === 'monthly_staff' || query.reportType === 'monthly_summary') {
+  } else if (query.reportType === 'monthly_staff') {
     periodFilter.type = 'monthly';
+  } else if (query.reportType === 'weekly_summary') {
+    periodFilter.type = 'weekly';
   }
 
   const periods = await ReportPeriod.find(periodFilter).select('_id title type year month weekNumber');
   const periodIds = periods.map(p => p._id);
   const periodMap = new Map(periods.map(p => [p._id.toString(), p]));
 
-  // --- Function to fetch and format MonthlySummary ---
-  const fetchMonthlySummaries = async () => {
-    const filter: any = periodIds.length > 0 ? { periodId: { $in: periodIds } } : {};
-    const summaries = await MonthlySummary.find(filter).populate('authorId', 'fullName username department');
+  const fetchWeeklySummaries = async () => {
+    const filter = { periodId: { $in: periodIds } };
+    const summaries = await WeeklySummary.find(filter).populate('authorId', 'fullName username department');
     return summaries.map((s: any) => ({
       _id: s._id,
-      title: `Tổng hợp tháng - ${s.periodTitle}`,
-      reportType: 'monthly_summary',
+      title: `Tổng hợp tuần - ${s.periodTitle}`,
+      reportType: 'weekly_summary',
       periodId: s.periodId,
       periodInfo: periodMap.get(s.periodId?.toString()),
       sender: s.authorId?.fullName || 'Hệ thống',
@@ -62,7 +63,7 @@ export async function getArchivedReports(query: ArchiveQuery) {
   // --- Function to fetch and format Report ---
   const fetchReports = async () => {
     const reportFilter: any = { status: { $in: ['pending', 'approved'] } };
-    if (periodIds.length > 0) reportFilter.periodId = { $in: periodIds };
+    reportFilter.periodId = { $in: periodIds };
     if (query.reportType) reportFilter.reportType = query.reportType;
     if (query.sender) reportFilter.sender = { $regex: query.sender, $options: 'i' };
 
@@ -82,8 +83,8 @@ export async function getArchivedReports(query: ArchiveQuery) {
 
   let allData: any[] = [];
 
-  if (query.reportType === 'monthly_summary') {
-    allData = await fetchMonthlySummaries();
+  if (query.reportType === 'weekly_summary') {
+    allData = await fetchWeeklySummaries();
     if (query.sender) {
       allData = allData.filter(item => item.sender.toLowerCase().includes(query.sender!.toLowerCase()));
     }
@@ -91,7 +92,7 @@ export async function getArchivedReports(query: ArchiveQuery) {
     allData = await fetchReports();
   } else {
     // Both
-    const [summaries, reports] = await Promise.all([fetchMonthlySummaries(), fetchReports()]);
+    const [summaries, reports] = await Promise.all([fetchWeeklySummaries(), fetchReports()]);
     allData = [...summaries, ...reports];
     if (query.sender) {
       allData = allData.filter(item => item.sender.toLowerCase().includes(query.sender!.toLowerCase()));
@@ -111,8 +112,8 @@ export async function getArchivedReportById(id: string, type: string) {
   let reportData;
   let periodId;
 
-  if (type === 'monthly_summary') {
-    const summary = await MonthlySummary.findById(id).populate('authorId', 'fullName username department');
+  if (type === 'weekly_summary') {
+    const summary = await WeeklySummary.findById(id).populate('authorId', 'fullName username department');
     if (!summary) throw new Error('Không tìm thấy bản tổng hợp');
     reportData = summary.toObject();
     periodId = summary.periodId;
