@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
-import { spawn } from 'child_process';
+import ExcelJS from 'exceljs';
 import mongoose from 'mongoose';
 import { WeeklyTask, TaskRegistrationOverride } from '../models/WeeklyTask';
 import type { ITaskItem } from '../models/WeeklyTask';
@@ -505,59 +505,125 @@ ${rows}
 }
 
 export async function generateWeeklyTasksExcelFile(tasks: any[], weekLabel: string): Promise<string> {
-  const scriptPath = path.resolve(__dirname, '../scripts/generate_weekly_tasks_excel.py');
   const tmpDir = path.resolve(__dirname, '../../tmp');
   if (!fs.existsSync(tmpDir)) {
     fs.mkdirSync(tmpDir, { recursive: true });
   }
 
   const fileId = `${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
-  const inputJsonPath = path.join(tmpDir, `payload_${fileId}.json`);
   const outputXlsxPath = path.join(tmpDir, `nhiem_vu_${fileId}.xlsx`);
 
-  const payload = {
-    weekLabel,
-    tasks: tasks.map((t) => {
-      const items = normalizeItems(t);
-      return {
-        userId: {
-          fullName: typeof t.userId === 'object' && t.userId ? t.userId.fullName : 'N/A',
-        },
-        items,
-        content: mergeItemsContent(items),
-        deadline: mergeItemsDeadline(items),
-        isRegistered: t.isRegistered !== false && items.length > 0 && items.some((it: any) => it.content),
-      };
-    }),
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('Nhiệm vụ tuần', {
+    views: [{ showGridLines: true }],
+    pageSetup: {
+      fitToPage: true,
+      fitToWidth: 1,
+      fitToHeight: 0,
+      printTitlesRow: '4:4',
+    },
+  });
+
+  const FONT_NAME = 'Arial';
+  const thinSide = { style: 'thin' as const, color: { argb: 'FF000000' } };
+  const cellBorder: any = {
+    top: thinSide,
+    left: thinSide,
+    bottom: thinSide,
+    right: thinSide,
   };
 
-  fs.writeFileSync(inputJsonPath, JSON.stringify(payload), 'utf-8');
+  // Column Widths (matching standard: A:8, B:28, C:75, D:25)
+  ws.getColumn('A').width = 8;
+  ws.getColumn('B').width = 28;
+  ws.getColumn('C').width = 75;
+  ws.getColumn('D').width = 25;
 
-  return new Promise<string>((resolve, reject) => {
-    const child = spawn('python', [scriptPath, inputJsonPath, outputXlsxPath], {
-      stdio: ['ignore', 'pipe', 'pipe'],
-      env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
-    });
+  // Row 1: Spacing
+  ws.getRow(1).height = 8;
 
-    let stderr = '';
-    child.stderr.on('data', (d) => {
-      stderr += d.toString();
-    });
+  // Row 2: Title
+  ws.getRow(2).height = 32;
+  ws.mergeCells('A2:D2');
+  const titleCell = ws.getCell('A2');
+  titleCell.value = `NHIỆM VỤ ${weekLabel.toUpperCase()}`;
+  titleCell.font = { name: FONT_NAME, size: 14, bold: true, color: { argb: 'FF000000' } };
+  titleCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
 
-    child.on('close', (code) => {
-      // Clean up input json
-      try {
-        fs.unlinkSync(inputJsonPath);
-      } catch {
-        /* ignore */
-      }
+  // Row 3: Spacer
+  ws.getRow(3).height = 12;
 
-      if (code === 0 && fs.existsSync(outputXlsxPath)) {
-        resolve(outputXlsxPath);
-      } else {
-        reject(new Error(`Không tạo được file Excel: ${stderr}`));
-      }
-    });
+  // Row 4: Headers
+  ws.getRow(4).height = 28;
+  const headers = [
+    { cell: 'A4', text: 'STT' },
+    { cell: 'B4', text: 'HỌ VÀ TÊN' },
+    { cell: 'C4', text: 'NHIỆM VỤ TUẦN' },
+    { cell: 'D4', text: 'THỜI GIAN HOÀN THÀNH' },
+  ];
+  for (const h of headers) {
+    const c = ws.getCell(h.cell);
+    c.value = h.text;
+    c.font = { name: FONT_NAME, size: 11, bold: true, color: { argb: 'FF000000' } };
+    c.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    c.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFF2F4F8' },
+    };
+    c.border = cellBorder;
+  }
+
+  // Rows 5+: Data rows
+  tasks.forEach((task: any, idx: number) => {
+    const rowNum = 5 + idx;
+    const user = task.userId;
+    const fullName = typeof user === 'object' && user ? (user.fullName || '').trim() : String(user || '').trim();
+    const items = normalizeItems(task);
+    const content = mergeItemsContent(items);
+    const deadline = mergeItemsDeadline(items);
+
+    // Cell A: STT
+    const cStt = ws.getCell(`A${rowNum}`);
+    cStt.value = idx + 1;
+    cStt.font = { name: FONT_NAME, size: 11, color: { argb: 'FF000000' } };
+    cStt.alignment = { horizontal: 'center', vertical: 'top' };
+    cStt.border = cellBorder;
+
+    // Cell B: HỌ VÀ TÊN (Uppercase & Bold)
+    const cName = ws.getCell(`B${rowNum}`);
+    cName.value = fullName.toUpperCase();
+    cName.font = { name: FONT_NAME, size: 11, bold: true, color: { argb: 'FF000000' } };
+    cName.alignment = { horizontal: 'left', vertical: 'top', wrapText: true };
+    cName.border = cellBorder;
+
+    // Cell C: NHIỆM VỤ TUẦN (Wrap text)
+    const cContent = ws.getCell(`C${rowNum}`);
+    cContent.value = content;
+    cContent.font = { name: FONT_NAME, size: 11, color: { argb: 'FF000000' } };
+    cContent.alignment = { horizontal: 'left', vertical: 'top', wrapText: true };
+    cContent.border = cellBorder;
+
+    // Cell D: THỜI GIAN HOÀN THÀNH
+    const cDeadline = ws.getCell(`D${rowNum}`);
+    cDeadline.value = deadline;
+    cDeadline.font = { name: FONT_NAME, size: 11, color: { argb: 'FF000000' } };
+    cDeadline.alignment = { horizontal: 'center', vertical: 'top', wrapText: true };
+    cDeadline.border = cellBorder;
+
+    // Row height calculation
+    if (content) {
+      const lines = content.split('\n');
+      const lineCount = lines.length;
+      const wrapExtra = lines.reduce((acc: number, line: string) => acc + Math.floor(line.length / 65), 0);
+      const totalLines = Math.max(1, lineCount + wrapExtra);
+      ws.getRow(rowNum).height = Math.max(24, totalLines * 19 + 6);
+    } else {
+      ws.getRow(rowNum).height = 24;
+    }
   });
+
+  await wb.xlsx.writeFile(outputXlsxPath);
+  return outputXlsxPath;
 }
 
