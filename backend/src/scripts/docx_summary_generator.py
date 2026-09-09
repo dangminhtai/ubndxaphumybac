@@ -4,9 +4,13 @@ import shutil
 import sys
 import zipfile
 import xml.etree.ElementTree as ET
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from zoneinfo import ZoneInfo
+try:
+    from zoneinfo import ZoneInfo
+    VIETNAM_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
+except Exception:
+    VIETNAM_TZ = timezone(timedelta(hours=7))
 
 W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 XML_SPACE = "http://www.w3.org/XML/1998/namespace"
@@ -32,13 +36,13 @@ def required(payload, key):
 
 def format_place_date(today=None):
     if not today:
-        today = datetime.now(ZoneInfo("Asia/Ho_Chi_Minh")).date()
+        today = datetime.now(VIETNAM_TZ).date()
     return f"Phù Mỹ Bắc, ngày {today.day} tháng {today.month} năm {today.year}"
 
 
 def format_vietnam_date(value):
     parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-    return parsed.astimezone(ZoneInfo("Asia/Ho_Chi_Minh")).strftime("%d/%m/%Y")
+    return parsed.astimezone(VIETNAM_TZ).strftime("%d/%m/%Y")
 
 
 def markdown_to_html(text):

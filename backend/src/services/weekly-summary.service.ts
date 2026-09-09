@@ -1,8 +1,8 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { spawn } from 'child_process';
 import mongoose from 'mongoose';
+import { runPythonScript } from '../utils/pythonRunner';
 import ReportPeriod, { type IReportPeriod } from '../models/ReportPeriod';
 import Report from '../models/Report';
 import User from '../models/User';
@@ -243,6 +243,30 @@ export async function updateWeeklySummary(periodId: string, data: WeeklySummaryU
   return getWeeklySummaryByPeriod(periodId);
 }
 
+function resolveWeeklySummaryTemplatePath() {
+  const candidates = [
+    path.resolve(process.cwd(), 'src/templates/weekly_template.docx'),
+    path.resolve(process.cwd(), 'backend/src/templates/weekly_template.docx'),
+    path.resolve(__dirname, '../templates/weekly_template.docx'),
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c)) return c;
+  }
+  return candidates[0];
+}
+
+function resolveWeeklySummaryScriptPath() {
+  const candidates = [
+    path.resolve(process.cwd(), 'src/scripts/generate_weekly_summary_docx.py'),
+    path.resolve(process.cwd(), 'backend/src/scripts/generate_weekly_summary_docx.py'),
+    path.resolve(__dirname, '../scripts/generate_weekly_summary_docx.py'),
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c)) return c;
+  }
+  return candidates[0];
+}
+
 export async function exportWeeklySummaryDocx(periodId: string) {
   const period = await resolveWeeklyPeriod(periodId);
   const summary = await WeeklySummary.findOne({ periodId }).populate('authorId', 'department');
@@ -250,8 +274,8 @@ export async function exportWeeklySummaryDocx(periodId: string) {
   const author = summary.authorId as unknown as { department?: string };
   if (!author?.department) throw appError('Bản tổng hợp thiếu đơn vị người tạo', 500, 'WEEKLY_SUMMARY_AUTHOR_INVALID');
 
-  const templatePath = path.resolve(process.cwd(), 'src/templates/weekly_template.docx');
-  const scriptPath = path.resolve(process.cwd(), 'src/scripts/generate_weekly_summary_docx.py');
+  const templatePath = resolveWeeklySummaryTemplatePath();
+  const scriptPath = resolveWeeklySummaryScriptPath();
   const outputPath = path.join(os.tmpdir(), `tong-hop-tuan-${Date.now()}.docx`);
   if (!fs.existsSync(templatePath)) throw appError('Không tìm thấy template tổng hợp tuần', 500, 'WEEKLY_SUMMARY_TEMPLATE_MISSING');
 
@@ -267,21 +291,20 @@ export async function exportWeeklySummaryDocx(periodId: string) {
     nextTasks: summary.nextTasks,
   };
 
-  await new Promise<void>((resolve, reject) => {
-    const child = spawn('python', [scriptPath, templatePath, outputPath], {
-      cwd: process.cwd(),
-      env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
-      stdio: ['pipe', 'ignore', 'pipe'],
+  try {
+    await runPythonScript({
+      scriptPath,
+      args: [templatePath, outputPath],
+      stdinPayload: payload,
+      cwd: path.dirname(scriptPath),
     });
-    let stderr = '';
-    child.stderr.on('data', (chunk: Buffer) => { stderr += chunk.toString('utf8'); });
-    child.on('error', reject);
-    child.on('close', (code) => {
-      if (code === 0 && fs.existsSync(outputPath)) resolve();
-      else reject(appError(`Không tạo được DOCX tổng hợp tuần: ${stderr}`, 500, 'WEEKLY_SUMMARY_EXPORT_FAILED'));
-    });
-    child.stdin.write(JSON.stringify(payload));
-    child.stdin.end();
-  });
+  } catch (err: any) {
+    throw appError(`Không tạo được DOCX tổng hợp tuần: ${err.message || err}`, 500, 'WEEKLY_SUMMARY_EXPORT_FAILED');
+  }
+
+  if (!fs.existsSync(outputPath)) {
+    throw appError('File DOCX đầu ra không được tạo', 500, 'WEEKLY_SUMMARY_EXPORT_FAILED');
+  }
+
   return outputPath;
 }

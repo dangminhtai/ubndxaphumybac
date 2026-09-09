@@ -1,7 +1,7 @@
-import { spawn } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { runPythonScript } from '../utils/pythonRunner';
 import Report from '../models/Report';
 import ReportPeriod from '../models/ReportPeriod';
 import type { AuthUser } from '../middleware/auth.middleware';
@@ -51,8 +51,27 @@ export function listReportsForUser(user: AuthUser) {
 }
 
 function resolveWeeklyTemplatePath() {
-  const rootDir = process.cwd();
-  return path.join(rootDir, 'src', 'templates', 'weekly_template.docx');
+  const candidates = [
+    path.resolve(process.cwd(), 'src/templates/weekly_template.docx'),
+    path.resolve(process.cwd(), 'backend/src/templates/weekly_template.docx'),
+    path.resolve(__dirname, '../templates/weekly_template.docx'),
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c)) return c;
+  }
+  return candidates[0];
+}
+
+function resolveWeeklyScriptPath() {
+  const candidates = [
+    path.resolve(process.cwd(), 'src/scripts/generate_weekly_docx.py'),
+    path.resolve(process.cwd(), 'backend/src/scripts/generate_weekly_docx.py'),
+    path.resolve(__dirname, '../scripts/generate_weekly_docx.py'),
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c)) return c;
+  }
+  return candidates[0];
 }
 
 function validateWeeklyReportInput(input: WeeklyReportInput) {
@@ -386,7 +405,7 @@ export async function exportWeeklyReportDocx(input: WeeklyReportInput) {
   validateWeeklyReportInput(input);
 
   const templatePath = resolveWeeklyTemplatePath();
-  const scriptPath = path.resolve(process.cwd(), 'src', 'scripts', 'generate_weekly_docx.py');
+  const scriptPath = resolveWeeklyScriptPath();
   const outputPath = path.join(os.tmpdir(), `bao-cao-tuan-${Date.now()}.docx`);
 
   if (!fs.existsSync(templatePath)) {
@@ -395,31 +414,24 @@ export async function exportWeeklyReportDocx(input: WeeklyReportInput) {
     throw error;
   }
 
-  await new Promise<void>((resolve, reject) => {
-    const child = spawn('python', [scriptPath, templatePath, outputPath], {
-      cwd: process.cwd(),
-      env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
-      stdio: ['pipe', 'pipe', 'pipe'],
+  try {
+    await runPythonScript({
+      scriptPath,
+      args: [templatePath, outputPath],
+      stdinPayload: input,
+      cwd: path.dirname(scriptPath),
     });
+  } catch (err: any) {
+    const error = new Error(`Không tạo được file DOCX báo cáo tuần: ${err.message || err}`);
+    Object.assign(error, { statusCode: 500 });
+    throw error;
+  }
 
-    let stderr = '';
-    child.stderr.on('data', (chunk: Buffer) => {
-      stderr += chunk.toString('utf8');
-    });
-
-    child.on('error', reject);
-    child.on('close', (code) => {
-      if (code === 0 && fs.existsSync(outputPath)) {
-        resolve();
-        return;
-      }
-      console.error('Python Script Failed. Code:', code, 'Stderr:', stderr);
-      reject(new Error(stderr));
-    });
-
-    child.stdin.write(JSON.stringify(input));
-    child.stdin.end();
-  });
+  if (!fs.existsSync(outputPath)) {
+    const error = new Error('File DOCX đầu ra không được tạo');
+    Object.assign(error, { statusCode: 500 });
+    throw error;
+  }
 
   return outputPath;
 }
