@@ -4,7 +4,7 @@ import { logger } from '../config/logger';
 
 export interface AuditLogInput {
   action: string;
-  category: 'auth' | 'report' | 'period' | 'user' | 'export' | 'summary' | 'schedule';
+  category: 'auth' | 'report' | 'period' | 'user' | 'export' | 'summary' | 'schedule' | 'task';
   user?: AuthUser | null;
   targetType?: string;
   targetId?: string;

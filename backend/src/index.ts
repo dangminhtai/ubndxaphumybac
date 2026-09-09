@@ -11,6 +11,7 @@ import auditLogsRouter from './routes/audit-logs';
 import archiveRouter from './routes/archive';
 import notificationRouter from './routes/notifications';
 import workScheduleRouter from './routes/work-schedules';
+import weeklyTaskRouter from './routes/weekly-tasks-registration';
 import documentCatalogRouter from './routes/document-catalog';
 import {
   closeDatabase,
@@ -47,6 +48,7 @@ app.use('/api/admin/logs', auditLogsRouter);
 app.use('/api/archive', archiveRouter);
 app.use('/api/notifications', notificationRouter);
 app.use('/api/work-schedules', workScheduleRouter);
+app.use('/api/weekly-tasks', weeklyTaskRouter);
 app.use('/api/document-catalog', documentCatalogRouter);
 
 app.get('/api/health', (_req, res) => {

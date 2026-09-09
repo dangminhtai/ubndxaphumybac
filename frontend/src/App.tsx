@@ -16,6 +16,7 @@ import Notifications from './pages/Notifications';
 import WorkSchedules from './pages/WorkSchedules';
 import WorkScheduleForm from './pages/WorkScheduleForm';
 import WorkScheduleStats from './pages/WorkScheduleStats';
+import WeeklyTasksPage from './pages/WeeklyTasks';
 import DocumentCatalog from './pages/DocumentCatalog';
 
 function App() {
@@ -42,6 +43,7 @@ function App() {
         <Route path="/work-schedules/new" element={<ProtectedRoute roles={['admin', 'department_lead']}><WorkScheduleForm /></ProtectedRoute>} />
         <Route path="/work-schedules/stats" element={<ProtectedRoute roles={['admin', 'department_lead']}><WorkScheduleStats /></ProtectedRoute>} />
         <Route path="/work-schedules/:id/edit" element={<ProtectedRoute roles={['admin', 'department_lead']}><WorkScheduleForm /></ProtectedRoute>} />
+        <Route path="/weekly-tasks" element={<ProtectedRoute><WeeklyTasksPage /></ProtectedRoute>} />
         <Route path="/document-catalog" element={<ProtectedRoute><DocumentCatalog /></ProtectedRoute>} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>

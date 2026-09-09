@@ -19,7 +19,7 @@ const auditLogSchema = new Schema<IAuditLog>(
     category: {
       type: String,
       required: true,
-      enum: ['auth', 'report', 'period', 'user', 'export', 'summary', 'schedule'],
+      enum: ['auth', 'report', 'period', 'user', 'export', 'summary', 'schedule', 'task'],
       index: true,
     },
     userId: { type: Schema.Types.ObjectId, ref: 'User', index: true },
