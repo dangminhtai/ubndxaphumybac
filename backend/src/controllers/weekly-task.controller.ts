@@ -1,3 +1,4 @@
+import fs from 'fs';
 import type { NextFunction, Response } from 'express';
 import type { AuthenticatedRequest } from '../middleware/auth.middleware';
 import * as weeklyTaskService from '../services/weekly-task.service';
@@ -86,12 +87,23 @@ export async function exportExcel(req: AuthenticatedRequest, res: Response, next
       req.user!,
       req.query.targetWeekStart as string | undefined,
     );
-    const html = weeklyTaskService.buildExcelHtml(tasks, weekLabel);
 
-    const filename = `nhiem-vu-${weekLabel.replace(/\s+/g, '-').toLowerCase()}.xls`;
-    res.setHeader('Content-Type', 'application/vnd.ms-excel; charset=UTF-8');
-    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
-    res.send('\ufeff' + html);
+    const filePath = await weeklyTaskService.generateWeeklyTasksExcelFile(tasks, weekLabel);
+    const filename = `nhiem-vu-${weekLabel.replace(/\s+/g, '-').toLowerCase()}.xlsx`;
+
+    res.download(filePath, filename, (err) => {
+      // Dọn dẹp file tạm
+      try {
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } catch {
+        /* ignore */
+      }
+      if (err && !res.headersSent) {
+        next(err);
+      }
+    });
   } catch (err) {
     next(err);
   }

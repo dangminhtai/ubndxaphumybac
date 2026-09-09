@@ -1,3 +1,7 @@
+import path from 'path';
+import fs from 'fs';
+import crypto from 'crypto';
+import { spawn } from 'child_process';
 import mongoose from 'mongoose';
 import { WeeklyTask, TaskRegistrationOverride } from '../models/WeeklyTask';
 import User from '../models/User';
@@ -448,3 +452,57 @@ ${rows}
 </body>
 </html>`;
 }
+
+export async function generateWeeklyTasksExcelFile(tasks: any[], weekLabel: string): Promise<string> {
+  const scriptPath = path.resolve(__dirname, '../scripts/generate_weekly_tasks_excel.py');
+  const tmpDir = path.resolve(__dirname, '../../tmp');
+  if (!fs.existsSync(tmpDir)) {
+    fs.mkdirSync(tmpDir, { recursive: true });
+  }
+
+  const fileId = `${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+  const inputJsonPath = path.join(tmpDir, `payload_${fileId}.json`);
+  const outputXlsxPath = path.join(tmpDir, `nhiem_vu_${fileId}.xlsx`);
+
+  const payload = {
+    weekLabel,
+    tasks: tasks.map((t) => ({
+      userId: {
+        fullName: typeof t.userId === 'object' && t.userId ? t.userId.fullName : 'N/A',
+      },
+      content: t.content || '',
+      deadline: t.deadline || '',
+      isRegistered: t.isRegistered !== false && Boolean(t.content),
+    })),
+  };
+
+  fs.writeFileSync(inputJsonPath, JSON.stringify(payload), 'utf-8');
+
+  return new Promise<string>((resolve, reject) => {
+    const child = spawn('python', [scriptPath, inputJsonPath, outputXlsxPath], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
+    });
+
+    let stderr = '';
+    child.stderr.on('data', (d) => {
+      stderr += d.toString();
+    });
+
+    child.on('close', (code) => {
+      // Clean up input json
+      try {
+        fs.unlinkSync(inputJsonPath);
+      } catch {
+        /* ignore */
+      }
+
+      if (code === 0 && fs.existsSync(outputXlsxPath)) {
+        resolve(outputXlsxPath);
+      } else {
+        reject(new Error(`Không tạo được file Excel: ${stderr}`));
+      }
+    });
+  });
+}
+

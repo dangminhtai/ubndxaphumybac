@@ -111,13 +111,15 @@ export async function exportWeeklyTasksExcel(targetWeekStart?: string) {
     responseType: 'blob',
   });
 
-  const blob = new Blob([res.data], { type: 'application/vnd.ms-excel' });
+  const blob = new Blob([res.data], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement('a');
 
   const disposition = res.headers['content-disposition'] as string | undefined;
   const match = disposition?.match(/filename="?([^"]+)"?/);
-  a.download = match ? decodeURIComponent(match[1]) : 'nhiem-vu-tuan.xls';
+  a.download = match ? decodeURIComponent(match[1]) : 'nhiem-vu-tuan.xlsx';
   a.href = url;
   document.body.appendChild(a);
   a.click();
