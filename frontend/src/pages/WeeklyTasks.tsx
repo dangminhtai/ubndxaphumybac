@@ -398,16 +398,6 @@ export default function WeeklyTasks() {
           )}
         </div>
 
-        {/* Locked message for staff if window is closed */}
-        {!canEdit && (
-          <div className="mb-4 flex items-center gap-2.5 rounded-lg border border-amber-200 bg-amber-50/80 px-3.5 py-2.5 text-xs text-amber-800">
-            <Lock className="h-4 w-4 shrink-0 text-amber-600" />
-            <span>
-              Chức năng nhập/chỉnh sửa đang tạm khóa (mở vào Thứ Bảy – Chủ Nhật hoặc khi Admin mở sớm).
-            </span>
-          </div>
-        )}
-
         {/* Họ và tên (read-only) */}
         <div className="mb-4">
           <label className="mb-1.5 block text-sm font-semibold text-on-surface">
