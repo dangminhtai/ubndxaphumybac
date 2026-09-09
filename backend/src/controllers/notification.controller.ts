@@ -1,6 +1,6 @@
 import { NextFunction, Response } from 'express';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
-import { getUserNotifications, markAllAsRead, markAsRead } from '../services/notification.service';
+import { getUserNotifications, markAllAsRead, markAsRead, deleteAllNotifications as deleteAllNotifsService, deleteNotification as deleteNotifService } from '../services/notification.service';
 
 export async function getNotifications(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
@@ -24,6 +24,24 @@ export async function readNotification(req: AuthenticatedRequest, res: Response,
 export async function readAllNotifications(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
     const result = await markAllAsRead(req.user!.id);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deleteAllNotifications(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    const result = await deleteAllNotifsService(req.user!.id);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deleteNotification(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    const result = await deleteNotifService(String(req.params.id), req.user!.id);
     res.json(result);
   } catch (err) {
     next(err);

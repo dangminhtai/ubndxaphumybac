@@ -30,3 +30,14 @@ export async function markAllNotificationsAsRead() {
   const response = await apiClient.patch<{ success: boolean }>('/notifications/read-all');
   return response.data;
 }
+
+export async function deleteAllNotifications() {
+  const response = await apiClient.delete<{ success: boolean }>('/notifications');
+  return response.data;
+}
+
+export async function deleteNotification(id: string) {
+  const response = await apiClient.delete<{ success: boolean }>(`/notifications/${id}`);
+  return response.data;
+}
+

@@ -100,6 +100,21 @@ export async function markAllAsRead(userId: string) {
   return { success: true };
 }
 
+export async function deleteAllNotifications(userId: string) {
+  await Notification.deleteMany({ recipientId: userId });
+  return { success: true };
+}
+
+export async function deleteNotification(notificationId: string, userId: string) {
+  const result = await Notification.findOneAndDelete({ _id: notificationId, recipientId: userId });
+  if (!result) {
+    const error = new Error('Không tìm thấy thông báo');
+    Object.assign(error, { statusCode: 404 });
+    throw error;
+  }
+  return { success: true };
+}
+
 export async function generateOnboardingNotifications(userId: string) {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);

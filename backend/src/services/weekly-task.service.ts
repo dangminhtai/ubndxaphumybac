@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { spawn } from 'child_process';
 import mongoose from 'mongoose';
 import { WeeklyTask, TaskRegistrationOverride } from '../models/WeeklyTask';
+import type { ITaskItem } from '../models/WeeklyTask';
 import User from '../models/User';
 import type { AuthUser } from '../middleware/auth.middleware';
 import { writeAuditLog } from './audit.service';
@@ -66,6 +67,18 @@ function weekLabelFromMonday(monday: Date) {
 
 function makeError(message: string, statusCode: number) {
   return Object.assign(new Error(message), { statusCode });
+}
+
+/**
+ * Backward-compat helper: if a task doc still has the legacy `content` field
+ * but no `items`, convert it to the new items[] format.
+ */
+function normalizeItems(doc: any): ITaskItem[] {
+  if (doc.items && doc.items.length > 0) return doc.items;
+  if (doc.content) {
+    return [{ content: doc.content, deadline: doc.deadline || '' }];
+  }
+  return [];
 }
 
 /* ── Registration status ── */
@@ -176,8 +189,12 @@ export async function getMyTask(user: AuthUser, targetWeekStartParam?: string) {
     : getNextMonday(getVietnamCivilDate());
 
   const task = await WeeklyTask.findOne({ userId: user.id, targetWeekStart });
+  const taskObj = task ? task.toObject() : null;
+  if (taskObj) {
+    taskObj.items = normalizeItems(taskObj);
+  }
   return {
-    task,
+    task: taskObj,
     weekLabel: weekLabelFromMonday(targetWeekStart),
     targetWeekStart: targetWeekStart.toISOString(),
   };
@@ -186,7 +203,8 @@ export async function getMyTask(user: AuthUser, targetWeekStartParam?: string) {
 /* ── Upsert task ── */
 
 export interface WeeklyTaskInput {
-  content: string;
+  items?: { content: string; deadline?: string }[];
+  content?: string;
   deadline?: string;
   targetWeekStart?: string;
 }
@@ -194,8 +212,20 @@ export interface WeeklyTaskInput {
 export async function upsertTask(user: AuthUser, input: WeeklyTaskInput) {
   const status = await requireRegistrationOpen(user);
 
-  const content = input.content?.trim();
-  if (!content) throw makeError('Vui lòng nhập nhiệm vụ tuần', 400);
+  let rawList = input.items;
+  if (!rawList || rawList.length === 0) {
+    if (input.content) {
+      rawList = [{ content: input.content, deadline: input.deadline || '' }];
+    } else {
+      rawList = [];
+    }
+  }
+
+  const items: ITaskItem[] = rawList
+    .map((it) => ({ content: (it.content || '').trim(), deadline: (it.deadline || '').trim() }))
+    .filter((it) => it.content.length > 0);
+
+  if (items.length === 0) throw makeError('Vui lòng nhập ít nhất một nhiệm vụ', 400);
 
   const targetWeekStart = input.targetWeekStart
     ? new Date(input.targetWeekStart)
@@ -207,8 +237,10 @@ export async function upsertTask(user: AuthUser, input: WeeklyTaskInput) {
     {
       $set: {
         weekLabel,
-        content,
-        deadline: input.deadline?.trim() || '',
+        items,
+        // Clear legacy fields
+        content: undefined,
+        deadline: undefined,
       },
       $setOnInsert: { userId: new mongoose.Types.ObjectId(user.id), targetWeekStart },
     },
@@ -221,7 +253,7 @@ export async function upsertTask(user: AuthUser, input: WeeklyTaskInput) {
     user,
     targetType: 'WeeklyTask',
     targetId: task._id.toString(),
-    details: `Đăng ký nhiệm vụ ${weekLabel}`,
+    details: `Đăng ký ${items.length} nhiệm vụ ${weekLabel}`,
   });
 
   return task;
@@ -314,7 +346,9 @@ export async function listTasks(user: AuthUser, targetWeekStartParam?: string) {
     processedUserIds.add(uid);
     const existing = taskMap.get(uid);
     if (existing) {
-      combinedTasks.push(existing);
+      const obj = existing.toObject ? existing.toObject() : existing;
+      obj.items = normalizeItems(obj);
+      combinedTasks.push(obj);
     } else {
       // Unregistered user placeholder
       combinedTasks.push({
@@ -322,6 +356,7 @@ export async function listTasks(user: AuthUser, targetWeekStartParam?: string) {
         userId: u,
         targetWeekStart,
         weekLabel,
+        items: [],
         content: '',
         deadline: '',
         isRegistered: false,
@@ -333,7 +368,9 @@ export async function listTasks(user: AuthUser, targetWeekStartParam?: string) {
   for (const t of existingTasks) {
     const uid = getUserIdString(t);
     if (uid && !processedUserIds.has(uid)) {
-      combinedTasks.push(t);
+      const obj = t.toObject ? t.toObject() : t;
+      obj.items = normalizeItems(obj);
+      combinedTasks.push(obj);
     }
   }
 
@@ -415,6 +452,17 @@ function escapeHtml(text: string) {
     .replace(/"/g, '&quot;');
 }
 
+function mergeItemsContent(items: any[]): string {
+  if (!items || items.length === 0) return '';
+  return items.map((it: any) => (it.content || '').trim()).filter(Boolean).join('\n');
+}
+
+function mergeItemsDeadline(items: any[]): string {
+  if (!items || items.length === 0) return '';
+  const validItems = items.filter((it: any) => (it.content || '').trim());
+  return validItems.map((it: any) => (it.deadline || '').trim()).join('\n');
+}
+
 export function buildExcelHtml(tasks: any[], weekLabel: string) {
   const title = `NHIỆM VỤ ${weekLabel.toUpperCase()}`;
 
@@ -422,13 +470,16 @@ export function buildExcelHtml(tasks: any[], weekLabel: string) {
     .map((task: any, index: number) => {
       const user = task.userId;
       const fullName = typeof user === 'object' && user ? (user.fullName || '').toUpperCase() : 'N/A';
-      const contentHtml = escapeHtml(task.content || '').replace(/\n/g, '<br>');
-      const deadline = escapeHtml(task.deadline || '');
+      const items = normalizeItems(task);
+      const contentText = mergeItemsContent(items);
+      const deadlineText = mergeItemsDeadline(items);
+      const contentHtml = escapeHtml(contentText).replace(/\n/g, '<br>');
+      const deadlineHtml = escapeHtml(deadlineText).replace(/\n/g, '<br>');
       return `<tr>
       <td style="text-align:center;vertical-align:top">${index + 1}</td>
       <td style="font-weight:bold;vertical-align:top">${escapeHtml(fullName)}</td>
       <td style="vertical-align:top">${contentHtml}</td>
-      <td style="vertical-align:top;text-align:center">${deadline}</td>
+      <td style="vertical-align:top;text-align:center">${deadlineHtml}</td>
     </tr>`;
     })
     .join('\n');
@@ -466,14 +517,18 @@ export async function generateWeeklyTasksExcelFile(tasks: any[], weekLabel: stri
 
   const payload = {
     weekLabel,
-    tasks: tasks.map((t) => ({
-      userId: {
-        fullName: typeof t.userId === 'object' && t.userId ? t.userId.fullName : 'N/A',
-      },
-      content: t.content || '',
-      deadline: t.deadline || '',
-      isRegistered: t.isRegistered !== false && Boolean(t.content),
-    })),
+    tasks: tasks.map((t) => {
+      const items = normalizeItems(t);
+      return {
+        userId: {
+          fullName: typeof t.userId === 'object' && t.userId ? t.userId.fullName : 'N/A',
+        },
+        items,
+        content: mergeItemsContent(items),
+        deadline: mergeItemsDeadline(items),
+        isRegistered: t.isRegistered !== false && items.length > 0 && items.some((it: any) => it.content),
+      };
+    }),
   };
 
   fs.writeFileSync(inputJsonPath, JSON.stringify(payload), 'utf-8');

@@ -8,6 +8,7 @@ import {
   Loader2,
   Lock,
   Pencil,
+  Plus,
   Save,
   Trash2,
   Unlock,
@@ -43,6 +44,17 @@ function formatDate(d: Date) {
   return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 }
 
+function extractItemsFromTask(task: WeeklyTaskData | null): { content: string; deadline: string }[] {
+  if (!task) return [{ content: '', deadline: '' }];
+  if (task.items && task.items.length > 0) {
+    return task.items.map((it) => ({ content: it.content || '', deadline: it.deadline || '' }));
+  }
+  if (task.content) {
+    return [{ content: task.content, deadline: task.deadline || '' }];
+  }
+  return [{ content: '', deadline: '' }];
+}
+
 export default function WeeklyTasks() {
   const user = readUser();
   const isAdmin = user?.role === 'admin';
@@ -52,10 +64,11 @@ export default function WeeklyTasks() {
   const [status, setStatus] = useState<RegistrationStatus | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(true);
 
-  /* ── My task ── */
+  /* ── My task (multi-item) ── */
   const [myTask, setMyTask] = useState<WeeklyTaskData | null>(null);
-  const [formContent, setFormContent] = useState('');
-  const [formDeadline, setFormDeadline] = useState('');
+  const [formItems, setFormItems] = useState<{ content: string; deadline: string }[]>([
+    { content: '', deadline: '' },
+  ]);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -96,13 +109,11 @@ export default function WeeklyTasks() {
     try {
       const res = await getMyWeeklyTask(targetWeekStart);
       setMyTask(res.task);
+      const items = extractItemsFromTask(res.task);
+      setFormItems(items);
       if (res.task) {
-        setFormContent(res.task.content);
-        setFormDeadline(res.task.deadline);
         setEditing(false);
       } else {
-        setFormContent('');
-        setFormDeadline('');
         setEditing(canEdit);
       }
     } catch {
@@ -153,21 +164,53 @@ export default function WeeklyTasks() {
     }
   }, [selectedWeek]);
 
+  /* ── Multi-task Item helpers ── */
+  function handleAddItem() {
+    setFormItems((prev) => [...prev, { content: '', deadline: '' }]);
+  }
+
+  function handleRemoveItem(index: number) {
+    setFormItems((prev) => {
+      if (prev.length <= 1) {
+        return [{ content: '', deadline: '' }];
+      }
+      return prev.filter((_, i) => i !== index);
+    });
+  }
+
+  function handleUpdateItem(index: number, field: 'content' | 'deadline', value: string) {
+    setFormItems((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+      return next;
+    });
+  }
+
+  function handleItemDatePick(index: number, dateVal: string) {
+    if (!dateVal) return;
+    const d = new Date(dateVal + 'T00:00:00');
+    handleUpdateItem(index, 'deadline', formatDate(d));
+  }
+
   /* ── Handlers ── */
   async function handleSave() {
-    if (!formContent.trim()) {
-      toast.error('Vui lòng nhập nhiệm vụ tuần');
+    const validItems = formItems
+      .map((it) => ({ content: it.content.trim(), deadline: it.deadline.trim() }))
+      .filter((it) => it.content.length > 0);
+
+    if (validItems.length === 0) {
+      toast.error('Vui lòng nhập ít nhất một nhiệm vụ tuần');
       return;
     }
     setSaving(true);
     try {
       const activeWeek = selectedWeek || status?.targetWeekStart;
       const task = await upsertWeeklyTask({
-        content: formContent,
-        deadline: formDeadline,
+        items: validItems,
         targetWeekStart: activeWeek,
       });
       setMyTask(task);
+      setFormItems(extractItemsFromTask(task));
       setEditing(false);
       toast.success('Đã lưu nhiệm vụ tuần');
       if (activeWeek) {
@@ -187,8 +230,7 @@ export default function WeeklyTasks() {
     try {
       await deleteWeeklyTask(myTask._id);
       setMyTask(null);
-      setFormContent('');
-      setFormDeadline('');
+      setFormItems([{ content: '', deadline: '' }]);
       setEditing(canEdit);
       setDeleteDialog(false);
       toast.success('Đã xóa nhiệm vụ');
@@ -247,12 +289,6 @@ export default function WeeklyTasks() {
     }
   }
 
-  function handleDatePick(e: React.ChangeEvent<HTMLInputElement>) {
-    const val = e.target.value;
-    if (!val) return;
-    const d = new Date(val + 'T00:00:00');
-    setFormDeadline(formatDate(d));
-  }
 
   /* ── Loading state ── */
   if (loadingStatus) {
@@ -411,70 +447,134 @@ export default function WeeklyTasks() {
           />
         </div>
 
-        {/* Nhiệm vụ tuần */}
-        <div className="mb-4">
-          <label className="mb-1.5 block text-sm font-semibold text-on-surface">
-            Nhiệm vụ tuần <span className="text-error">*</span>
-          </label>
-          {editing && canEdit ? (
-            <textarea
-              value={formContent}
-              onChange={(e) => setFormContent(e.target.value)}
-              placeholder="- Rà soát các chỉ tiêu kế hoạch phát triển KHCN...&#10;- Tham mưu việc tổ chức quay, chụp hình ảnh...&#10;- Tham mưu tổ chức Cuộc thi Rung chuông vàng CCHC"
-              rows={6}
-              className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2.5 text-sm outline-none transition-colors placeholder:text-outline focus:border-primary"
-            />
-          ) : (
-            <div className="min-h-[100px] whitespace-pre-wrap rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-sm text-on-surface">
-              {myTask?.content || (
-                <span className="italic text-on-surface-variant/60">
-                  (Chưa nhập nhiệm vụ cho tuần này)
-                </span>
-              )}
+        {/* Danh sách nhiệm vụ tuần */}
+        {editing && canEdit ? (
+          <div className="mb-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-semibold text-on-surface">
+                Danh sách nhiệm vụ đăng ký <span className="text-error">*</span>
+              </label>
+              <span className="text-xs text-on-surface-variant font-medium">
+                {formItems.length} nhiệm vụ
+              </span>
             </div>
-          )}
-        </div>
 
-        {/* Thời gian hoàn thành (cả picker và nhập thủ công) */}
-        <div className="mb-5">
-          <label className="mb-1.5 block text-sm font-semibold text-on-surface">
-            Thời gian hoàn thành
-          </label>
-          {editing && canEdit ? (
-            <div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={formDeadline}
-                  onChange={(e) => setFormDeadline(e.target.value)}
-                  placeholder="VD: 15/8/2026 hoặc Ngày 13/8/2026"
-                  className="flex-1 rounded-lg border border-outline-variant bg-surface px-3 py-2.5 text-sm outline-none transition-colors placeholder:text-outline focus:border-primary"
-                />
-                <label className="relative inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-outline-variant bg-surface px-3 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-surface-container-high">
-                  <Calendar className="h-4 w-4" />
-                  <span className="hidden sm:inline">Chọn ngày</span>
-                  <input
-                    type="date"
-                    onChange={handleDatePick}
-                    className="absolute inset-0 cursor-pointer opacity-0"
-                    tabIndex={-1}
+            {formItems.map((item, idx) => (
+              <div
+                key={idx}
+                className="rounded-xl border border-outline-variant bg-surface-container-low/50 p-4 shadow-sm space-y-3"
+              >
+                <div className="flex items-center justify-between border-b border-outline-variant pb-2">
+                  <span className="flex items-center gap-1.5 text-xs font-bold uppercase text-primary">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-on-primary text-[10px]">
+                      {idx + 1}
+                    </span>
+                    Nhiệm vụ {idx + 1}
+                  </span>
+                  {formItems.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveItem(idx)}
+                      className="inline-flex items-center gap-1 text-xs text-error hover:text-error/80 px-2 py-1 rounded hover:bg-error/10 transition-colors"
+                      title="Xóa nhiệm vụ này"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span>Xóa</span>
+                    </button>
+                  )}
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-on-surface-variant">
+                    Nội dung nhiệm vụ <span className="text-error">*</span>
+                  </label>
+                  <textarea
+                    value={item.content}
+                    onChange={(e) => handleUpdateItem(idx, 'content', e.target.value)}
+                    placeholder={`Nhập nội dung nhiệm vụ ${idx + 1}...`}
+                    rows={3}
+                    className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm outline-none transition-colors placeholder:text-outline focus:border-primary"
                   />
-                </label>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-on-surface-variant">
+                    Thời gian hoàn thành
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={item.deadline}
+                      onChange={(e) => handleUpdateItem(idx, 'deadline', e.target.value)}
+                      placeholder="VD: 15/8/2026 hoặc Ngày 13/8/2026"
+                      className="flex-1 rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm outline-none transition-colors placeholder:text-outline focus:border-primary"
+                    />
+                    <label className="relative inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-surface-container-high">
+                      <Calendar className="h-4 w-4" />
+                      <span className="hidden sm:inline">Chọn ngày</span>
+                      <input
+                        type="date"
+                        onChange={(e) => handleItemDatePick(idx, e.target.value)}
+                        className="absolute inset-0 cursor-pointer opacity-0"
+                        tabIndex={-1}
+                      />
+                    </label>
+                  </div>
+                </div>
               </div>
-              <p className="mt-1.5 text-xs text-on-surface-variant">
-                Linh hoạt: Bạn có thể gõ trực tiếp (ví dụ: &quot;Ngày 13/8/2026&quot;) hoặc bấm nút chọn ngày từ lịch.
-              </p>
-            </div>
-          ) : (
-            <div className="rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-sm text-on-surface">
-              {myTask?.deadline || (
-                <span className="italic text-on-surface-variant/60">
-                  (Chưa nhập thời gian hoàn thành)
-                </span>
-              )}
-            </div>
-          )}
-        </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={handleAddItem}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-dashed border-primary/50 bg-primary/5 px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary/10 w-full"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Thêm nhiệm vụ</span>
+            </button>
+          </div>
+        ) : (
+          <div className="mb-5 space-y-3">
+            <label className="block text-sm font-semibold text-on-surface">
+              Nhiệm vụ đã đăng ký
+            </label>
+            {(() => {
+              const displayItems = extractItemsFromTask(myTask).filter((it) => it.content.trim());
+              if (displayItems.length === 0) {
+                return (
+                  <div className="min-h-[80px] flex items-center justify-center rounded-lg border border-outline-variant bg-surface-container-low px-3 py-4 text-sm italic text-on-surface-variant/60">
+                    (Chưa nhập nhiệm vụ cho tuần này)
+                  </div>
+                );
+              }
+              return (
+                <div className="space-y-2.5">
+                  {displayItems.map((it, idx) => (
+                    <div
+                      key={idx}
+                      className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 p-3.5 rounded-xl border border-outline-variant bg-surface-container-low"
+                    >
+                      <div className="flex items-start gap-2.5 flex-1 min-w-0">
+                        <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold mt-0.5">
+                          {idx + 1}
+                        </span>
+                        <div className="whitespace-pre-wrap text-sm text-on-surface leading-relaxed flex-1">
+                          {it.content}
+                        </div>
+                      </div>
+                      {it.deadline && (
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-primary bg-white border border-primary/20 px-2.5 py-1 rounded-md shrink-0 self-start">
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span>{it.deadline}</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+        )}
 
         {/* Action buttons */}
         {canEdit && (
@@ -482,6 +582,7 @@ export default function WeeklyTasks() {
             {editing ? (
               <>
                 <button
+                  type="button"
                   onClick={handleSave}
                   disabled={saving}
                   className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary transition-colors hover:bg-primary/90 disabled:opacity-50"
@@ -495,9 +596,9 @@ export default function WeeklyTasks() {
                 </button>
                 {myTask && (
                   <button
+                    type="button"
                     onClick={() => {
-                      setFormContent(myTask?.content || '');
-                      setFormDeadline(myTask?.deadline || '');
+                      setFormItems(extractItemsFromTask(myTask));
                       setEditing(false);
                     }}
                     className="rounded-lg border border-outline-variant px-4 py-2.5 text-sm font-semibold text-on-surface transition-colors hover:bg-surface-container-high"
@@ -509,6 +610,7 @@ export default function WeeklyTasks() {
             ) : (
               <>
                 <button
+                  type="button"
                   onClick={() => setEditing(true)}
                   className="inline-flex items-center gap-2 rounded-lg border border-primary bg-surface px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary/5"
                 >
@@ -516,6 +618,7 @@ export default function WeeklyTasks() {
                   Sửa nhiệm vụ
                 </button>
                 <button
+                  type="button"
                   onClick={() => setDeleteDialog(true)}
                   className="inline-flex items-center gap-2 rounded-lg border border-error/30 px-4 py-2.5 text-sm font-semibold text-error transition-colors hover:bg-error/5"
                 >
@@ -581,7 +684,10 @@ export default function WeeklyTasks() {
                 </thead>
                 <tbody>
                   {allTasks.map((task, i) => {
-                    const isRegistered = task.isRegistered !== false && Boolean(task.content);
+                    const taskItems = (task.items && task.items.length > 0)
+                      ? task.items
+                      : (task.content ? [{ content: task.content, deadline: task.deadline || '' }] : []);
+                    const isRegistered = task.isRegistered !== false && taskItems.length > 0 && taskItems.some((it) => it.content.trim());
                     return (
                       <tr
                         key={task._id}
@@ -589,16 +695,25 @@ export default function WeeklyTasks() {
                           !isRegistered ? 'bg-surface-container-lowest/50' : ''
                         }`}
                       >
-                        <td className="px-4 py-3.5 text-center text-sm font-medium text-on-surface-variant">
+                        <td className="px-4 py-3.5 text-center text-sm font-medium text-on-surface-variant align-top">
                           {i + 1}
                         </td>
-                        <td className="px-4 py-3.5 text-sm font-bold uppercase text-on-surface">
+                        <td className="px-4 py-3.5 text-sm font-bold uppercase text-on-surface align-top">
                           {getUserName(task)}
                         </td>
-                        <td className="px-4 py-3.5 text-sm text-on-surface">
+                        <td className="px-4 py-3.5 text-sm text-on-surface align-top">
                           {isRegistered ? (
-                            <div className="whitespace-pre-wrap leading-relaxed">
-                              {task.content}
+                            <div className="space-y-1.5 leading-relaxed">
+                              {taskItems.map((item, idx) => (
+                                <div key={idx} className="flex items-start gap-2">
+                                  {taskItems.length > 1 && (
+                                    <span className="text-primary font-bold text-xs shrink-0 mt-0.5">
+                                      {idx + 1}.
+                                    </span>
+                                  )}
+                                  <span className="whitespace-pre-wrap">{item.content}</span>
+                                </div>
+                              ))}
                             </div>
                           ) : (
                             <span className="italic text-on-surface-variant/50">
@@ -606,8 +721,18 @@ export default function WeeklyTasks() {
                             </span>
                           )}
                         </td>
-                        <td className="px-4 py-3.5 text-center text-sm text-on-surface-variant">
-                          {task.deadline || (isRegistered ? '—' : '')}
+                        <td className="px-4 py-3.5 text-center text-sm text-on-surface-variant align-top">
+                          {isRegistered ? (
+                            <div className="space-y-1.5 leading-relaxed">
+                              {taskItems.map((item, idx) => (
+                                <div key={idx} className="text-sm">
+                                  {item.deadline || '—'}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            ''
+                          )}
                         </td>
                       </tr>
                     );

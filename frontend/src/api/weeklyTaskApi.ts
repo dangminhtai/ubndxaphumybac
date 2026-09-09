@@ -23,13 +23,19 @@ export interface WeeklyTaskUser {
   position?: string;
 }
 
+export interface TaskItem {
+  content: string;
+  deadline?: string;
+}
+
 export interface WeeklyTaskData {
   _id: string;
   userId: WeeklyTaskUser | string;
   targetWeekStart: string;
   weekLabel: string;
-  content: string;
-  deadline: string;
+  items?: TaskItem[];
+  content?: string;
+  deadline?: string;
   createdAt: string;
   updatedAt: string;
   isRegistered?: boolean;
@@ -87,7 +93,8 @@ export async function getWeeklyTasks(targetWeekStart?: string) {
 }
 
 export async function upsertWeeklyTask(input: {
-  content: string;
+  items?: TaskItem[];
+  content?: string;
   deadline?: string;
   targetWeekStart?: string;
 }) {

@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Bell, Check, CheckCircle2, ChevronRight, Loader2, Info } from 'lucide-react';
+import { Bell, Check, CheckCircle2, ChevronRight, Loader2, Info, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '../components/layout/AppLayout';
 import Dialog from '../components/ui/Dialog';
-import { getNotifications, markAllNotificationsAsRead, markNotificationAsRead } from '../api/notificationApi';
+import {
+  getNotifications,
+  markAllNotificationsAsRead,
+  markNotificationAsRead,
+  deleteAllNotifications,
+  deleteNotification,
+} from '../api/notificationApi';
 import type { AppNotification } from '../api/notificationApi';
 
 function formatTime(dateString: string) {
@@ -16,9 +22,16 @@ export default function Notifications() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [dialogState, setDialogState] = useState({ isOpen: false, message: '' });
+  const [dialogState, setDialogState] = useState<{
+    isOpen: boolean;
+    type?: 'alert' | 'confirm';
+    title?: string;
+    message: string;
+    isDanger?: boolean;
+    onConfirmAction?: () => void;
+  }>({ isOpen: false, message: '' });
 
-  const closeDialog = () => setDialogState(prev => ({ ...prev, isOpen: false }));
+  const closeDialog = () => setDialogState({ isOpen: false, message: '' });
 
   const loadNotifications = async () => {
     setLoading(true);
@@ -41,8 +54,47 @@ export default function Notifications() {
       await markAllNotificationsAsRead();
       setNotifications(notifications.map(n => ({ ...n, isRead: true })));
     } catch {
-      setDialogState({ isOpen: true, message: 'Có lỗi xảy ra khi cập nhật thông báo' });
+      setDialogState({ isOpen: true, type: 'alert', message: 'Có lỗi xảy ra khi cập nhật thông báo' });
     }
+  };
+
+  const handleDeleteAll = () => {
+    setDialogState({
+      isOpen: true,
+      type: 'confirm',
+      title: 'Xác nhận xóa tất cả',
+      message: 'Bạn có chắc chắn muốn xóa toàn bộ thông báo không? Hành động này không thể hoàn tác.',
+      isDanger: true,
+      onConfirmAction: async () => {
+        closeDialog();
+        try {
+          await deleteAllNotifications();
+          setNotifications([]);
+        } catch {
+          setDialogState({ isOpen: true, type: 'alert', message: 'Có lỗi xảy ra khi xóa thông báo' });
+        }
+      },
+    });
+  };
+
+  const handleDeleteOne = (e: React.MouseEvent, notifId: string) => {
+    e.stopPropagation();
+    setDialogState({
+      isOpen: true,
+      type: 'confirm',
+      title: 'Xác nhận xóa',
+      message: 'Bạn có muốn xóa thông báo này không?',
+      isDanger: true,
+      onConfirmAction: async () => {
+        closeDialog();
+        try {
+          await deleteNotification(notifId);
+          setNotifications(prev => prev.filter(n => n._id !== notifId));
+        } catch {
+          setDialogState({ isOpen: true, type: 'alert', message: 'Có lỗi xảy ra khi xóa thông báo' });
+        }
+      },
+    });
   };
 
   const handleNotificationClick = async (notif: AppNotification) => {
@@ -69,10 +121,19 @@ export default function Notifications() {
     >
       <Dialog
         isOpen={dialogState.isOpen}
-        type="alert"
-        title="Thông báo hệ thống"
+        type={dialogState.type || 'alert'}
+        title={dialogState.title || 'Thông báo hệ thống'}
         message={dialogState.message}
-        onConfirm={closeDialog}
+        isDanger={dialogState.isDanger}
+        confirmText={dialogState.type === 'confirm' ? 'Xóa' : 'Đồng ý'}
+        cancelText="Hủy"
+        onConfirm={() => {
+          if (dialogState.onConfirmAction) {
+            dialogState.onConfirmAction();
+          } else {
+            closeDialog();
+          }
+        }}
         onCancel={closeDialog}
       />
       <div className="mx-auto max-w-4xl space-y-6">
@@ -92,15 +153,28 @@ export default function Notifications() {
               <p className="text-sm text-on-surface-variant">Bạn có {unreadCount} thông báo chưa đọc</p>
             </div>
           </div>
-          {unreadCount > 0 && (
-            <button
-              onClick={() => void handleMarkAllRead()}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-outline-variant px-3 py-2 text-xs font-medium text-primary transition-colors hover:bg-surface-container-low md:gap-2 md:px-4 md:text-sm"
-            >
-              <CheckCircle2 className="h-4 w-4" />
-              Đánh dấu đọc tất cả
-            </button>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {unreadCount > 0 && (
+              <button
+                type="button"
+                onClick={() => void handleMarkAllRead()}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-outline-variant px-3 py-2 text-xs font-medium text-primary transition-colors hover:bg-surface-container-low md:gap-2 md:px-4 md:text-sm"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                Đánh dấu đọc tất cả
+              </button>
+            )}
+            {notifications.length > 0 && (
+              <button
+                type="button"
+                onClick={handleDeleteAll}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-error/30 px-3 py-2 text-xs font-medium text-error transition-colors hover:bg-error/10 md:gap-2 md:px-4 md:text-sm"
+              >
+                <Trash2 className="h-4 w-4" />
+                Xóa tất cả
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="rounded-xl border border-outline-variant bg-white shadow-level-1 overflow-hidden">
@@ -120,7 +194,7 @@ export default function Notifications() {
                 <div
                   key={notif._id}
                   onClick={() => void handleNotificationClick(notif)}
-                  className={`flex cursor-pointer gap-3 p-3 transition-colors hover:bg-surface-container-lowest md:gap-4 md:p-4 ${
+                  className={`group flex cursor-pointer items-start gap-3 p-3 transition-colors hover:bg-surface-container-lowest md:gap-4 md:p-4 ${
                     notif.isRead ? 'opacity-70' : 'bg-surface-container-low'
                   }`}
                 >
@@ -129,7 +203,7 @@ export default function Notifications() {
                       {notif.type === 'period_opened' ? <Check className="h-4 w-4 md:h-5 md:w-5" /> : <Info className="h-4 w-4 md:h-5 md:w-5" />}
                     </div>
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
                       <h4 className={`text-sm ${notif.isRead ? 'font-medium text-on-surface' : 'font-semibold text-primary'}`}>
                         {notif.title}
@@ -148,11 +222,19 @@ export default function Notifications() {
                       </div>
                     )}
                   </div>
-                  {!notif.isRead && (
-                    <div className="flex flex-shrink-0 items-center justify-center">
+                  <div className="flex flex-shrink-0 items-center gap-2">
+                    {!notif.isRead && (
                       <div className="h-2.5 w-2.5 rounded-full bg-error" />
-                    </div>
-                  )}
+                    )}
+                    <button
+                      type="button"
+                      onClick={(e) => handleDeleteOne(e, notif._id)}
+                      className="rounded-md p-1.5 text-on-surface-variant/50 transition-colors hover:bg-error/10 hover:text-error"
+                      title="Xóa thông báo"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
