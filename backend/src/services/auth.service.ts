@@ -182,11 +182,33 @@ export async function createManagedUser(input: RegisterInput) {
 export async function updateManagedUser(userId: string, input: Partial<RegisterInput> & { isActive?: boolean }) {
   const update: Record<string, unknown> = {};
 
+  // Cho phép admin đổi tên đăng nhập (username)
+  if (input.username && input.username.trim().length > 0) {
+    const trimmedUsername = input.username.trim();
+    const existing = await User.findOne({ username: trimmedUsername, _id: { $ne: userId } });
+    if (existing) {
+      const error = new Error('Tên đăng nhập đã tồn tại');
+      Object.assign(error, { statusCode: 409 });
+      throw error;
+    }
+    update.username = trimmedUsername;
+  }
+
   if (input.fullName) update.fullName = input.fullName;
   if (input.department) update.department = input.department;
   if (input.position !== undefined) update.position = input.position;
   if (input.role) update.role = normalizeRole(input.role);
   if (typeof input.isActive === 'boolean') update.isActive = input.isActive;
+
+  // Cho phép admin cập nhật mật khẩu khi sửa tài khoản
+  if (input.password && input.password.trim().length > 0) {
+    if (input.password.length < 6) {
+      const error = new Error('Mật khẩu phải có ít nhất 6 ký tự');
+      Object.assign(error, { statusCode: 400 });
+      throw error;
+    }
+    update.passwordHash = await bcrypt.hash(input.password, SALT_ROUNDS);
+  }
 
   const user = await User.findByIdAndUpdate(userId, update, { new: true }).select('-passwordHash');
   if (!user) {

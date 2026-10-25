@@ -195,7 +195,6 @@ export default function AdminUsers() {
           </div>
           <div className="space-y-4">
             {(['username', 'password', 'fullName', 'position'] as const).map((field) => {
-              if (editingUserId && field === 'username') return null; // Can't change username
               return (
               <div key={field}>
                 <label className="mb-1 block text-sm font-medium text-on-surface-variant">
@@ -207,7 +206,6 @@ export default function AdminUsers() {
                   placeholder={field === 'password' && editingUserId ? 'Bỏ trống nếu không đổi...' : `Nhập ${fieldLabels[field].toLowerCase()}...`}
                   type={field === 'password' ? 'password' : 'text'}
                   value={form[field] || ''}
-                  disabled={field === 'username' && editingUserId !== null}
                   onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.value }))}
                 />
                 {field === 'password' && !editingUserId && (
