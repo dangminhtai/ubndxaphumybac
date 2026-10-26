@@ -2,15 +2,22 @@ import { apiClient } from './client';
 import type { ReportPeriod } from '../types/report';
 
 export interface WeeklySummary {
+  entries?: SummaryEntry[];
   _id?: string;
   periodId: string;
   periodTitle: string;
-  content: string;
-  difficulties: string;
-  proposals: string;
-  nextTasks: string;
   status: 'draft' | 'published' | 'archived';
 }
+
+export interface SummaryEntry {
+  id: string;
+  sourceReportId?: string;
+  groupId: string | null;
+  section: 'results' | 'nextTasks';
+  text: string;
+}
+
+export interface SummaryGroup { id: string; title: string }
 
 export interface WeeklyEmployeeReport {
   _id: string;
@@ -33,6 +40,8 @@ export interface MissingEmployee {
 }
 
 export interface WeeklySummaryResponse {
+  groups: SummaryGroup[];
+  nextPeriodTitle: string;
   summary: WeeklySummary;
   period: ReportPeriod;
   employeeReports: WeeklyEmployeeReport[];
@@ -64,6 +73,15 @@ export async function updateWeeklySummary(periodId: string, payload: Partial<Wee
 export async function exportWeeklySummaryDocx(periodId: string) {
   const response = await apiClient.post<Blob>(`/weekly-summaries/${periodId}/export-docx`, undefined, {
     responseType: 'blob',
+    timeout: 120_000,
+  });
+  return response.data;
+}
+
+export async function exportWeeklySummaryPdf(periodId: string) {
+  const response = await apiClient.post<Blob>(`/weekly-summaries/${periodId}/export-pdf`, undefined, {
+    responseType: 'blob',
+    timeout: 120_000,
   });
   return response.data;
 }

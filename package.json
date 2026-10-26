@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
-    "dev:frontend": "cd frontend && npm run dev",
+    "dev": "concurrently --kill-others \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "node scripts/wait-for-backend.cjs && cd frontend && npm run dev",
     "dev:backend": "cd backend && npm run dev",
     "catalog:convert": "python scripts/convert-document-catalog.py",
     "catalog:validate": "node scripts/validate-document-catalog.mjs",

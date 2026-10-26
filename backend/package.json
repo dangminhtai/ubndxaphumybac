@@ -6,7 +6,7 @@
     "start": "tsx src/index.ts",
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "test:database": "npm run build && node scripts/test-database-reconnect.cjs",
+    "test:database": "npm run build && node scripts/test-database-reconnect.cjs && node scripts/test-readiness-http.cjs",
     "test:errors": "npm run build && node scripts/test-error-handling.cjs",
     "test:catalog": "npm run build && node scripts/test-document-catalog.cjs",
     "test:weekly-summary": "npm run build && node scripts/test-weekly-summary.cjs"

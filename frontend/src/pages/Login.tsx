@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { User, Lock as LockIcon, EyeOff, Eye } from 'lucide-react';
 import { login } from '../api/authApi';
 import logo from '../assets/logo.png';
+import { formatApiError } from '../utils/apiError';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -21,8 +22,8 @@ export default function Login() {
       localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
       navigate('/dashboard');
-    } catch {
-      setError('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
+    } catch (error) {
+      setError(formatApiError(error, 'Không đăng nhập được. Vui lòng thử lại.'));
     } finally {
       setLoading(false);
     }

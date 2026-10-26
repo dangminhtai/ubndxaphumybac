@@ -1,32 +1,31 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  Bold,
   CheckCircle2,
   FileText,
-  Italic,
-  List,
-  ListOrdered,
   Loader2,
   Save,
   Download,
-  Underline,
   Wand2,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
+import GroupedSummaryEditor from '../components/GroupedSummaryEditor';
+import { weeklyLabel } from '../utils/weeklyLabel';
 import {
   getWeeklySummary,
   generateWeeklySummary,
   updateWeeklySummary,
   exportWeeklySummaryDocx,
+  exportWeeklySummaryPdf,
 } from '../api/weeklySummaryApi';
 import type {
   MissingEmployee,
   WeeklyEmployeeReport,
   WeeklySummary as IWeeklySummary,
   WeeklySummaryResponse,
+  SummaryGroup,
 } from '../api/weeklySummaryApi';
 import { getCurrentPeriod, getPeriods } from '../api/periodApi';
 import { returnReport } from '../api/reportApi';
@@ -39,182 +38,12 @@ function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-interface EditorSection {
-  title: string;
-  placeholder: string;
-  heightClass: string;
-  fieldKey: keyof IWeeklySummary;
-}
-
-const SECTIONS: EditorSection[] = [
-  {
-    title: 'Kết quả thực hiện',
-    placeholder: 'Nhập nội dung tổng hợp...',
-    heightClass: 'min-h-[250px]',
-    fieldKey: 'content',
-  },
-  {
-    title: 'Khó khăn, vướng mắc',
-    placeholder: 'Nhập khó khăn...',
-    heightClass: 'min-h-[150px]',
-    fieldKey: 'difficulties',
-  },
-  {
-    title: 'Kiến nghị, đề xuất',
-    placeholder: 'Nhập kiến nghị...',
-    heightClass: 'min-h-[150px]',
-    fieldKey: 'proposals',
-  },
-  {
-    title: 'Nhiệm vụ trọng tâm thời gian tới',
-    placeholder: 'Nhập nhiệm vụ...',
-    heightClass: 'min-h-[150px]',
-    fieldKey: 'nextTasks',
-  },
-];
-
-function Toolbar({
-  textareaRef,
-  onChange,
-  orderedList = false,
-}: {
-  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
-  onChange: (val: string) => void;
-  orderedList?: boolean;
-}) {
-  const handleFormat = (type: 'bold' | 'italic' | 'underline' | 'list' | 'ordered-list') => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value;
-    const selectedText = text.substring(start, end);
-
-    let replacement = '';
-    switch (type) {
-      case 'bold':
-        replacement = `**${selectedText || 'in đậm'}**`;
-        break;
-      case 'italic':
-        replacement = `*${selectedText || 'in nghiêng'}*`;
-        break;
-      case 'underline':
-        replacement = `<u>${selectedText || 'gạch chân'}</u>`;
-        break;
-      case 'list': {
-        const lines = selectedText.split('\n');
-        replacement = lines.map(line => line.startsWith('- ') ? line : `- ${line}`).join('\n');
-        if (!selectedText) replacement = '- ';
-        break;
-      }
-      case 'ordered-list': {
-        const lines = selectedText.split('\n');
-        replacement = lines.map((line, idx) => {
-          const prefix = `${idx + 1}. `;
-          return line.startsWith(prefix) ? line : `${prefix}${line}`;
-        }).join('\n');
-        if (!selectedText) replacement = '1. ';
-        break;
-      }
-    }
-
-    const newValue = text.substring(0, start) + replacement + text.substring(end);
-    onChange(newValue);
-
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start, start + replacement.length);
-    }, 0);
-  };
-
-  return (
-    <div className="flex items-center gap-2 rounded-t-lg border-b border-outline-variant bg-surface-container-low p-2">
-      <button
-        className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors"
-        type="button"
-        title="In đậm (Bold)"
-        onClick={() => handleFormat('bold')}
-      >
-        <Bold className="h-4 w-4" />
-      </button>
-      <button
-        className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors"
-        type="button"
-        title="In nghiêng (Italic)"
-        onClick={() => handleFormat('italic')}
-      >
-        <Italic className="h-4 w-4" />
-      </button>
-      <button
-        className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors"
-        type="button"
-        title="Gạch chân (Underline)"
-        onClick={() => handleFormat('underline')}
-      >
-        <Underline className="h-4 w-4" />
-      </button>
-      <div className="mx-1 h-5 w-px bg-outline-variant" />
-      <button
-        className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors"
-        type="button"
-        title="Danh sách gạch đầu dòng"
-        onClick={() => handleFormat('list')}
-      >
-        <List className="h-4 w-4" />
-      </button>
-      {orderedList && (
-        <button
-          className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors"
-          type="button"
-          title="Danh sách đánh số"
-          onClick={() => handleFormat('ordered-list')}
-        >
-          <ListOrdered className="h-4 w-4" />
-        </button>
-      )}
-    </div>
-  );
-}
-
-function ReportEditor({
-  section,
-  value,
-  onChange,
-}: {
-  section: EditorSection;
-  value: string;
-  onChange: (val: string) => void;
-}) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  return (
-    <section>
-      <div className="mb-stack-sm flex items-center gap-2">
-        <h3 className="font-headline-sm text-base text-on-surface font-semibold">{section.title}</h3>
-      </div>
-      <div className="overflow-hidden rounded-lg border border-outline-variant bg-surface focus-within:border-primary">
-        <Toolbar textareaRef={textareaRef} onChange={onChange} orderedList={true} />
-        <textarea
-          ref={textareaRef}
-          className={`${section.heightClass} w-full resize-y border-none bg-transparent p-4 font-doc-preview text-doc-preview text-on-surface outline-none`}
-          placeholder={section.placeholder}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-        />
-      </div>
-    </section>
-  );
-}
-
 export default function WeeklySummaryPage() {
   const query = useQuery();
   const navigate = useNavigate();
   const [periodId, setPeriodId] = useState(query.get('periodId') || '');
   const [form, setForm] = useState<Partial<IWeeklySummary>>({
-    content: '',
-    difficulties: '',
-    proposals: '',
-    nextTasks: '',
+    entries: [],
     periodTitle: '',
   });
   const [employeeReports, setEmployeeReports] = useState<WeeklyEmployeeReport[]>([]);
@@ -222,6 +51,9 @@ export default function WeeklySummaryPage() {
   const [periods, setPeriods] = useState<ReportPeriod[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState<ReportPeriod | null>(null);
   const [expandedReportId, setExpandedReportId] = useState<string | null>(null);
+  const [groups, setGroups] = useState<SummaryGroup[]>([]);
+  const [nextPeriodTitle, setNextPeriodTitle] = useState('');
+  const readOnly = selectedPeriod?.status === 'archived';
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -254,16 +86,15 @@ export default function WeeklySummaryPage() {
 
   const applyResponse = (data: WeeklySummaryResponse) => {
     setForm({
-      content: data.summary.content || '',
-      difficulties: data.summary.difficulties || '',
-      proposals: data.summary.proposals || '',
-      nextTasks: data.summary.nextTasks || '',
+      entries: data.summary.entries || [],
       periodTitle: data.summary.periodTitle,
     });
     setEmployeeReports(data.employeeReports);
     setMissingEmployees(data.missingEmployees);
     setSubmissionStats(data.submissionStats);
     setSelectedPeriod(data.period);
+    setGroups(data.groups);
+    setNextPeriodTitle(data.nextPeriodTitle);
   };
 
   useEffect(() => {
@@ -301,10 +132,6 @@ export default function WeeklySummaryPage() {
 
     void loadData();
   }, [navigate, periodId]);
-
-  const updateField = (fieldName: keyof typeof form, value: string) => {
-    setForm((current) => ({ ...current, [fieldName]: value }));
-  };
 
   const handleSave = async () => {
     if (!periodId) return false;
@@ -353,24 +180,24 @@ export default function WeeklySummaryPage() {
     });
   };
 
-  const handleExport = async () => {
+  const handleExport = async (format: 'docx' | 'pdf' = 'docx') => {
     if (!periodId) return;
     setExporting(true);
     setError('');
     try {
-      if (!(await handleSave())) return;
-      const blob = await exportWeeklySummaryDocx(periodId);
+      if (!readOnly && !(await handleSave())) return;
+      const blob = await (format === 'pdf' ? exportWeeklySummaryPdf(periodId) : exportWeeklySummaryDocx(periodId));
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `tong-hop-bao-cao-tuan-${form.periodTitle?.replace(/\s+/g, '-').toLowerCase()}.docx`;
+      link.download = `bao-cao-${form.periodTitle?.replace(/\s+/g, '-').toLowerCase()}.${format}`;
       document.body.appendChild(link);
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
-      setMessage('Đã xuất file DOCX');
+      setMessage(`Đã xuất file ${format.toUpperCase()}`);
     } catch (err: unknown) {
-      let errorMessage = 'Không xuất được file DOCX';
+      let errorMessage = `Không xuất được file ${format.toUpperCase()}`;
       if (typeof err === 'object' && err !== null && 'response' in err) {
         const response = (err as { response?: { data?: unknown } }).response;
         if (response?.data instanceof Blob) {
@@ -456,6 +283,7 @@ export default function WeeklySummaryPage() {
           <select
             className="min-w-56 rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface outline-none focus:border-primary"
             value={periodId}
+            disabled={saving || exporting || generating}
             onChange={(event) => {
               const nextPeriodId = event.target.value;
               setPeriodId(nextPeriodId);
@@ -464,13 +292,13 @@ export default function WeeklySummaryPage() {
             aria-label="Chọn kỳ báo cáo tuần"
           >
             {periods.map((period) => (
-              <option key={period._id} value={period._id}>{period.title}</option>
+              <option key={period._id} value={period._id}>{weeklyLabel(period.startDate)} ({new Date(period.startDate).toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })})</option>
             ))}
           </select>
           <button
             className="inline-flex items-center gap-2 rounded-lg bg-surface-container-high px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-surface-container-highest disabled:opacity-60"
             type="button"
-            disabled={generating || loading}
+            disabled={generating || saving || exporting || loading || readOnly}
             onClick={() => void handleGenerate()}
           >
             {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
@@ -479,11 +307,18 @@ export default function WeeklySummaryPage() {
           <button
             className="inline-flex items-center gap-2 rounded-lg border border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface transition-colors hover:bg-surface-container-low disabled:opacity-60"
             type="button"
-            disabled={exporting || loading}
-            onClick={() => void handleExport()}
+            disabled={exporting || saving || generating || loading}
+            onClick={() => void handleExport('docx')}
           >
             {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            Lưu & Xuất DOCX
+            {readOnly ? 'Xuất DOCX' : 'Lưu & Xuất DOCX'}
+          </button>
+          <button
+            className="inline-flex items-center gap-2 rounded-lg border border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface transition-colors hover:bg-surface-container-low disabled:opacity-60"
+            type="button" disabled={exporting || saving || generating || loading} onClick={() => void handleExport('pdf')}
+          >
+            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {readOnly ? 'Xuất PDF' : 'Lưu & Xuất PDF'}
           </button>
         </div>
       }
@@ -504,7 +339,7 @@ export default function WeeklySummaryPage() {
           <button
             className="inline-flex items-center gap-1.5 md:gap-2 rounded-lg bg-primary px-4 py-2 text-sm md:text-base md:px-6 md:py-2.5 font-semibold text-white shadow-level-1 transition-colors hover:bg-primary-container disabled:opacity-60"
             type="button"
-            disabled={saving || loading}
+            disabled={saving || exporting || generating || loading || readOnly}
             onClick={() => void handleSave()}
           >
             {saving ? <Loader2 className="h-4 w-4 md:h-5 md:w-5 animate-spin" /> : <Save className="h-4 w-4 md:h-5 md:w-5" />}
@@ -554,17 +389,10 @@ export default function WeeklySummaryPage() {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8 pb-8">
-          <form className="flex-1 space-y-stack-lg">
+          <form className="min-w-0 flex-1 space-y-stack-lg" onSubmit={(event) => event.preventDefault()}>
             <div className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-stack-lg">
               <div className="flex flex-col gap-stack-lg">
-                {SECTIONS.map((section, idx) => (
-                  <ReportEditor
-                    key={idx}
-                    section={section}
-                    value={(form[section.fieldKey] as string) || ''}
-                    onChange={(val) => updateField(section.fieldKey, val)}
-                  />
-                ))}
+                <GroupedSummaryEditor entries={form.entries || []} groups={groups} reports={employeeReports} currentTitle={form.periodTitle || ''} nextTitle={nextPeriodTitle} readOnly={readOnly || saving || exporting || generating} onChange={(entries) => setForm((current) => ({ ...current, entries }))} />
               </div>
             </div>
           </form>
@@ -630,7 +458,7 @@ export default function WeeklySummaryPage() {
                             <button
                               type="button"
                               onClick={() => void handleReturn(r._id)}
-                              disabled={loading}
+                              disabled={loading || readOnly || saving || exporting || generating}
                               className="inline-flex items-center gap-2 rounded-lg bg-error-container px-3 py-1.5 text-xs font-semibold text-error transition-colors hover:bg-error/20 disabled:opacity-60"
                             >
                               Trả về (Yêu cầu sửa)

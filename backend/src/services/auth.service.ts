@@ -110,7 +110,7 @@ export async function createUser(input: RegisterInput, options: { mustChangePass
 export async function loginUser(input: LoginInput) {
   const { username, password } = input;
 
-  if (!username || !password) {
+  if (typeof username !== 'string' || typeof password !== 'string' || !username || !password) {
     const error = new Error('Vui lòng nhập tên đăng nhập và mật khẩu');
     Object.assign(error, { statusCode: 400 });
     throw error;
@@ -118,6 +118,10 @@ export async function loginUser(input: LoginInput) {
 
   const user = await User.findOne({ username });
   if (!user || !user.isActive) {
+    void writeAuditLog({
+      action: 'LOGIN_FAILED', category: 'auth', attemptedUsername: username,
+      details: `${user ? 'Tài khoản bị vô hiệu hóa' : 'Tên đăng nhập không tồn tại'}: ${JSON.stringify(username)}`,
+    });
     const error = new Error('Tên đăng nhập hoặc mật khẩu không đúng');
     Object.assign(error, { statusCode: 401 });
     throw error;
@@ -125,7 +129,7 @@ export async function loginUser(input: LoginInput) {
 
   const isMatch = await bcrypt.compare(password, user.passwordHash);
   if (!isMatch) {
-    void writeAuditLog({ action: 'LOGIN_FAILED', category: 'auth', details: `Sai mật khẩu cho user: ${username}` });
+    void writeAuditLog({ action: 'LOGIN_FAILED', category: 'auth', attemptedUsername: username, details: `Sai mật khẩu cho user: ${JSON.stringify(username)}` });
     const error = new Error('Tên đăng nhập hoặc mật khẩu không đúng');
     Object.assign(error, { statusCode: 401 });
     throw error;

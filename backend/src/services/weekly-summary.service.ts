@@ -2,11 +2,14 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import mongoose from 'mongoose';
+import { weeklyLabel } from '../utils/weeklyLabel';
 import { runPythonScript } from '../utils/pythonRunner';
 import ReportPeriod, { type IReportPeriod } from '../models/ReportPeriod';
 import Report from '../models/Report';
 import User from '../models/User';
 import WeeklySummary from '../models/WeeklySummary';
+import { getDocumentConfig } from '../config/document';
+import { WEEKLY_GROUPS, buildWeeklyEntries, combineWeeklyEntries, summaryEntriesSchema, type SummaryEntry } from './weekly-summary-groups';
 import type { AuthUser } from '../middleware/auth.middleware';
 
 interface ReportOwner {
@@ -23,6 +26,8 @@ export interface WeeklySourceReport {
   department: string;
   sender: string;
   content: string;
+  administrativeReform?: string;
+  digitalTransformation?: string;
   difficulties?: string;
   proposals?: string;
   nextTasks?: string;
@@ -31,10 +36,7 @@ export interface WeeklySourceReport {
 }
 
 export interface WeeklySummaryUpdate {
-  content?: string;
-  difficulties?: string;
-  proposals?: string;
-  nextTasks?: string;
+  entries?: SummaryEntry[];
   status?: 'draft' | 'published';
 }
 
@@ -159,34 +161,26 @@ export async function getEligibleWeeklyReports(periodId: string) {
   };
 }
 
-function formatReportHeading(report: WeeklySourceReport) {
-  const heading = report.field?.trim() || report.department?.trim() || 'Chưa phân lĩnh vực';
-  return `- ${heading.charAt(0).toUpperCase()}${heading.slice(1)}`;
-}
-
-function combineSection(reports: WeeklySourceReport[], field: 'content' | 'difficulties' | 'proposals' | 'nextTasks') {
-  return reports
-    .filter((report) => Boolean(report[field]?.trim()))
-    .map((report) => `${formatReportHeading(report)}\n${report[field]!.trim()}`)
-    .join('\n\n');
-}
-
 export async function getWeeklySummaryByPeriod(periodId: string) {
   const source = await getEligibleWeeklyReports(periodId);
   const summary = await WeeklySummary.findOne({ periodId });
   return {
-    summary: summary?.toObject() || {
+    summary: summary ? {
+      _id: summary._id, periodId: summary.periodId,
+      periodTitle: weeklyLabel(source.period.startDate).title,
+      entries: summary.entries || [], sourceReportIds: summary.sourceReportIds,
+      sourceGeneratedAt: summary.sourceGeneratedAt, status: summary.status,
+    } : {
       periodId: source.period.id,
-      periodTitle: source.period.title,
+      periodTitle: weeklyLabel(source.period.startDate).title,
       sourceReportIds: [],
-      content: '',
-      difficulties: '',
-      proposals: '',
-      nextTasks: '',
+      entries: [],
       status: 'draft',
     },
-    period: source.period,
+    period: { ...source.period.toObject(), title: weeklyLabel(source.period.startDate).title },
+    nextPeriodTitle: weeklyLabel(source.period.startDate, 1).title,
     submissionStats: source.submissionStats,
+    groups: WEEKLY_GROUPS.map(({ id, title }) => ({ id, title })),
     employeeReports: source.reports,
     missingEmployees: source.missingEmployees,
   };
@@ -204,22 +198,24 @@ export async function generateWeeklySummary(periodId: string, user: AuthUser) {
     throw appError('Phát hiện báo cáo trùng của cùng nhân viên trong kỳ', 409, 'WEEKLY_SUMMARY_DUPLICATE_SOURCE');
   }
 
+  const entries = buildWeeklyEntries(source.reports);
+
   await WeeklySummary.findOneAndUpdate(
     { periodId: source.period._id },
     {
       $set: {
-        periodTitle: source.period.title,
+        periodTitle: weeklyLabel(source.period.startDate).title,
         sourceReportIds: source.reports.map((report) => report._id),
         sourceGeneratedAt: new Date(),
-        content: combineSection(source.reports, 'content'),
-        difficulties: combineSection(source.reports, 'difficulties'),
-        proposals: combineSection(source.reports, 'proposals'),
-        nextTasks: combineSection(source.reports, 'nextTasks'),
+        entries,
+        content: combineWeeklyEntries(entries, 'results'),
+        nextTasks: combineWeeklyEntries(entries, 'nextTasks'),
         authorId: user.id,
       },
       $setOnInsert: { status: 'draft' },
+      $unset: { difficulties: '', proposals: '' },
     },
-    { upsert: true, new: true, runValidators: true },
+    { upsert: true, new: true, runValidators: true, strict: false },
   );
   return getWeeklySummaryByPeriod(periodId);
 }
@@ -230,29 +226,30 @@ export async function updateWeeklySummary(periodId: string, data: WeeklySummaryU
     throw appError('Kỳ báo cáo đã lưu trữ, không thể cập nhật', 409, 'WEEKLY_PERIOD_ARCHIVED');
   }
   const allowed: WeeklySummaryUpdate = {};
-  for (const field of ['content', 'difficulties', 'proposals', 'nextTasks'] as const) {
-    if (typeof data[field] === 'string') allowed[field] = data[field];
+  if (data.entries !== undefined) {
+    const parsed = summaryEntriesSchema.safeParse(data.entries);
+    if (!parsed.success) throw appError('Nội dung phân nhóm không hợp lệ', 400, 'WEEKLY_SUMMARY_INVALID_ENTRIES');
+    const existing = await WeeklySummary.findOne({ periodId });
+    const sources = new Set(existing?.sourceReportIds.map(String) || []);
+    if (parsed.data.some((entry) => entry.sourceReportId && !sources.has(entry.sourceReportId))) {
+      throw appError('Nguồn nội dung không thuộc bản tổng hợp đã lưu', 400, 'WEEKLY_SUMMARY_INVALID_SOURCE');
+    }
+    allowed.entries = parsed.data;
   }
   if (data.status === 'draft' || data.status === 'published') allowed.status = data.status;
 
   await WeeklySummary.findOneAndUpdate(
     { periodId: period._id },
-    { $set: { ...allowed, periodTitle: period.title, authorId: user.id } },
-    { upsert: true, new: true, runValidators: true },
+    {
+      $set: {
+        ...allowed, periodTitle: weeklyLabel(period.startDate).title, authorId: user.id,
+        ...(allowed.entries ? { content: combineWeeklyEntries(allowed.entries, 'results'), nextTasks: combineWeeklyEntries(allowed.entries, 'nextTasks') } : {}),
+      },
+      $unset: { difficulties: '', proposals: '' },
+    },
+    { upsert: true, new: true, runValidators: true, strict: false },
   );
   return getWeeklySummaryByPeriod(periodId);
-}
-
-function resolveWeeklySummaryTemplatePath() {
-  const candidates = [
-    path.resolve(process.cwd(), 'src/templates/weekly_template.docx'),
-    path.resolve(process.cwd(), 'backend/src/templates/weekly_template.docx'),
-    path.resolve(__dirname, '../templates/weekly_template.docx'),
-  ];
-  for (const c of candidates) {
-    if (fs.existsSync(c)) return c;
-  }
-  return candidates[0];
 }
 
 function resolveWeeklySummaryScriptPath() {
@@ -267,44 +264,42 @@ function resolveWeeklySummaryScriptPath() {
   return candidates[0];
 }
 
-export async function exportWeeklySummaryDocx(periodId: string) {
+export async function exportWeeklySummaryFile(periodId: string, format: 'docx' | 'pdf' = 'docx') {
   const period = await resolveWeeklyPeriod(periodId);
-  const summary = await WeeklySummary.findOne({ periodId }).populate('authorId', 'department');
+  const summary = await WeeklySummary.findOne({ periodId });
   if (!summary) throw appError('Chưa có bản tổng hợp tuần để xuất', 404, 'WEEKLY_SUMMARY_NOT_FOUND');
-  const author = summary.authorId as unknown as { department?: string };
-  if (!author?.department) throw appError('Bản tổng hợp thiếu đơn vị người tạo', 500, 'WEEKLY_SUMMARY_AUTHOR_INVALID');
-
-  const templatePath = resolveWeeklySummaryTemplatePath();
+  if (!summary.entries) throw appError('Hãy tạo tổng hợp theo mẫu và lưu trước khi xuất.', 409, 'WEEKLY_SUMMARY_GROUPING_REQUIRED');
+  if (summary.entries.some((entry) => entry.text.trim() && !entry.groupId)) {
+    throw appError('Còn nội dung chưa phân nhóm. Hãy chọn lĩnh vực trước khi xuất.', 409, 'WEEKLY_SUMMARY_GROUPING_REQUIRED');
+  }
+  const config = getDocumentConfig();
   const scriptPath = resolveWeeklySummaryScriptPath();
-  const outputPath = path.join(os.tmpdir(), `tong-hop-tuan-${Date.now()}.docx`);
-  if (!fs.existsSync(templatePath)) throw appError('Không tìm thấy template tổng hợp tuần', 500, 'WEEKLY_SUMMARY_TEMPLATE_MISSING');
-
-  const payload = {
-    period: period.title,
-    reportTitle: `BÁO CÁO CÔNG TÁC ${period.title.toUpperCase()}`,
-    department: author.department,
-    startDate: period.startDate.toISOString(),
-    dueDate: period.dueDate.toISOString(),
-    content: summary.content,
-    difficulties: summary.difficulties,
-    proposals: summary.proposals,
-    nextTasks: summary.nextTasks,
-  };
-
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'weekly-summary-'));
+  const label = weeklyLabel(period.startDate);
+  const outputPath = path.join(tempDir, `tong-hop-bao-cao-tuan-${label.week}-${label.year}.${format}`);
   try {
     await runPythonScript({
       scriptPath,
-      args: [templatePath, outputPath],
-      stdinPayload: payload,
+      args: [outputPath],
+      stdinPayload: {
+        config,
+        startDate: period.startDate.toISOString(),
+        dueDate: period.dueDate.toISOString(),
+        sourceGeneratedAt: summary.sourceGeneratedAt?.toISOString(),
+        entries: summary.entries,
+        groups: WEEKLY_GROUPS.map(({ id, title }) => ({ id, title })),
+      },
       cwd: path.dirname(scriptPath),
     });
-  } catch (err: any) {
-    throw appError(`Không tạo được DOCX tổng hợp tuần: ${err.message || err}`, 500, 'WEEKLY_SUMMARY_EXPORT_FAILED');
+    const header = fs.readFileSync(outputPath).subarray(0, 5).toString('ascii');
+    if (format === 'pdf' ? header !== '%PDF-' : !header.startsWith('PK')) throw new Error('File đầu ra không hợp lệ');
+    return outputPath;
+  } catch (error: unknown) {
+    for (const file of fs.readdirSync(tempDir)) fs.unlinkSync(path.join(tempDir, file));
+    fs.rmdirSync(tempDir);
+    const message = error instanceof Error ? error.message : String(error);
+    throw appError(`Không tạo được ${format.toUpperCase()}: ${message}`, 500, 'WEEKLY_SUMMARY_EXPORT_FAILED');
   }
-
-  if (!fs.existsSync(outputPath)) {
-    throw appError('File DOCX đầu ra không được tạo', 500, 'WEEKLY_SUMMARY_EXPORT_FAILED');
-  }
-
-  return outputPath;
 }
+
+export const exportWeeklySummaryDocx = (periodId: string) => exportWeeklySummaryFile(periodId, 'docx');

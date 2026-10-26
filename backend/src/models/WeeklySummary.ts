@@ -1,13 +1,13 @@
 import mongoose, { Document, Schema } from 'mongoose';
+import type { SummaryEntry } from '../services/weekly-summary-groups';
 
 export interface IWeeklySummary extends Document {
   periodId: mongoose.Types.ObjectId;
   periodTitle: string;
   sourceReportIds: mongoose.Types.ObjectId[];
   sourceGeneratedAt?: Date;
+  entries?: SummaryEntry[];
   content: string;
-  difficulties: string;
-  proposals: string;
   nextTasks: string;
   status: 'draft' | 'published' | 'archived';
   authorId: mongoose.Types.ObjectId;
@@ -20,9 +20,14 @@ const weeklySummarySchema = new Schema<IWeeklySummary>({
   periodTitle: { type: String, required: true },
   sourceReportIds: [{ type: Schema.Types.ObjectId, ref: 'Report' }],
   sourceGeneratedAt: { type: Date },
+  entries: { type: [new Schema({
+    id: { type: String, required: true },
+    sourceReportId: { type: String },
+    groupId: { type: String, default: null },
+    section: { type: String, enum: ['results', 'nextTasks'], required: true },
+    text: { type: String, default: '' },
+  }, { _id: false })], default: undefined },
   content: { type: String, default: '' },
-  difficulties: { type: String, default: '' },
-  proposals: { type: String, default: '' },
   nextTasks: { type: String, default: '' },
   status: { type: String, enum: ['draft', 'published', 'archived'], default: 'draft' },
   authorId: { type: Schema.Types.ObjectId, ref: 'User', required: true },

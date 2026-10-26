@@ -13,6 +13,10 @@ let reconnectAttempt = 0;
 let shuttingDown = false;
 let listenersRegistered = false;
 let connectedHandlersRunning = false;
+let initialized = false;
+let initializationFailed = false;
+let connectionGeneration = 0;
+let initializationRetryTimer: NodeJS.Timeout | null = null;
 const connectedHandlers = new Set<ConnectedHandler>();
 
 export function getReconnectDelay(attempt: number) {
@@ -27,18 +31,31 @@ function clearReconnectTimer() {
 }
 
 async function runConnectedHandlers() {
-  if (connectedHandlersRunning || connectedHandlers.size === 0) return;
+  if (connectedHandlersRunning || shuttingDown || mongoose.connection.readyState !== 1) return;
+  if (initializationRetryTimer) clearTimeout(initializationRetryTimer);
+  initializationRetryTimer = null;
+  const generation = connectionGeneration;
   connectedHandlersRunning = true;
+  initialized = false;
+  initializationFailed = false;
   try {
     for (const handler of connectedHandlers) {
-      try {
-        await handler();
-      } catch (error) {
-        logger.error(`Database connected handler failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      }
+      await handler();
     }
+    initialized = generation === connectionGeneration && mongoose.connection.readyState === 1 && !shuttingDown;
+    if (initialized) logger.info('Application ready: MongoDB connected and initialization complete');
+  } catch (error) {
+    initializationFailed = true;
+    logger.error(`Database initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   } finally {
     connectedHandlersRunning = false;
+    if (!initialized && !shuttingDown && mongoose.connection.readyState === 1 && !initializationRetryTimer) {
+      initializationRetryTimer = setTimeout(() => {
+        initializationRetryTimer = null;
+        void runConnectedHandlers();
+      }, 5_000);
+      initializationRetryTimer.unref();
+    }
   }
 }
 
@@ -72,6 +89,8 @@ function registerConnectionListeners() {
   });
 
   mongoose.connection.on('disconnected', () => {
+    initialized = false;
+    connectionGeneration += 1;
     if (shuttingDown) return;
     logger.warn('MongoDB disconnected');
     scheduleReconnect();
@@ -84,6 +103,8 @@ function registerConnectionListeners() {
 
 export function onDatabaseConnected(handler: ConnectedHandler) {
   connectedHandlers.add(handler);
+  initialized = false;
+  if (mongoose.connection.readyState === 1) void runConnectedHandlers();
   return () => connectedHandlers.delete(handler);
 }
 
@@ -123,8 +144,21 @@ export function getDatabaseStatus() {
   }
 }
 
+export function getApplicationReadiness() {
+  const mongodb = getDatabaseStatus();
+  const ready = mongodb === 'connected' && initialized && !shuttingDown;
+  const phase = shuttingDown ? 'shutting_down' : ready ? 'ready'
+    : mongodb !== 'connected' ? 'waiting_for_database'
+      : initializationFailed ? 'initialization_failed' : 'initializing';
+  return { ready, mongodb, phase };
+}
+
 export async function closeDatabase() {
   shuttingDown = true;
+  initialized = false;
+  connectionGeneration += 1;
+  if (initializationRetryTimer) clearTimeout(initializationRetryTimer);
+  initializationRetryTimer = null;
   clearReconnectTimer();
   connectedHandlers.clear();
   if (mongoose.connection.readyState !== 0) {

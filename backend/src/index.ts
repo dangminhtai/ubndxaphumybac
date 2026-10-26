@@ -16,7 +16,7 @@ import documentCatalogRouter from './routes/document-catalog';
 import {
   closeDatabase,
   connectDatabase,
-  getDatabaseStatus,
+  getApplicationReadiness,
   onDatabaseConnected,
 } from './config/db';
 import { env } from './config/env';
@@ -28,6 +28,7 @@ const app = express();
 
 app.use(requestContext);
 app.use(cors({ origin: env.frontendOrigin }));
+app.use('/api/weekly-summaries', express.json({ limit: '2mb' }));
 app.use(express.json());
 
 import { ensureCurrentWeekPeriod } from './services/period.service';
@@ -37,6 +38,24 @@ onDatabaseConnected(async () => {
   await ensureCurrentWeekPeriod();
 });
 void connectDatabase();
+
+app.get('/api/live', (_req, res) => res.json({ alive: true }));
+app.get(['/api/health', '/api/ready'], (_req, res) => {
+  const state = getApplicationReadiness();
+  res.set('Cache-Control', 'no-store');
+  res.status(state.ready ? 200 : 503).json({
+    ...state, status: state.ready ? 'ok' : 'not_ready', port: env.port,
+  });
+});
+app.use('/api', (_req, res, next) => {
+  const state = getApplicationReadiness();
+  if (state.ready) return next();
+  res.set('Retry-After', '3').status(503).json({
+    error: 'Hệ thống đang kết nối dữ liệu hoặc hoàn tất khởi tạo. Vui lòng chờ.',
+    code: 'APPLICATION_NOT_READY', retryable: true,
+    requestId: res.locals.requestId, ...state,
+  });
+});
 
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
@@ -50,24 +69,6 @@ app.use('/api/notifications', notificationRouter);
 app.use('/api/work-schedules', workScheduleRouter);
 app.use('/api/weekly-tasks', weeklyTaskRouter);
 app.use('/api/document-catalog', documentCatalogRouter);
-
-app.get('/api/health', (_req, res) => {
-  const mongodb = getDatabaseStatus();
-  res.json({
-    status: mongodb === 'connected' ? 'ok' : 'degraded',
-    message: 'API is running',
-    mongodb,
-    port: env.port,
-  });
-});
-
-app.get('/api/ready', (_req, res) => {
-  const mongodb = getDatabaseStatus();
-  res.status(mongodb === 'connected' ? 200 : 503).json({
-    ready: mongodb === 'connected',
-    mongodb,
-  });
-});
 
 app.use(errorHandler);
 

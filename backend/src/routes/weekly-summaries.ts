@@ -17,5 +17,6 @@ router.get('/:periodId', getSummary);
 router.post('/:periodId/generate', generateSummary);
 router.patch('/:periodId', updateSummary);
 router.post('/:periodId/export-docx', exportSummary);
+router.post('/:periodId/export-pdf', exportSummary);
 
 export default router;

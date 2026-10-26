@@ -6,6 +6,7 @@ export interface AuditLogInput {
   action: string;
   category: 'auth' | 'report' | 'period' | 'user' | 'export' | 'summary' | 'schedule' | 'task';
   user?: AuthUser | null;
+  attemptedUsername?: string;
   targetType?: string;
   targetId?: string;
   details?: string;
@@ -18,7 +19,7 @@ export async function writeAuditLog(input: AuditLogInput) {
       action: input.action,
       category: input.category,
       userId: input.user?.id,
-      username: input.user?.username,
+      username: input.user?.username || input.attemptedUsername,
       fullName: input.user?.fullName,
       targetType: input.targetType,
       targetId: input.targetId,
@@ -27,7 +28,7 @@ export async function writeAuditLog(input: AuditLogInput) {
     });
 
     // Ghi log ra terminal để tiện theo dõi trong quá trình dev / vận hành
-    const userDisplay = input.user ? `[${input.user.username}]` : '[SYSTEM]';
+    const userDisplay = input.user ? `[${input.user.username}]` : input.attemptedUsername ? `[LOGIN:${JSON.stringify(input.attemptedUsername)}]` : '[SYSTEM]';
     logger.info(`[AUDIT] ${userDisplay} ${input.action} - ${input.details || ''}`);
   } catch (err: any) {
     logger.error(`Failed to write audit log: ${err.message}`);

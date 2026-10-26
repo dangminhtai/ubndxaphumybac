@@ -34,6 +34,7 @@ dist-ssr/
 # Vite / Frontend build
 frontend/dist/
 frontend/dist-ssr/
+frontend/dist-weekly-summary-qa/
 
 # Backend build
 backend/dist/
