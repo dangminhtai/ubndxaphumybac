@@ -392,7 +392,7 @@ export default function WeeklySummaryPage() {
           <form className="min-w-0 flex-1 space-y-stack-lg" onSubmit={(event) => event.preventDefault()}>
             <div className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-stack-lg">
               <div className="flex flex-col gap-stack-lg">
-                <GroupedSummaryEditor entries={form.entries || []} groups={groups} reports={employeeReports} currentTitle={form.periodTitle || ''} nextTitle={nextPeriodTitle} readOnly={readOnly || saving || exporting || generating} onChange={(entries) => setForm((current) => ({ ...current, entries }))} />
+                <GroupedSummaryEditor entries={form.entries || []} groups={groups} currentTitle={form.periodTitle || ''} nextTitle={nextPeriodTitle} readOnly={readOnly || saving || exporting || generating} onChange={(entries) => setForm((current) => ({ ...current, entries }))} />
               </div>
             </div>
           </form>

@@ -1,5 +1,7 @@
 # Plan nâng cấp tổng hợp tuần theo mẫu hành chính
 
+**USER CONFIRMED — giao diện cuối cùng:** hai phần I/II, mỗi phần đúng 8 lĩnh vực cố định và mỗi lĩnh vực đúng một textarea luôn có sẵn. Bỏ dropdown nhóm/phần, metadata nguồn và các nút thêm/xóa/tách đoạn. Mapping sẽ do người dùng hướng dẫn sau; lần này chỉ chỉnh editor, chưa đổi thêm logic mapping. Tiêu đề phần dùng “TUẦN {xx}” tự tính.
+
 Trạng thái: ĐÃ TRIỂN KHAI TRONG WORKSPACE — build và kiểm thử fixture/browser đạt; chưa kiểm tra MongoDB thật hoặc runtime Linux/server. Không commit/push/deploy.
 
 **USER CONFIRMED — điều chỉnh sau phản hồi giao diện:** chỉ admin đổi sang mẫu PDF hai phần × tám lĩnh vực. Xóa form admin cũ, nút/cảnh báo chuyển đổi và hai editor Khó khăn, vướng mắc / Kiến nghị, đề xuất. Chuyên viên tiếp tục biểu mẫu bốn mục cho một lĩnh vực, không sửa. Các quyết định giữ giao diện legacy/khó khăn/kiến nghị bên dưới là HISTORICAL và đã được thay thế bởi yêu cầu này.
@@ -133,3 +135,9 @@ Hướng dẫn cấu hình chung, runtime Python/PDF và cách chạy lại ki�
 - Giữ content/nextTasks là projection cho kho lưu trữ, không dùng làm form admin bốn mục.
 - PASS: build backend, frontend typecheck/bundle QA; contract và HTTP fixture xác nhận API admin không trả difficulties/proposals, nhưng báo cáo chuyên viên vẫn giữ hai trường nguồn. DOCX regression đạt; PDF conversion không đổi, không chạy lại trong lần sửa này.
 - PASS browser QA: cả bản có entries và bản chưa có entries đều không hiện form/cảnh báo cũ; bản chưa có entries có đúng 16 nhóm trong form admin, không có hai editor khó khăn/kiến nghị. Đã xem ảnh `C:/Users/Public/weekly-summary-qa/weekly-ui-test/admin-empty-new-template.png`. Lưu/đọc lại, tải Word/PDF, desktop/mobile và archived tiếp tục đạt với API mock.
+
+## 8. Đơn giản hóa editor thành 16 ô nhập cố định
+
+- Đã thay editor từng đoạn bằng một textarea cho từng cặp phần/lĩnh vực. Nhiều đoạn đã nằm cùng nhóm được hiển thị cùng ô; sửa ô chỉ cập nhật nhóm tương ứng, các nhóm khác giữ nguyên.
+- Xóa toàn bộ dropdown, nhãn nguồn, thêm/xóa/tách đoạn và hướng dẫn phân nhóm khỏi editor. Không sửa form chuyên viên hoặc logic mapping backend trong lần này.
+- PASS frontend typecheck và bundle QA. Browser QA kiểm tra 16 ô, tiêu đề đúng tuần, gộp nội dung cùng lĩnh vực, sửa/lưu/reload đúng ô, mẫu trống đủ 16 ô, desktop/mobile, readiness và archived.

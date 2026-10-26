@@ -47,6 +47,10 @@ def main():
     server = ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(Handler, directory=str(DIST)))
     threading.Thread(target=server.serve_forever, daemon=True).start()
     state = copy.deepcopy(FIXTURE)
+    state['summary']['entries'] = [
+        {'id': 'one', 'groupId': 'health', 'section': 'results', 'text': 'Nguồn 1'},
+        {'id': 'two', 'groupId': 'health', 'section': 'results', 'text': 'Nguồn 2'},
+    ]
     errors = []
     saved = []
     availability = {'ready': False}
@@ -94,30 +98,32 @@ def main():
             assert page.get_by_role('button', name='Lưu bản tổng hợp', exact=True).count() == 0
             page.screenshot(path=str(OUTPUT / 'startup-wait.png'))
             availability['ready'] = True
-            page.get_by_text('Chưa phân nhóm (1)', exact=True).wait_for()
+            page.get_by_role('heading', name='I. KẾT QUẢ THỰC HIỆN NHIỆM VỤ TUẦN 43', exact=True).wait_for()
             assert page.get_by_role('combobox', name='Chọn kỳ báo cáo tuần').inner_text().startswith('Tuần 43 năm 2026')
-            page.screenshot(path=str(OUTPUT / 'desktop-unassigned.png'), full_page=True)
-            page.get_by_role('combobox', name='Nhóm lĩnh vực').select_option('health')
-            assert page.get_by_text('Chưa phân nhóm (1)', exact=True).count() == 0
-            text = page.get_by_role('textbox', name='Nội dung báo cáo')
-            text.fill('Nội dung đã sửa: 168 lượt\nĐoạn lĩnh vực khác')
-            text.evaluate('(el) => {el.focus(); el.setSelectionRange(28, 28)}')
-            page.get_by_role('button', name='Tách tại vị trí con trỏ').click()
-            assert page.get_by_role('textbox', name='Nội dung báo cáo').count() == 2
+            assert page.locator('form textarea').count() == 16
+            assert page.locator('form select').count() == 0
+            assert page.get_by_role('button', name='Thêm nội dung', exact=True).count() == 0
+            assert page.get_by_role('button', name='Tách tại vị trí con trỏ', exact=True).count() == 0
+            result = page.get_by_role('textbox', name='Kết quả - Y tế và an toàn thực phẩm', exact=True)
+            assert result.input_value() == 'Nguồn 1\n\nNguồn 2'
+            result.fill('Nội dung đã sửa: 168 lượt')
+            page.get_by_role('textbox', name='Nhiệm vụ - Giáo dục và đào tạo', exact=True).fill('Nhiệm vụ giáo dục tuần tới')
             availability['ready'] = False
             page.get_by_text('Hệ thống chưa sẵn sàng', exact=True).wait_for()
-            assert page.locator('textarea[aria-label="Nội dung báo cáo"]').count() == 2
+            assert page.locator('form textarea').count() == 16
             assert page.locator('[inert]').count() == 1
             availability['ready'] = True
             page.get_by_text('Hệ thống chưa sẵn sàng', exact=True).wait_for(state='hidden')
-            page.get_by_role('combobox', name='Nhóm lĩnh vực').nth(1).select_option('culture')
             page.get_by_role('button', name='Lưu bản tổng hợp', exact=True).click()
             page.wait_for_function("document.body.innerText.includes('Đã lưu bản tổng hợp')")
             assert len(saved[-1]['entries']) == 2
-            assert ''.join(e['text'] for e in saved[-1]['entries']) == 'Nội dung đã sửa: 168 lượt\nĐoạn lĩnh vực khác'
+            assert saved[-1]['entries'][0]['text'] == 'Nội dung đã sửa: 168 lượt'
+            assert saved[-1]['entries'][1]['text'] == 'Nhiệm vụ giáo dục tuần tới'
             page.reload()
-            page.get_by_role('textbox', name='Nội dung báo cáo').first.wait_for()
-            assert page.get_by_role('textbox', name='Nội dung báo cáo').count() == 2
+            page.get_by_role('textbox', name='Kết quả - Y tế và an toàn thực phẩm', exact=True).wait_for()
+            assert page.locator('form textarea').count() == 16
+            assert page.get_by_role('textbox', name='Kết quả - Y tế và an toàn thực phẩm', exact=True).input_value() == 'Nội dung đã sửa: 168 lượt'
+            assert page.get_by_role('textbox', name='Nhiệm vụ - Giáo dục và đào tạo', exact=True).input_value() == 'Nhiệm vụ giáo dục tuần tới'
             with page.expect_download() as download:
                 page.get_by_role('button', name='Lưu & Xuất PDF', exact=True).click()
             assert download.value.suggested_filename.endswith('.pdf')
@@ -132,15 +138,16 @@ def main():
             page.reload()
             page.get_by_role('button', name='Xuất PDF', exact=True).wait_for()
             assert page.get_by_role('button', name='Lưu bản tổng hợp', exact=True).is_disabled()
-            assert page.get_by_role('textbox', name='Nội dung báo cáo').first.is_disabled()
+            assert page.locator('form textarea').first.is_disabled()
             with page.expect_download() as download:
                 page.get_by_role('button', name='Xuất PDF', exact=True).click()
             state['period']['status'] = 'open'
             state['summary'].pop('entries')
             page.reload()
-            page.get_by_role('heading', name='I. Kết quả thực hiện nhiệm vụ tuần 43 năm 2026', exact=True).wait_for()
+            page.get_by_role('heading', name='I. KẾT QUẢ THỰC HIỆN NHIỆM VỤ TUẦN 43', exact=True).wait_for()
             assert page.locator('form h4').count() == 16
-            assert page.get_by_role('textbox', name='Nội dung báo cáo').count() == 0
+            assert page.locator('form textarea').count() == 16
+            assert all(value == '' for value in page.locator('form textarea').evaluate_all('(els) => els.map(el => el.value)'))
             assert page.get_by_role('button', name='Chuyển nội dung hiện tại sang 8 nhóm').count() == 0
             assert 'Khó khăn, vướng mắc' not in page.inner_text('body')
             assert 'Kiến nghị, đề xuất' not in page.inner_text('body')
@@ -148,7 +155,7 @@ def main():
             page.screenshot(path=str(OUTPUT / 'admin-empty-new-template.png'), full_page=True)
             assert not errors, errors
             browser.close()
-        print(f'PASS: mocked browser desktop/mobile, ISO label, grouping, split, save/reload, Word/PDF downloads, archived read-only, legacy. Screenshots: {OUTPUT}')
+        print(f'PASS: 16 fixed textareas, no group/section dropdowns or add/split controls, save/reload by field, desktop/mobile, readiness and archived. Screenshots: {OUTPUT}')
     finally:
         server.shutdown()
         server.server_close()

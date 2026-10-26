@@ -4,10 +4,10 @@
 
 1. Mở Tổng hợp tuần và chọn kỳ. Tên tuần trong năm tự tính theo ISO 8601 từ ngày bắt đầu kỳ theo giờ Việt Nam, không dùng `weekNumber` trong tháng của dữ liệu cũ.
 2. Tạo tổng hợp tự động. Chỉ báo cáo weekly đã nộp/được duyệt trong kỳ được chọn được lấy; thiếu người nộp vẫn tạo được nếu có ít nhất một báo cáo hợp lệ.
-3. Rà soát hai phần, mỗi phần có 8 nhóm. Tên lĩnh vực khớp danh mục ánh xạ sẽ được xếp tự động. Lĩnh vực trống, không nhận diện được hoặc chứa nhiều lĩnh vực nằm ở Chưa phân nhóm. Chọn nhóm hoặc đặt con trỏ để tách đoạn rồi chuyển từng phần về nhóm phù hợp.
+3. Giao diện admin có sẵn đúng 16 textarea: 8 lĩnh vực dưới phần I và 8 lĩnh vực dưới phần II, mỗi lĩnh vực một ô nhập. Không có dropdown nhóm/phần, nhãn nguồn, nút thêm/xóa/tách đoạn. Tiêu đề hai phần dùng tuần trong năm tự tính. Mapping nguồn chờ người dùng hướng dẫn tiếp; không thay đổi thêm logic mapping trong lần chỉnh giao diện này.
 4. Nội dung được giữ nguyên, không gọi AI để viết lại. Các trường nguồn Cải cách hành chính / Chuyển đổi số được đưa vào nhóm 6 / 7 của phần kết quả nếu có.
 5. Admin chỉ có editor hai phần theo mẫu PDF. Không có ô Khó khăn, vướng mắc / Kiến nghị, đề xuất riêng. Chuyên viên tiếp tục nộp bốn mục cho một lĩnh vực như trước; không đổi biểu mẫu chuyên viên.
-6. Lưu hoặc Lưu & Xuất DOCX/PDF. Nội dung chưa phân nhóm lưu nháp được nhưng cần phân nhóm trước khi xuất. Nhóm rỗng giữ tiêu đề, không tự ghi “không phát sinh”.
+6. Lưu hoặc Lưu & Xuất DOCX/PDF. Ô nhập trống luôn hiện sẵn. Khi xuất, nhóm rỗng giữ tiêu đề, không tự ghi “không phát sinh”. Quy tắc backend với nguồn chưa ánh xạ vẫn giữ nguyên trong lúc chờ mapping mới.
 
 Admin luôn hiện hai phần × tám nhóm, kể cả chưa tạo tổng hợp hoặc bản ghi chưa có entries. Không có form cũ, cảnh báo hoặc nút chuyển đổi. Dùng Tạo tổng hợp tự động để lấy nguồn đúng tuần và lưu theo mẫu. Các trường chuỗi kết quả/nhiệm vụ được đồng bộ để kho lưu trữ đọc đúng bản mới. Hai trường khó khăn/kiến nghị cũ của bản tổng hợp được gỡ khi tạo/lưu; các trường đó trong báo cáo chuyên viên không bị sửa. Kỳ archived chỉ đọc/xuất bản đã có cấu trúc.
 
