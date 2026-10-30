@@ -113,7 +113,7 @@ export default function EmployeeReport() {
         }}>Cập nhật bản nháp theo phân công mới</button>
       </div>}
       {!legacy && values.map((row) => <section key={row.fieldCode} className="space-y-5 rounded-xl border border-outline-variant bg-white p-4 md:p-6">
-        <h2 className="font-semibold text-primary">{row.fieldName || fields.find((field) => field.code === row.fieldCode)?.title || row.fieldCode}</h2>
+        <h2 className="font-semibold text-primary">{fields.find((field) => field.code === row.fieldCode)?.title || row.fieldName || row.fieldCode}</h2>
         {sections.map(([key, label]) => <div key={key}>
           <label htmlFor={`${row.fieldCode}-${key}`} className="mb-2 block text-sm font-semibold">{label}</label>
           <textarea id={`${row.fieldCode}-${key}`} aria-label={`${row.fieldCode} - ${label}`} disabled={busy || loading || readOnly || changedAssignment} value={row[key]}

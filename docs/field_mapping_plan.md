@@ -23,7 +23,7 @@ Người dùng đã duyệt và yêu cầu thực hiện. Mapping tài khoản t
 | LV1 | Lĩnh vực Nội vụ và công tác cán bộ | `linh` | Đặng Vũ Linh |
 | LV2 | Giáo dục và đào tạo | `Hạnh` | Phan Thị Hạnh |
 | LV3 | Bảo trợ xã hội và bảo hiểm y tế | `Ngọc Linh` | Đặng Ngọc Linh |
-| LV4 | Y tế và an toàn thực phẩm | `Phát` | Nguyễn Tấn Phát |
+| LV4 | Y tế | `Phát` | Nguyễn Tấn Phát |
 | LV5 | Người có công | `Bích Liễu` | Trần Thị Bích Liễu |
 | LV6 | Tổ chức bộ máy, công tác cán bộ và cải cách hành chính | `linh` | Đặng Vũ Linh |
 | LV7 | Khoa học, công nghệ và chuyển đổi số | `Hữu` | Đặng Minh Hữu |
@@ -74,7 +74,7 @@ Trước khi cập nhật phải đọc lại tài khoản hiện tại, đối 
 Ví dụ Phát được gán LV4:
 
 ```text
-Lĩnh vực: Y tế và an toàn thực phẩm
+Lĩnh vực: Y tế
 
 1. Kết quả thực hiện                  [ô nhập]
 2. Khó khăn, vướng mắc                [ô nhập]

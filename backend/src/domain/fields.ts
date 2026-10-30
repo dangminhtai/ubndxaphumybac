@@ -4,7 +4,7 @@ export const FIELDS = [
   { code: 'LV1', title: 'Lĩnh vực Nội vụ và công tác cán bộ', groupId: 'personnel' },
   { code: 'LV2', title: 'Giáo dục và đào tạo', groupId: 'education' },
   { code: 'LV3', title: 'Bảo trợ xã hội và bảo hiểm y tế', groupId: 'social' },
-  { code: 'LV4', title: 'Y tế và an toàn thực phẩm', groupId: 'health' },
+  { code: 'LV4', title: 'Y tế', groupId: 'health' },
   { code: 'LV5', title: 'Người có công', groupId: 'veterans' },
   { code: 'LV6', title: 'Tổ chức bộ máy, công tác cán bộ và cải cách hành chính', groupId: 'administration' },
   { code: 'LV7', title: 'Khoa học, công nghệ và chuyển đổi số', groupId: 'digital' },

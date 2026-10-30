@@ -477,18 +477,23 @@ export async function exportWeeklyReportDocxById(reportId: string, user: AuthUse
     throw error;
   }
 
+  const projected = report.fieldReports?.length ? projectFieldReports(report.fieldReports.map((field) => ({
+    fieldCode: field.fieldCode,
+    fieldName: FIELDS.find((definition) => definition.code === field.fieldCode)?.title || field.fieldName,
+    content: field.content, difficulties: field.difficulties, proposals: field.proposals, nextTasks: field.nextTasks,
+  }))) : report;
   return exportWeeklyReportDocx({
     period: requireReportValue(report.period, 'Báo cáo thiếu kỳ báo cáo'),
     reportTitle: requireReportValue(report.reportTitle, 'Báo cáo thiếu tiêu đề theo template DOCX'),
     startDate: report.startDate?.toISOString(),
     endDate: report.endDate?.toISOString(),
-    field: requireReportValue(report.field, 'Báo cáo thiếu lĩnh vực'),
+    field: requireReportValue(projected.field, 'Báo cáo thiếu lĩnh vực'),
     sender: requireReportValue(report.sender, 'Báo cáo thiếu người báo cáo'),
     department: requireReportValue(report.department, 'Báo cáo thiếu đơn vị báo cáo'),
-    content: requireReportValue(report.content, 'Báo cáo thiếu kết quả thực hiện'),
+    content: requireReportValue(projected.content, 'Báo cáo thiếu kết quả thực hiện'),
     administrativeReform: report.administrativeReform,
     digitalTransformation: report.digitalTransformation,
-    nextTasks: report.nextTasks,
+    nextTasks: projected.nextTasks,
     difficulties: report.difficulties,
     proposals: report.proposals,
     dueDate: report.dueDate?.toISOString(),

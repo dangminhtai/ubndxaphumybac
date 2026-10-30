@@ -25,7 +25,7 @@ USER = {'_id': 'a' * 24, 'username': 'qa-admin', 'fullName': 'Quản trị kiể
 PERIOD = {'_id': 'b' * 24, 'type': 'weekly', 'title': 'Tuần 04 tháng 10 năm 2026', 'startDate': '2026-10-19T00:00:00Z', 'dueDate': '2026-10-22T16:59:59Z', 'status': 'open'}
 GROUPS = [dict(id=key, title=title) for key, title in [
     ('personnel', 'Lĩnh vực Nội vụ và công tác cán bộ'), ('education', 'Giáo dục và đào tạo'),
-    ('social', 'Bảo trợ xã hội và bảo hiểm y tế'), ('health', 'Y tế và an toàn thực phẩm'),
+    ('social', 'Bảo trợ xã hội và bảo hiểm y tế'), ('health', 'Y tế'),
     ('veterans', 'Người có công'), ('administration', 'Tổ chức bộ máy, công tác cán bộ và cải cách hành chính'),
     ('digital', 'Khoa học, công nghệ và chuyển đổi số'), ('culture', 'Văn hóa và các lĩnh vực liên quan'),
 ]]
@@ -106,7 +106,7 @@ def main():
             assert page.locator('form select').count() == 0
             assert page.get_by_role('button', name='Thêm nội dung', exact=True).count() == 0
             assert page.get_by_role('button', name='Tách tại vị trí con trỏ', exact=True).count() == 0
-            result = page.get_by_role('textbox', name='Kết quả - Y tế và an toàn thực phẩm', exact=True)
+            result = page.get_by_role('textbox', name='Kết quả - Y tế', exact=True)
             assert result.input_value() == 'Nguồn 1\n\nNguồn 2'
             state['summary']['entries'][0]['text'] = 'Nguồn vừa cập nhật'
             page.wait_for_function("document.querySelector('#summary-results-health').value.includes('Nguồn vừa cập nhật')")
@@ -127,9 +127,9 @@ def main():
             assert saved[-1]['entries'][0]['text'] == 'Nội dung đã sửa: 168 lượt'
             assert saved[-1]['entries'][1]['text'] == 'Nhiệm vụ giáo dục tuần tới'
             page.reload()
-            page.get_by_role('textbox', name='Kết quả - Y tế và an toàn thực phẩm', exact=True).wait_for()
+            page.get_by_role('textbox', name='Kết quả - Y tế', exact=True).wait_for()
             assert page.locator('form textarea').count() == 16
-            assert page.get_by_role('textbox', name='Kết quả - Y tế và an toàn thực phẩm', exact=True).input_value() == 'Nội dung đã sửa: 168 lượt'
+            assert page.get_by_role('textbox', name='Kết quả - Y tế', exact=True).input_value() == 'Nội dung đã sửa: 168 lượt'
             assert page.get_by_role('textbox', name='Nhiệm vụ - Giáo dục và đào tạo', exact=True).input_value() == 'Nhiệm vụ giáo dục tuần tới'
             with page.expect_download() as download:
                 page.get_by_role('button', name='Lưu & Xuất PDF', exact=True).click()

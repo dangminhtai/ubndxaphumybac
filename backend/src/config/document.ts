@@ -5,7 +5,7 @@ import { z } from 'zod';
 const text = z.string().trim().min(1).max(500);
 const schema = z.object({
   parentAgency: text, agency: text, agencyDisplayName: text, documentCode: text,
-  place: text, addressee: text, recipients: z.array(text).min(1).max(30),
+  place: text, addressee: text, closingAddressee: text.optional(), recipients: z.array(text).min(1).max(30),
   signerTitle: text, signerName: text,
 }).strict();
 

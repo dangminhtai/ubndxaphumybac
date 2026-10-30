@@ -5,7 +5,7 @@ const LEGACY_ALIASES: Record<string, readonly string[]> = {
   LV1: ['Nội vụ', 'Công tác cán bộ', 'Nội vụ và công tác cán bộ', 'Nội vụ - Công tác cán bộ'],
   LV2: ['Giáo dục', 'Giáo dục đào tạo'],
   LV3: ['Bảo trợ xã hội', 'Bảo hiểm y tế', 'BHYT', 'An sinh xã hội'],
-  LV4: ['Y tế', 'An toàn thực phẩm'], LV5: [],
+  LV4: ['Y tế và an toàn thực phẩm', 'An toàn thực phẩm'], LV5: [],
   LV6: ['Cải cách hành chính', 'Tổ chức bộ máy'],
   LV7: ['Chuyển đổi số', 'Khoa học công nghệ', 'Khoa học và công nghệ'],
   LV8: ['Văn hóa', 'Văn hóa thông tin', 'Tín ngưỡng tôn giáo'],

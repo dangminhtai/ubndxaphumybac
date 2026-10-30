@@ -3,7 +3,7 @@ import { FIELDS, fieldReportSchema, domainError, type FieldReport } from '../dom
 
 export function snapshotFieldReports(value: unknown, assignedCodes: string[], status: string): FieldReport[] {
   const parsed = z.array(fieldReportSchema).min(1).max(8).safeParse(value);
-  if (!parsed.success) throw domainError('Báo cáo phải có bốn mục cho từng lĩnh vực đã phân công.', 400, 'REPORT_FIELD_REQUIRED');
+  if (!parsed.success) throw domainError('Nội dung báo cáo cho từng lĩnh vực đã phân công không hợp lệ.', 400, 'REPORT_FIELD_REQUIRED');
   const codes = parsed.data.map((field) => field.fieldCode);
   if (new Set(codes).size !== codes.length) throw domainError('Mã lĩnh vực trong báo cáo bị trùng.');
   if (codes.length !== assignedCodes.length || codes.some((code) => !assignedCodes.includes(code))) {

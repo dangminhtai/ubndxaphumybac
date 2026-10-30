@@ -17,7 +17,7 @@ GROUPS = [
     ('personnel', 'Lĩnh vực Nội vụ và công tác cán bộ'),
     ('education', 'Giáo dục và đào tạo'),
     ('social', 'Bảo trợ xã hội và bảo hiểm y tế'),
-    ('health', 'Y tế và an toàn thực phẩm'),
+    ('health', 'Y tế'),
     ('veterans', 'Người có công'),
     ('administration', 'Tổ chức bộ máy, công tác cán bộ và cải cách hành chính'),
     ('digital', 'Khoa học, công nghệ và chuyển đổi số'),
@@ -58,6 +58,14 @@ class DocumentTests(unittest.TestCase):
                 self.assertIn('Kết quả công tác tuần 43 năm 2026', text)
                 self.assertIn('và phương hướng, nhiệm vụ tuần 44 năm 2026', text)
                 self.assertIn('Số:       /BC-VHXH', text)
+                self.assertIn('I. KẾT QUẢ THỰC HIỆN NHIỆM VỤ TUẦN 43\n', text)
+                self.assertIn('II. PHƯƠNG HƯỚNG, NHIỆM VỤ TUẦN 44\n', text)
+                self.assertIn('cập nhật đến ngày 22/10/2026', text)
+                self.assertIn('Trên đây là báo cáo kết quả công tác tuần 43 và phương hướng, nhiệm vụ tuần 44 năm 2026', text)
+                self.assertIn('kính báo cáo UBND xã xem xét, chỉ đạo./.', text)
+                self.assertIn('- Lưu: VHXH.', text)
+                self.assertNotIn('____________', text)
+                self.assertEqual(len(root.findall('.//w:pBdr/w:bottom', ns)), 3)
                 self.assertIn('Người ký kiểm thử', text)
                 self.assertIn('5 < 10.', text)
                 self.assertEqual(text.count('692 trẻ; 536 trẻ; 77,4%; số 2324/QĐ-UBND.'), 16)
@@ -72,6 +80,17 @@ class DocumentTests(unittest.TestCase):
                 today = generator.datetime.now(generator.VIETNAM_TZ).date()
                 self.assertIn(f'ngày {today.day:02d} tháng {today.month:02d} năm {today.year}', text)
                 self.assertIn('PAGE', package.read('word/header1.xml').decode())
+
+    def test_cutoff_uses_period_due_date_not_generation_time(self):
+        payload = fixture()
+        payload['sourceGeneratedAt'] = '2026-10-30T10:00:00Z'
+        with tempfile.TemporaryDirectory() as folder:
+            output = Path(folder) / 'report.docx'
+            generator.build_document(payload, output)
+            from docx import Document
+            text = '\n'.join(p.text for p in Document(output).paragraphs)
+            self.assertIn('cập nhật đến ngày 22/10/2026', text)
+            self.assertNotIn('cập nhật đến ngày 30/10/2026', text)
 
     def test_unknown_group_fails(self):
         payload = fixture()

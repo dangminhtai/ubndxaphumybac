@@ -27,7 +27,7 @@ export default function SourceFieldMapping({ reportId, readOnly, onSaved }: { re
     {error && <p role="alert" className="text-xs text-error">{error}</p>}
     {preview && <div className="space-y-3 rounded-lg border border-outline-variant bg-white p-3">
       {preview.blocks.map((block, index) => <div key={index} className="space-y-2">
-        <p className="text-xs font-semibold">{block.fieldName || `Phần nguồn ${index + 1}`}</p>
+        <p className="text-xs font-semibold">{preview.fields.find((field) => field.code === block.fieldCode)?.title || block.fieldName || `Phần nguồn ${index + 1}`}</p>
         <pre className="max-h-48 overflow-auto whitespace-pre-wrap text-xs">{block.content}{'\n'}{block.difficulties}{'\n'}{block.proposals}{'\n'}{block.nextTasks}</pre>
         <select aria-label={`Mã lĩnh vực nguồn ${index + 1}`} disabled={busy} value={codes[index]} onChange={(event) => setCodes((current) => current.map((code, i) => i === index ? event.target.value : code))} className="w-full min-w-0 rounded border border-outline-variant p-2 text-xs">
           <option value="">Chọn mã sau khi đối chiếu</option>

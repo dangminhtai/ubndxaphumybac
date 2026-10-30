@@ -30,8 +30,8 @@ def paragraph(container, text='', *, bold=False, italic=False, align=None, size=
     p.alignment = align if align is not None else WD_ALIGN_PARAGRAPH.JUSTIFY
     f = p.paragraph_format
     f.space_after, f.space_before = Pt(after), Pt(0)
-    f.line_spacing = 1.05
-    f.first_line_indent = Cm(1.25) if indent else Cm(0)
+    f.line_spacing = 1
+    f.first_line_indent = Pt(36) if indent else Cm(0)
     f.keep_with_next, f.widow_control = keep, True
     for value, b, i, u in parse_runs(markdown_to_html(text)):
         r = p.add_run(value)
@@ -64,6 +64,19 @@ def two_columns(doc, left_width, right_width):
     return table.rows[0].cells
 
 
+def rule(container, width, column_width, after=6):
+    p = paragraph(container, size=1, after=after)
+    p.paragraph_format.line_spacing = Pt(1)
+    inset = Cm((column_width - width) / 2)
+    p.paragraph_format.left_indent = p.paragraph_format.right_indent = inset
+    borders = OxmlElement('w:pBdr')
+    bottom = OxmlElement('w:bottom')
+    for key, value in [('val', 'single'), ('sz', '4'), ('space', '0'), ('color', '000000')]:
+        bottom.set(qn(f'w:{key}'), value)
+    borders.append(bottom)
+    p._p.get_or_add_pPr().append(borders)
+
+
 def build_document(payload, output):
     config, groups, entries = payload['config'], payload['groups'], payload['entries']
     valid_ids = {group['id'] for group in groups}
@@ -73,11 +86,16 @@ def build_document(payload, output):
     current, following = week_label(start), week_label(start + timedelta(days=7))
     today = datetime.now(VIETNAM_TZ).date()
     doc = Document()
+    compat = doc.settings.element.find(qn('w:compat'))
+    if compat is not None:
+        for setting in compat.findall(qn('w:compatSetting')):
+            if setting.get(qn('w:name')) == 'compatibilityMode':
+                setting.set(qn('w:val'), '15')
     section = doc.sections[0]
     section.page_width, section.page_height = Cm(21), Cm(29.7)
     section.top_margin, section.bottom_margin = Cm(2), Cm(2)
     section.left_margin, section.right_margin = Cm(3), Cm(1.5)
-    section.header_distance = Cm(0.8)
+    section.header_distance = Cm(1)
     style = doc.styles['Normal']
     style.font.name, style.font.size = 'Times New Roman', Pt(14)
     section.different_first_page_header_footer = True
@@ -87,35 +105,39 @@ def build_document(payload, output):
     field.set(qn('w:instr'), 'PAGE')
     header._p.append(field)
 
-    left, right = two_columns(doc, 6.5, 10)
+    left, right = two_columns(doc, 6, 10.5)
     center = WD_ALIGN_PARAGRAPH.CENTER
-    paragraph(left, config['parentAgency'], align=center, size=13, after=0)
+    paragraph(left, config['parentAgency'], align=center, size=14, after=0)
     paragraph(left, config['agency'], bold=True, align=center, size=13, after=0)
-    paragraph(left, '____________', align=center, size=10, after=6)
-    paragraph(left, f"Số:       /{config['documentCode']}", align=center, size=13)
+    rule(left, 1.7, 6)
+    paragraph(left, f"Số:       /{config['documentCode']}", align=center, size=14)
     paragraph(right, 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM', bold=True, align=center, size=13, after=0)
     paragraph(right, 'Độc lập - Tự do - Hạnh phúc', bold=True, align=center, size=14, after=0)
-    paragraph(right, '________________________', align=center, size=10, after=6)
-    paragraph(right, f"{config['place']}, ngày {today.day:02d} tháng {today.month:02d} năm {today.year}", italic=True, align=center, size=13)
-    paragraph(doc, 'BÁO CÁO', bold=True, align=center, after=0, keep=True)
+    rule(right, 5.2, 10.5)
+    paragraph(right, f"{config['place']}, ngày {today.day:02d} tháng {today.month:02d} năm {today.year}", italic=True, align=center, size=14)
+    title = paragraph(doc, 'BÁO CÁO', bold=True, align=center, after=0, keep=True)
+    title.paragraph_format.space_before = Pt(12.4)
     paragraph(doc, f'Kết quả công tác {current}', bold=True, align=center, after=0, keep=True)
-    paragraph(doc, f'và phương hướng, nhiệm vụ {following}', bold=True, align=center, after=14, keep=True)
-    paragraph(doc, f"Kính gửi: {config['addressee']}.", align=center, after=12)
-    cutoff = f", cập nhật đến ngày {local_date(payload['sourceGeneratedAt']).strftime('%d/%m/%Y')}" if payload.get('sourceGeneratedAt') else ''
+    paragraph(doc, f'và phương hướng, nhiệm vụ {following}', bold=True, align=center, after=0, keep=True)
+    rule(doc, 3.85, 16.5, after=22.5)
+    paragraph(doc, f"Kính gửi: {config['addressee']}.", align=center, after=8.1)
+    cutoff = f", cập nhật đến ngày {local_date(payload['dueDate']).strftime('%d/%m/%Y')}"
     paragraph(doc, f"{config['agencyDisplayName']} báo cáo kết quả thực hiện nhiệm vụ {current}{cutoff}, và phương hướng, nhiệm vụ {following} như sau:", indent=True)
-    for key, title in [('results', f'I. KẾT QUẢ THỰC HIỆN NHIỆM VỤ {current.upper()}'), ('nextTasks', f'II. PHƯƠNG HƯỚNG, NHIỆM VỤ {following.upper()}')]:
+    for key, title in [('results', f'I. KẾT QUẢ THỰC HIỆN NHIỆM VỤ TUẦN {start.isocalendar().week}'), ('nextTasks', f'II. PHƯƠNG HƯỚNG, NHIỆM VỤ TUẦN {(start + timedelta(days=7)).isocalendar().week}')]:
         paragraph(doc, title, bold=True, keep=True, indent=True)
         for index, group in enumerate(groups, 1):
             group_entries = [entry for entry in entries if entry['section'] == key and entry['groupId'] == group['id'] and entry['text'].strip()]
             paragraph(doc, f"{index}. {group['title']}", bold=True, keep=bool(group_entries), indent=True)
             for entry in group_entries:
                 body_text(doc, entry['text'])
-    paragraph(doc, f"Trên đây là báo cáo kết quả công tác {current} và phương hướng, nhiệm vụ {following} của {config['agencyDisplayName']}, kính báo cáo {config['addressee']} xem xét, chỉ đạo./.", indent=True, keep=True)
-    left, right = two_columns(doc, 8, 8.5)
+    closing_current = f'tuần {start.isocalendar().week}' if start.isocalendar().year == (start + timedelta(days=7)).isocalendar().year else current
+    paragraph(doc, f"Trên đây là báo cáo kết quả công tác {closing_current} và phương hướng, nhiệm vụ {following} của {config['agencyDisplayName']}, kính báo cáo {config.get('closingAddressee', config['addressee'])} xem xét, chỉ đạo./.", indent=True, keep=True)
+    left, right = two_columns(doc, 8.35, 8.15)
     paragraph(left, 'Nơi nhận:', bold=True, italic=True, size=12, after=0)
-    for recipient in config['recipients']:
-        paragraph(left, f'- {recipient};', size=11, after=0)
-    paragraph(right, config['signerTitle'], bold=True, align=center, after=60, keep=True)
+    for index, recipient in enumerate(config['recipients']):
+        ending = '.' if index == len(config['recipients']) - 1 else ';'
+        paragraph(left, f'- {recipient.rstrip(";.")}{ending}', size=11, after=0)
+    paragraph(right, config['signerTitle'], bold=True, align=center, after=55, keep=True)
     paragraph(right, config['signerName'], bold=True, align=center)
     doc.save(output)
 

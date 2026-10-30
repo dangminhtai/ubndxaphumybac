@@ -52,6 +52,16 @@ Browser QA: `python scripts/test_weekly_summary_ui.py` từ root; cần Playwrig
 
 Các kết quả thực tế và giới hạn được ghi trong `docs/weekly_summary_template_plan.md`.
 
+## Đối chiếu thể thức với PDF mẫu — 30/10/2026
+
+- USER CONFIRMED: LV4 thống nhất tên “Y tế” trong cả hai phần, danh mục, giao diện chuyên viên và xuất báo cáo. Mã LV4/health không đổi; tên cũ còn là alias đọc dữ liệu lịch sử, không sửa nội dung nguồn trong DB.
+- Tiêu đề I/II chỉ ghi số tuần; năm giữ ở tiêu đề báo cáo và câu dẫn. Câu kết dùng “UBND xã”, năm ghi cuối cặp tuần cùng năm; khi giao năm vẫn ghi đủ hai năm. Nơi nhận kết thúc bằng dấu chấm.
+- Ngày văn bản lấy ngày hiện tại ở Việt Nam; số báo cáo trống; ngày “cập nhật đến” lấy dueDate của kỳ, không lấy ngày tạo lại bản tổng hợp. Thông tin cơ quan/người ký/nơi nhận dùng cấu hình chung; closingAddressee tùy chọn, mặc định “UBND xã”.
+- Khớp lại font, đường kẻ, khoảng cách, thụt dòng và chế độ tương thích Word 2013 trở lên. Không thêm dấu/chữ ký số vào file.
+- PASS: build backend/frontend; contract summary; sáu kiểm thử tài liệu gồm xuất PDF thật bằng Word trên Windows; browser mock chuyên viên và admin.
+- PASS: `python backend/scripts/compare-weekly-template.py` dùng nội dung chính PDF gốc để tạo DOCX/PDF trong thư mục tạm, giữ đủ 16 mục, cùng năm trang; các mốc tiêu đề trang đầu lệch dưới 1 pt. Đã xem ảnh trang đầu và cuối. Đây là bằng chứng trên Windows/Word, không phải tỷ lệ pixel “99%” hoặc kiểm chứng LibreOffice/Render.
+- Artifacts local: `%TEMP%/weekly-template-comparison/` gồm comparison.docx, comparison.pdf và ảnh reference/actual. PDF gốc giữ nguyên; nội dung/ngắt trang báo cáo thật phụ thuộc dữ liệu tuần đó và font/converter được cài trên server.
+
 ## Tự cập nhật nội dung nguồn — 27/10/2026
 
 - Tự điền cho bản chưa có hoặc bản draft rỗng chưa được chỉnh; bản admin chủ động lưu/xóa trắng không bị tự lấp lại.
