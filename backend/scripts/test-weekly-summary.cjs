@@ -53,10 +53,15 @@ assert.equal(weeklyLabel('2026-12-28T00:00:00Z', 1).year, 2027);
 assert.equal(weeklyLabel('2026-12-28T00:00:00Z', 1).week, 1);
 assert.equal(resolveWeeklyGroup('health'), 'health');
 assert.equal(resolveWeeklyGroup('unknown / mixed fields'), null);
-const entries = buildWeeklyEntries([{ _id: periodId, field: 'health', content: '  Keep original 168 / 119  ', nextTasks: 'Next original', administrativeReform: 'Admin', digitalTransformation: 'Digital' }]);
+const entries = buildWeeklyEntries([{ _id: periodId, content: 'unused', fieldReports: [
+  { fieldCode: 'LV4', content: '  Keep original 168 / 119  ', nextTasks: 'Next original' },
+  { fieldCode: 'LV6', content: 'Admin', nextTasks: '' },
+  { fieldCode: 'LV7', content: 'Digital', nextTasks: '' },
+] }]);
 assert.equal(entries[0].text, '  Keep original 168 / 119  ');
 assert.equal(entries[2].groupId, 'administration');
 assert.equal(entries[3].groupId, 'digital');
+assert.equal(buildWeeklyEntries([{ _id: periodId, field: 'Y tế', content: 'Legacy source without code' }]).length, 0);
 assert.equal(summaryEntriesSchema.safeParse(entries).success, true);
 assert.equal(summaryEntriesSchema.safeParse([...entries, entries[0]]).success, false);
 const documents = spawnSync(process.env.PYTHON_BIN || 'python', ['scripts/test_weekly_report_documents.py'], { stdio: 'inherit', env: { ...process.env, PYTHONIOENCODING: 'utf-8' } });

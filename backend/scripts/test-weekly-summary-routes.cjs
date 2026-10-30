@@ -26,6 +26,11 @@ const periods = [
 ];
 const source = (period, user, content, extra = {}) => ({ _id: id(), periodId: period._id, ownerId: user, sender: user.fullName, department: 'Phong', field: 'Y tế', reportType: 'weekly', status: 'pending', content, nextTasks: `Next ${content}`, submittedAt: new Date('2026-10-21'), ...extra });
 const reports = [source(periods[0], staff[1], 'OTHER-WEEK'), source(periods[1], staff[0], '168 lượt; 02 ca; 36 lũy kế', { administrativeReform: 'CCHC nguyên văn', digitalTransformation: 'CĐS nguyên văn', difficulties: 'Khó khăn nguyên văn', proposals: 'Kiến nghị nguyên văn' }), source(periods[1], staff[2], 'UNKNOWN-FIELD', { field: 'Nội vụ và chuyển đổi số' }), source(periods[1], staff[0], 'MONTHLY-EXCLUDED', { reportType: 'monthly_staff' }), source(periods[1], staff[1], 'DRAFT-EXCLUDED', { status: 'draft' })];
+reports[1].fieldReports = [
+  { fieldCode: 'LV4', content: reports[1].content, nextTasks: reports[1].nextTasks },
+  { fieldCode: 'LV6', content: 'CCHC nguyên văn', nextTasks: '' },
+  { fieldCode: 'LV7', content: 'CĐS nguyên văn', nextTasks: '' },
+];
 const summaries = new Map();
 Period.findById = async (key) => periods.find((p) => String(p._id) === String(key)) || null;
 Report.find = (filter) => ({ populate() { return this; }, sort() { return this; }, async lean() {
@@ -58,6 +63,9 @@ async function main() {
     admin.role = 'staff';
     assert.equal((await request()).status, 403);
     admin.role = 'admin';
+    assert.equal((await request('/generate', 'POST')).status, 409);
+    assert.ok((await (await request()).json()).sourceIssues.some((issue) => issue.code === 'MISSING_FIELD_CODE'));
+    reports[2].fieldReports = [{ fieldCode: 'LV1', content: reports[2].content, nextTasks: reports[2].nextTasks }];
     let response = await request('/generate', 'POST');
     assert.equal(response.status, 200);
     let data = await response.json();
@@ -75,6 +83,7 @@ async function main() {
     assert.ok(!('difficulties' in data.summary));
     assert.ok(!('proposals' in data.summary));
     assert.ok(data.employeeReports.some((r) => r.difficulties === 'Khó khăn nguyên văn' && r.proposals === 'Kiến nghị nguyên văn'));
+    await request('', 'PATCH', { entries: data.summary.entries.map((entry, index) => index === 0 ? { ...entry, groupId: null } : entry) });
     assert.equal((await request('/export-docx', 'POST')).status, 409);
     const invalid = data.summary.entries.map((e) => ({ ...e, groupId: 'invalid' }));
     assert.equal((await request('', 'PATCH', { entries: invalid })).status, 400);

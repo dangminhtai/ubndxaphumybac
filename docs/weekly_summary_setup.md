@@ -3,11 +3,11 @@
 ## Cách dùng
 
 1. Mở Tổng hợp tuần và chọn kỳ. Tên tuần trong năm tự tính theo ISO 8601 từ ngày bắt đầu kỳ theo giờ Việt Nam, không dùng `weekNumber` trong tháng của dữ liệu cũ.
-2. Tạo tổng hợp tự động. Chỉ báo cáo weekly đã nộp/được duyệt trong kỳ được chọn được lấy; thiếu người nộp vẫn tạo được nếu có ít nhất một báo cáo hợp lệ.
-3. Giao diện admin có sẵn đúng 16 textarea: 8 lĩnh vực dưới phần I và 8 lĩnh vực dưới phần II, mỗi lĩnh vực một ô nhập. Không có dropdown nhóm/phần, nhãn nguồn, nút thêm/xóa/tách đoạn. Tiêu đề hai phần dùng tuần trong năm tự tính. Mapping nguồn chờ người dùng hướng dẫn tiếp; không thay đổi thêm logic mapping trong lần chỉnh giao diện này.
+2. Khi chưa có bản soạn đã lưu, 16 ô tự hiển thị nội dung từ báo cáo weekly đã nộp/được duyệt trong đúng kỳ được chọn. Trang kiểm tra nguồn mỗi 5 giây. Đây là bản xem trước, không tự ghi database khi đọc trang. Bản tạo bằng nút Tạo tổng hợp tự động tiếp tục theo nguồn đến khi admin sửa/lưu; bản admin đã lưu được giữ, muốn lấy lại nguồn thì dùng nút tạo lại có xác nhận.
+3. Giao diện admin có sẵn đúng 16 textarea: 8 lĩnh vực dưới phần I và 8 lĩnh vực dưới phần II, mỗi lĩnh vực một ô nhập. Không có dropdown nhóm/phần, nhãn nguồn, nút thêm/xóa/tách đoạn. Tiêu đề hai phần dùng tuần trong năm tự tính. Mapping LV1–LV8 và phân công đã triển khai theo `docs/field_mapping_plan.md`; báo cáo mới lưu mã cho từng bộ bốn nội dung.
 4. Nội dung được giữ nguyên, không gọi AI để viết lại. Các trường nguồn Cải cách hành chính / Chuyển đổi số được đưa vào nhóm 6 / 7 của phần kết quả nếu có.
 5. Admin chỉ có editor hai phần theo mẫu PDF. Không có ô Khó khăn, vướng mắc / Kiến nghị, đề xuất riêng. Chuyên viên tiếp tục nộp bốn mục cho một lĩnh vực như trước; không đổi biểu mẫu chuyên viên.
-6. Lưu hoặc Lưu & Xuất DOCX/PDF. Ô nhập trống luôn hiện sẵn. Khi xuất, nhóm rỗng giữ tiêu đề, không tự ghi “không phát sinh”. Quy tắc backend với nguồn chưa ánh xạ vẫn giữ nguyên trong lúc chờ mapping mới.
+6. Lưu hoặc Lưu & Xuất DOCX/PDF. Ô nhập trống luôn hiện sẵn. Khi xuất, nhóm rỗng giữ tiêu đề, không tự ghi “không phát sinh”. Nguồn thiếu/trùng mã cần admin đối soát trước khi tạo tổng hợp; có công cụ riêng ở danh sách nguồn và Quản lý tài khoản.
 
 Admin luôn hiện hai phần × tám nhóm, kể cả chưa tạo tổng hợp hoặc bản ghi chưa có entries. Không có form cũ, cảnh báo hoặc nút chuyển đổi. Dùng Tạo tổng hợp tự động để lấy nguồn đúng tuần và lưu theo mẫu. Các trường chuỗi kết quả/nhiệm vụ được đồng bộ để kho lưu trữ đọc đúng bản mới. Hai trường khó khăn/kiến nghị cũ của bản tổng hợp được gỡ khi tạo/lưu; các trường đó trong báo cáo chuyên viên không bị sửa. Kỳ archived chỉ đọc/xuất bản đã có cấu trúc.
 
@@ -51,3 +51,12 @@ node node_modules/vite/bin/vite.js build . --configLoader runner --outDir dist-w
 Browser QA: `python scripts/test_weekly_summary_ui.py` từ root; cần Playwright Python và Chrome. Test mở HTTP server local tạm, mock API, không đăng nhập tài khoản thật; kiểm tra desktop/mobile, phân nhóm/tách đoạn, lưu/đọc lại, download, archived và bản cũ. `CHROME_BIN` có thể chỉ định Chrome khác. Kết quả chuyển file thật được kiểm tra riêng trong test backend/Python.
 
 Các kết quả thực tế và giới hạn được ghi trong `docs/weekly_summary_template_plan.md`.
+
+## Tự cập nhật nội dung nguồn — 27/10/2026
+
+- Tự điền cho bản chưa có hoặc bản draft rỗng chưa được chỉnh; bản admin chủ động lưu/xóa trắng không bị tự lấp lại.
+- GET trả preview và sourceReportIds, không tự tạo bản tổng hợp. Khi admin lưu preview, server kiểm tra nguồn của đúng kỳ rồi lưu snapshot để Word/PDF dùng cùng dữ liệu.
+- Refresh định kỳ không ghi đè chữ admin đang nhập; bản đã lưu thủ công không tự thay bằng nguồn mới. Kỳ archived không tự điền.
+- Nguồn thiếu/trùng mã vẫn được cảnh báo và không tự tổng hợp, theo quy tắc đối soát.
+- PASS: build backend/frontend; QA MongoDB thật cho preview không ghi DB, lưu preview, giữ sửa tay và giữ bản đã xóa trắng; browser mock kiểm tra nguồn mới tự hiện sau refresh và không ghi đè khi đang nhập. Regression mapping và HTTP summary đạt.
+- Kiểm tra đọc trên DB hiện tại: tuần 44 có bảy báo cáo hợp lệ, 16 entry có nội dung và không có lỗi mã lĩnh vực. Bản tổng hợp hiện có được giữ nguyên, không ghi đè trong phép kiểm tra này.

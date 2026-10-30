@@ -6,6 +6,8 @@ export interface IWeeklySummary extends Document {
   periodTitle: string;
   sourceReportIds: mongoose.Types.ObjectId[];
   sourceGeneratedAt?: Date;
+  manuallyEditedAt?: Date;
+  autoUpdateFromSources?: boolean;
   entries?: SummaryEntry[];
   content: string;
   nextTasks: string;
@@ -20,6 +22,8 @@ const weeklySummarySchema = new Schema<IWeeklySummary>({
   periodTitle: { type: String, required: true },
   sourceReportIds: [{ type: Schema.Types.ObjectId, ref: 'Report' }],
   sourceGeneratedAt: { type: Date },
+  manuallyEditedAt: { type: Date },
+  autoUpdateFromSources: { type: Boolean },
   entries: { type: [new Schema({
     id: { type: String, required: true },
     sourceReportId: { type: String },

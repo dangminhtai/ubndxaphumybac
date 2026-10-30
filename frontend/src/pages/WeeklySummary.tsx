@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   CheckCircle2,
@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
 import GroupedSummaryEditor from '../components/GroupedSummaryEditor';
+import SourceFieldMapping from '../components/SourceFieldMapping';
 import { weeklyLabel } from '../utils/weeklyLabel';
 import {
   getWeeklySummary,
@@ -39,6 +40,8 @@ function useQuery() {
 }
 
 export default function WeeklySummaryPage() {
+  const dirty = useRef(false);
+  const busy = useRef(false);
   const query = useQuery();
   const navigate = useNavigate();
   const [periodId, setPeriodId] = useState(query.get('periodId') || '');
@@ -53,6 +56,8 @@ export default function WeeklySummaryPage() {
   const [expandedReportId, setExpandedReportId] = useState<string | null>(null);
   const [groups, setGroups] = useState<SummaryGroup[]>([]);
   const [nextPeriodTitle, setNextPeriodTitle] = useState('');
+  const [sourceIssues, setSourceIssues] = useState<NonNullable<WeeklySummaryResponse['sourceIssues']>>([]);
+  const [fieldCoverage, setFieldCoverage] = useState({ expected: 8, submitted: 0 });
   const readOnly = selectedPeriod?.status === 'archived';
   
   const [loading, setLoading] = useState(true);
@@ -85,7 +90,9 @@ export default function WeeklySummaryPage() {
   const [submissionStats, setSubmissionStats] = useState({ expected: 0, submitted: 0, missing: 0, late: 0, duplicateReports: 0 });
 
   const applyResponse = (data: WeeklySummaryResponse) => {
+    dirty.current = false;
     setForm({
+      sourceReportIds: data.summary.sourceReportIds,
       entries: data.summary.entries || [],
       periodTitle: data.summary.periodTitle,
     });
@@ -95,9 +102,35 @@ export default function WeeklySummaryPage() {
     setSelectedPeriod(data.period);
     setGroups(data.groups);
     setNextPeriodTitle(data.nextPeriodTitle);
+    setSourceIssues(data.sourceIssues || []);
+    setFieldCoverage(data.fieldCoverage || { expected: 8, submitted: 0 });
   };
 
+  busy.current = saving || exporting || generating;
   useEffect(() => {
+    if (!periodId) return;
+    let active = true;
+    let fetching = false;
+    const timer = setInterval(async () => {
+      if (fetching || busy.current) return;
+      fetching = true;
+      try {
+        const data = await getWeeklySummary(periodId);
+        if (!active || busy.current) return;
+        if (!dirty.current && data.autoFilled) applyResponse(data);
+        else {
+          setEmployeeReports(data.employeeReports); setMissingEmployees(data.missingEmployees);
+          setSubmissionStats(data.submissionStats); setSourceIssues(data.sourceIssues || []);
+          setFieldCoverage(data.fieldCoverage || { expected: 8, submitted: 0 });
+        }
+      } catch { /* Preserve the current draft during a temporary refresh failure. */ }
+      finally { fetching = false; }
+    }, 5000);
+    return () => { active = false; clearInterval(timer); };
+  }, [periodId]);
+
+  useEffect(() => {
+    let active = true;
     const loadData = async () => {
       setLoading(true);
       setError('');
@@ -106,6 +139,7 @@ export default function WeeklySummaryPage() {
 
         if (!currentPeriodId) {
           const currentWeekly = await getCurrentPeriod('weekly');
+          if (!active) return;
           if (currentWeekly && currentWeekly._id) {
             currentPeriodId = currentWeekly._id;
             setPeriodId(currentPeriodId);
@@ -121,16 +155,18 @@ export default function WeeklySummaryPage() {
           getPeriods('weekly'),
           getWeeklySummary(currentPeriodId),
         ]);
+        if (!active) return;
         setPeriods(weeklyPeriods);
         applyResponse(summary);
       } catch (err: unknown) {
-        setError(formatApiError(err, 'Không tải được bản tổng hợp tuần'));
+        if (active) setError(formatApiError(err, 'Không tải được bản tổng hợp tuần'));
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
     void loadData();
+    return () => { active = false; };
   }, [navigate, periodId]);
 
   const handleSave = async () => {
@@ -374,6 +410,11 @@ export default function WeeklySummaryPage() {
           )}
         </div>
 
+        <p className="mb-3 text-sm text-on-surface-variant">Đã có nguồn cho {fieldCoverage.submitted}/{fieldCoverage.expected} lĩnh vực.</p>
+        {sourceIssues.length > 0 && <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+          Nguồn báo cáo có {sourceIssues.length} vấn đề thiếu/trùng mã lĩnh vực. Đối soát ở danh sách báo cáo bên cạnh trước khi tạo tổng hợp; nội dung đang soạn không tự bị thay đổi.
+          <ul className="mt-2 list-disc pl-5">{sourceIssues.map((issue, index) => <li key={index}>{employeeReports.find((report) => report._id === issue.reportId)?.sender || issue.reportId}: {issue.code === 'DUPLICATE_FIELD_SOURCE' ? `Trùng ${issue.fieldCode}` : 'Chưa có mã lĩnh vực hợp lệ'}</li>)}</ul>
+        </div>}
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             ['Dự kiến', submissionStats.expected],
@@ -392,7 +433,7 @@ export default function WeeklySummaryPage() {
           <form className="min-w-0 flex-1 space-y-stack-lg" onSubmit={(event) => event.preventDefault()}>
             <div className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-stack-lg">
               <div className="flex flex-col gap-stack-lg">
-                <GroupedSummaryEditor entries={form.entries || []} groups={groups} currentTitle={form.periodTitle || ''} nextTitle={nextPeriodTitle} readOnly={readOnly || saving || exporting || generating} onChange={(entries) => setForm((current) => ({ ...current, entries }))} />
+                <GroupedSummaryEditor entries={form.entries || []} groups={groups} currentTitle={form.periodTitle || ''} nextTitle={nextPeriodTitle} readOnly={readOnly || saving || exporting || generating} onChange={(entries) => { dirty.current = true; setForm((current) => ({ ...current, entries })); }} />
               </div>
             </div>
           </form>
@@ -453,6 +494,12 @@ export default function WeeklySummaryPage() {
                               <div className="mb-3">{r.nextTasks}</div>
                             </>
                           )}
+                          <SourceFieldMapping reportId={r._id} readOnly={Boolean(readOnly)} onSaved={async () => {
+                            const data = await getWeeklySummary(periodId);
+                            setEmployeeReports(data.employeeReports); setSourceIssues(data.sourceIssues || []);
+                            setFieldCoverage(data.fieldCoverage || { expected: 8, submitted: 0 });
+                            setMessage('Đã cập nhật mã nguồn. Tạo tổng hợp khi đã đối soát xong.');
+                          }} />
                           
                           <div className="mt-4 flex justify-end">
                             <button

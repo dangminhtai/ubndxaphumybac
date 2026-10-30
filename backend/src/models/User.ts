@@ -8,6 +8,7 @@ export interface IUser extends Document {
   department: string;
   departmentId?: string;
   position?: string;
+  fieldCodes: string[];
   isActive: boolean;
   mustChangePassword: boolean;
 }
@@ -25,6 +26,7 @@ const UserSchema: Schema = new Schema({
   department: { type: String, required: true },
   departmentId: { type: String },
   position: { type: String },
+  fieldCodes: { type: [String], default: [] },
   isActive: { type: Boolean, default: true },
   mustChangePassword: { type: Boolean, default: false },
 }, { timestamps: true });

@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Loader2, Plus, RotateCcw, UserX, Pencil, Trash2, X } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
+import FieldAssignmentBoard from '../components/FieldAssignmentBoard';
+import FieldSourceReview from '../components/FieldSourceReview';
+import { getFields, type FieldDefinition } from '../api/fieldsApi';
+import { formatApiError } from '../utils/apiError';
 import Dialog from '../components/ui/Dialog';
 import type { DialogType } from '../components/ui/Dialog';
 import { createUser, getUsers, resetUserPassword, updateUser, deleteUser as deleteUserApi } from '../api/authApi';
@@ -13,6 +17,7 @@ const initialForm: CreateUserPayload = {
   department: 'PHÒNG VĂN HÓA - XÃ HỘI',
   role: 'staff',
   position: '',
+  fieldCodes: [],
 };
 
 const fieldLabels: Record<string, string> = {
@@ -30,6 +35,7 @@ const roleLabels: Record<string, string> = {
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<ManagedUser[]>([]);
+  const [fields, setFields] = useState<FieldDefinition[]>([]);
   const [form, setForm] = useState(initialForm);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -60,7 +66,8 @@ export default function AdminUsers() {
     setLoading(true);
     setError('');
     try {
-      setUsers(await getUsers());
+      const [accounts, directory] = await Promise.all([getUsers(), getFields()]);
+      setUsers(accounts); setFields(directory);
     } catch {
       setError('Không tải được danh sách tài khoản');
     } finally {
@@ -86,8 +93,8 @@ export default function AdminUsers() {
       }
       setForm(initialForm);
       await loadUsers();
-    } catch {
-      setError(editingUserId ? 'Không cập nhật được tài khoản' : 'Không tạo được tài khoản');
+    } catch (err) {
+      setError(formatApiError(err, editingUserId ? 'Không cập nhật được tài khoản' : 'Không tạo được tài khoản'));
     } finally {
       setLoading(false);
     }
@@ -102,6 +109,7 @@ export default function AdminUsers() {
       department: user.department || '',
       role: user.role,
       position: user.position || '',
+      fieldCodes: user.fieldCodes || [],
     });
     setError('');
     setMessage('');
@@ -123,8 +131,8 @@ export default function AdminUsers() {
       confirmText: 'Đồng ý',
       onConfirm: async () => {
         closeDialog();
-        await updateUser(id, { isActive: !isActive });
-        await loadUsers();
+        try { await updateUser(id, { isActive: !isActive }); await loadUsers(); }
+        catch (err) { setError(formatApiError(err, 'Không thay đổi được trạng thái tài khoản.')); }
       }
     });
   };
@@ -182,6 +190,8 @@ export default function AdminUsers() {
         onConfirm={dialogState.onConfirm}
         onCancel={closeDialog}
       />
+      <FieldAssignmentBoard users={users} onSaved={loadUsers} />
+      <FieldSourceReview />
       <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
         {/* Create form */}
         <section className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 self-start lg:sticky lg:top-24 md:p-5">
@@ -244,6 +254,13 @@ export default function AdminUsers() {
                 <option value="admin">Quản trị viên</option>
               </select>
             </div>
+            {form.role === 'staff' && <fieldset className="space-y-2">
+              <legend className="mb-2 text-sm font-medium">Lĩnh vực phụ trách (ít nhất một)</legend>
+              {fields.map((field) => <label key={field.code} className="flex items-start gap-2 text-sm">
+                <input type="checkbox" checked={(form.fieldCodes || []).includes(field.code)} onChange={(event) => setForm((current) => ({ ...current, fieldCodes: event.target.checked ? [...(current.fieldCodes || []), field.code] : (current.fieldCodes || []).filter((code) => code !== field.code) }))} />
+                <span>{field.code} — {field.title}</span>
+              </label>)}
+            </fieldset>}
             <button
               className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-semibold text-white disabled:opacity-60 transition-colors hover:bg-primary-container"
               type="button"
@@ -277,7 +294,7 @@ export default function AdminUsers() {
               <tbody>
                 {users.map((user) => (
                   <tr key={user._id || user.id} className="border-b border-surface-container-low">
-                    <td className="py-3 pr-3 font-semibold">{user.username}</td>
+                    <td className="py-3 pr-3 font-semibold">{user.username}<div className="text-xs font-normal text-on-surface-variant">{user.fieldCodes?.join(', ')}</div></td>
                     <td className="py-3 pr-3">{user.fullName}</td>
                     <td className="py-3 pr-3 text-on-surface-variant">{user.department || '—'}</td>
                     <td className="py-3 pr-3 text-on-surface-variant">{user.position || '—'}</td>
@@ -342,6 +359,7 @@ export default function AdminUsers() {
                   <div className="min-w-0">
                     <div className="font-semibold text-sm truncate">{user.fullName}</div>
                     <div className="text-xs text-on-surface-variant">@{user.username}</div>
+                    <div className="text-xs text-on-surface-variant">{user.fieldCodes?.join(', ')}</div>
                     <div className="text-xs text-on-surface-variant mt-1">{user.department || '—'} • {user.position || '—'}</div>
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0">

@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import authRoutes from './routes/auth';
+import fieldRoutes from './routes/fields';
 import adminRoutes from './routes/admin';
 import periodRoutes from './routes/periods';
 import reportRoutes from './routes/reports';
@@ -28,7 +29,7 @@ const app = express();
 
 app.use(requestContext);
 app.use(cors({ origin: env.frontendOrigin }));
-app.use('/api/weekly-summaries', express.json({ limit: '2mb' }));
+app.use(['/api/weekly-summaries', '/api/reports'], express.json({ limit: '2mb' }));
 app.use(express.json());
 
 import { ensureCurrentWeekPeriod } from './services/period.service';
@@ -58,6 +59,7 @@ app.use('/api', (_req, res, next) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/fields', fieldRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/periods', periodRoutes);
 app.use('/api/reports', reportRoutes);

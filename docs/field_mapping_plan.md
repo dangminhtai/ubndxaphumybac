@@ -1,8 +1,8 @@
 # Plan mã lĩnh vực, phân công chuyên viên và tổng hợp tuần
 
-Trạng thái: **CHỜ NGƯỜI DÙNG ĐỌC VÀ DUYỆT PLAN**.
+Trạng thái: **ĐÃ TRIỂN KHAI CODE, ÁP DỤNG MAPPING DATABASE VÀ KIỂM TRA**.
 
-Tài liệu này mô tả công việc tiếp theo. Chưa triển khai mapping, chưa thay đổi phân công/role hoặc ghi database theo plan này. Các checkbox bên dưới đều là việc chưa thực hiện.
+Người dùng đã duyệt và yêu cầu thực hiện. Mapping tài khoản thật đã cập nhật, đọc lại DB và kiểm tra bằng API/giao diện local. Không đổi mật khẩu, không commit/push/deploy. Còn 13 nguồn lịch sử cần admin xác nhận nghiệp vụ, gồm bốn bản không còn kỳ báo cáo; không tự đoán mã. Chi tiết và bằng chứng tại mục 11.
 
 ## 1. Mục tiêu và phạm vi đã thống nhất
 
@@ -166,15 +166,15 @@ fieldReports: Array<{
 
 ## 7. Cập nhật database có kiểm soát
 
-- [ ] Đọc lại tài khoản hiện hữu; kiểm tra username, `_id`, role, trạng thái và phân công nếu đã có.
-- [ ] Tạo script dry-run chỉ in thay đổi dự kiến: LV1–LV8 cho đúng bảy chuyên viên; Trọng → admin / Phó phòng; giữ admin hiện có.
-- [ ] Kiểm tra người thiếu/thừa, username không tìm thấy và xung đột. Không tự tạo người hoặc đoán thay thế.
-- [ ] Lưu bản sao các bản ghi sẽ sửa trước khi áp dụng; file chứa dữ liệu tài khoản đặt ngoài Git, không xuất hash/mật khẩu vào log.
-- [ ] Áp dụng đúng thay đổi đã duyệt, có kiểm tra trạng thái trước cập nhật để tránh ghi đè sửa đổi phát sinh.
-- [ ] Đọc lại từ DB sau cập nhật để xác nhận đủ tám lĩnh vực, Vũ Linh có hai mã, Trọng là admin và mật khẩu không bị thay đổi.
-- [ ] Đối soát báo cáo lịch sử riêng: chỉ gán mã khi xác định chắc chắn, không lấy phân công mới để đoán lịch sử.
+- [x] Đọc lại tài khoản hiện hữu; kiểm tra username, `_id`, role, trạng thái và phân công nếu đã có.
+- [x] Tạo script dry-run chỉ in thay đổi dự kiến: LV1–LV8 cho đúng bảy chuyên viên; Trọng → admin / Phó phòng; giữ admin hiện có.
+- [x] Kiểm tra người thiếu/thừa, username không tìm thấy và xung đột. Không tự tạo người hoặc đoán thay thế.
+- [x] Lưu bản sao các bản ghi sẽ sửa trước khi áp dụng; file chứa dữ liệu tài khoản đặt ngoài Git, không xuất hash/mật khẩu vào log.
+- [x] Áp dụng đúng thay đổi đã duyệt, có kiểm tra trạng thái trước cập nhật để tránh ghi đè sửa đổi phát sinh.
+- [x] Đọc lại từ DB sau cập nhật để xác nhận đủ tám lĩnh vực, Vũ Linh có hai mã, Trọng là admin và mật khẩu không bị thay đổi.
+- [x] Đối soát báo cáo lịch sử riêng: chỉ gán mã khi xác định chắc chắn, không lấy phân công mới để đoán lịch sử.
 
-Chưa chạy script cập nhật trong bước viết plan này. Không bulk-delete tài khoản/báo cáo, không reset mật khẩu, không deploy.
+Đã chạy dry-run, sao lưu ngoài Git và áp dụng transaction. Không bulk-delete tài khoản/báo cáo, không reset mật khẩu, không deploy. Snapshot chỉ được đối soát ở đúng kỳ tuần hiện tại; 17 kỳ cũ dù còn trạng thái open vẫn giữ nguyên roster.
 
 ## 8. Thứ tự triển khai
 
@@ -188,25 +188,88 @@ Chưa chạy script cập nhật trong bước viết plan này. Không bulk-del
 
 ## 9. Checklist nghiệm thu
 
-- [ ] Danh mục có đúng LV1–LV8; tên và thứ tự khớp mẫu PDF.
-- [ ] Đọc lại DB: đúng bảng phân công; `linh` có LV1/LV6; `Ngọc Linh` có LV3; Trọng là admin/Phó phòng; giữ admin hiện có.
-- [ ] Staff không lưu được phân công rỗng hoặc mã sai. Tài khoản admin không bị ép chọn lĩnh vực.
-- [ ] Chuyên viên chọn mã của người khác bị chặn với đúng thông báo; phân công cũ không bị thay đổi khi request thất bại.
-- [ ] Hai người đồng thời chọn một lĩnh vực chỉ một người thành công; admin nhìn thấy xung đột hiện hữu và chuyển giao đúng, có audit.
-- [ ] Đổi vai trò/kích hoạt lại tài khoản kiểm tra đầy đủ ràng buộc phân công.
-- [ ] Chuyên viên một lĩnh vực có bốn mục; Vũ Linh có hai bộ bốn mục độc lập. Không còn ô nhập lĩnh vực tự do.
-- [ ] Lưu rồi đọc lại báo cáo đúng từng mã; không chỉ dựa vào toast.
-- [ ] Chỉ nguồn đã nộp/được duyệt của tuần chọn vào tổng hợp; không trộn draft, báo cáo tháng hoặc tuần khác.
-- [ ] Kết quả LVx vào I.x; nhiệm vụ LVx vào II.x. Khó khăn/kiến nghị còn nguyên trong báo cáo chuyên viên, không tạo ô admin riêng.
-- [ ] Đổi lĩnh vực sau khi nộp không làm báo cáo lịch sử chuyển nhóm; admin không tự mất nội dung đã chỉnh tay.
-- [ ] Thống kê đúng số người và số lĩnh vực; một người hai lĩnh vực không bị đếm hai lần.
-- [ ] Admin vẫn có đúng 16 textarea, tuần tự tính; không xuất hiện lại form/cảnh báo chuyển đổi cũ.
-- [ ] Word/PDF lấy đúng bản đã lưu, đúng mã/thứ tự/nội dung, số báo cáo để trống và ngày xuất tự tính.
-- [ ] Build, test backend, kiểm thử phân quyền và browser desktop/mobile; ghi PASS/FAIL/BLOCKED/NOT TESTED cùng expected/actual và bằng chứng.
+- [x] Danh mục có đúng LV1–LV8; tên và thứ tự khớp mẫu PDF.
+- [x] Đọc lại DB: đúng bảng phân công; `linh` có LV1/LV6; `Ngọc Linh` có LV3; Trọng là admin/Phó phòng; giữ admin hiện có.
+- [x] Staff không lưu được phân công rỗng hoặc mã sai. Tài khoản admin không bị ép chọn lĩnh vực.
+- [x] Chuyên viên chọn mã của người khác bị chặn với đúng thông báo; phân công cũ không bị thay đổi khi request thất bại.
+- [x] Hai người đồng thời chọn một lĩnh vực chỉ một người thành công; admin nhìn thấy xung đột hiện hữu và chuyển giao đúng, có audit.
+- [x] Đổi vai trò/kích hoạt lại tài khoản kiểm tra đầy đủ ràng buộc phân công.
+- [x] Chuyên viên một lĩnh vực có bốn mục; Vũ Linh có hai bộ bốn mục độc lập. Không còn ô nhập lĩnh vực tự do.
+- [x] Lưu rồi đọc lại báo cáo đúng từng mã; không chỉ dựa vào toast.
+- [x] Chỉ nguồn đã nộp/được duyệt của tuần chọn vào tổng hợp; không trộn draft, báo cáo tháng hoặc tuần khác.
+- [x] Kết quả LVx vào I.x; nhiệm vụ LVx vào II.x. Khó khăn/kiến nghị còn nguyên trong báo cáo chuyên viên, không tạo ô admin riêng.
+- [x] Đổi lĩnh vực sau khi nộp không làm báo cáo lịch sử chuyển nhóm; admin không tự mất nội dung đã chỉnh tay.
+- [x] Thống kê đúng số người và số lĩnh vực; một người hai lĩnh vực không bị đếm hai lần.
+- [x] Admin vẫn có đúng 16 textarea, tuần tự tính; không xuất hiện lại form/cảnh báo chuyển đổi cũ.
+- [x] Word/PDF lấy đúng bản đã lưu, đúng mã/thứ tự/nội dung, số báo cáo để trống và ngày xuất tự tính.
+- [x] Build, test backend, kiểm thử phân quyền và browser desktop/mobile; ghi PASS/FAIL/BLOCKED/NOT TESTED cùng expected/actual và bằng chứng.
 
 ## 10. Cách đọc trạng thái
 
 - **USER CONFIRMED:** bảng phân công, Trọng thành admin, staff ít nhất một lĩnh vực, cảnh báo/chặn chuyên viên chọn trùng, admin xử lý, chuyên viên bốn mục và admin 16 ô.
-- **SUGGESTED:** cách trình bày nhiều lĩnh vực bằng khối/tab, cách xử lý nguồn lịch sử xung đột, phạm vi tài khoản hoạt động và cơ chế chuyển giao nguyên tử. Đây là lựa chọn triển khai trong plan để người dùng duyệt.
-- **UNVERIFIED:** DB tại thời điểm triển khai có còn khớp danh sách đã đọc; báo cáo cũ có đủ thông tin xác định LV hay không; MongoDB hiện tại hỗ trợ cách cập nhật nguyên tử được chọn ra sao.
-- **NOT TESTED:** toàn bộ thay đổi mapping trong plan này; hiện chưa triển khai.
+- **IMPLEMENTED:** nhiều lĩnh vực được trình bày bằng các khối bốn mục; chỉ staff đang hoạt động giữ chỗ lĩnh vực; chuyển giao nguyên tử; nguồn thiếu/trùng mã chặn generate và có công cụ đối soát riêng, không làm thay đổi editor 16 ô.
+- **VERIFIED:** danh tính tài khoản hiện tại khớp bảng; MongoDB hỗ trợ transaction; mỗi LV có đúng một người đảm nhận sau migration; Trọng thành admin/Phó phòng, admin cũ giữ nguyên.
+- **UNVERIFIED:** ý nghĩa nghiệp vụ của 13 tên lĩnh vực mơ hồ trong dữ liệu cũ. Chỉ người phụ trách có thể xác nhận; không lấy phân công hiện tại để đoán lịch sử.
+
+## 11. Tiến độ, bằng chứng và giới hạn thực tế
+
+Ngày thực hiện: 26/10/2026.
+
+### Code và dữ liệu đã thay đổi
+
+- Danh mục chuẩn duy nhất tại `backend/src/domain/fields.ts`; ID nhóm tổng hợp cũ liên kết tường minh với LV1–LV8. Alias chuỗi chỉ còn dùng cho kiểm kê/migration dữ liệu cũ.
+- `User.fieldCodes`; API `/api/fields`, `/api/fields/mine`, `/api/fields/assignments`. Mọi thay đổi phân công và lưu/nộp báo cáo mới dùng transaction và một document khóa chung để chống tranh chấp.
+- Admin có bảng tám lĩnh vực, thấy người đang phụ trách/trùng; chuyển giao bằng lưu toàn bộ phân công. Tạo/sửa/kích hoạt staff kiểm tra mã, ít nhất một lĩnh vực và xung đột. Các thay đổi có audit.
+- Form chuyên viên bỏ nhập tên tự do; một lĩnh vực có bốn ô, Vũ Linh có hai lĩnh vực với tám ô. Có chọn lại lĩnh vực từ danh mục; chọn trùng cảnh báo ngay và backend chặn lưu.
+- `Report.fieldReports` lưu riêng bốn nội dung và tên/mã snapshot của từng lĩnh vực. Tạo/nộp xác nhận lại phân công trong transaction; report đã nộp không đổi khi tài khoản đổi lĩnh vực.
+- Tổng hợp chỉ đọc `fieldReports.fieldCode`, không còn đoán theo tên/đơn vị. Thống kê người nộp và độ phủ lĩnh vực riêng. Admin vẫn đúng 16 ô, khó khăn/kiến nghị chỉ ở báo cáo nguồn.
+- Nguồn thiếu mã/trùng mã chặn generate, hiển thị ở phần đối soát. Admin có công cụ xác nhận mã nguồn theo từng khối, nội dung chữ chỉ đọc và giữ nguyên, có kiểm tra phiên bản trước khi lưu. Không chèn công cụ này vào editor 16 ô.
+
+### Migration thật
+
+Lệnh đã chạy trong `backend/`:
+
+```text
+node scripts/migrate-field-mapping.cjs
+node scripts/migrate-field-mapping.cjs --apply
+```
+
+- Dry-run đối chiếu `_id`, username, họ tên và trạng thái của đúng tám tài khoản đã chốt.
+- Sao lưu đầy đủ các bản ghi sẽ sửa vào file ngoài Git: `%USERPROFILE%/.codex/backups/main-web-fields/2026-10-26T07-33-57-965Z.json`. Backup có dữ liệu tài khoản nhạy cảm, không commit/upload.
+- Transaction đã cập nhật bảy staff với đủ tám lĩnh vực và Trọng thành admin/Phó phòng. Giữ admin hiện có; đọc lại xác nhận có hai admin hoạt động.
+- So sánh `passwordHash` trước/sau của từng tài khoản cập nhật: không đổi; không in hash ra log.
+- Bổ sung snapshot mã cho sáu báo cáo cũ có tên lĩnh vực xác định chắc chắn; không sửa nội dung bốn mục của các báo cáo đó.
+- Chỉ đối soát expectedReporterIds của một kỳ tuần hiện tại thành bảy người. Không cập nhật hàng loạt các kỳ lịch sử còn trạng thái open.
+- Có 13 báo cáo chưa xác định được mã: chín bản thuộc kỳ còn tồn tại và bốn bản không còn tham chiếu kỳ. Admin xem trong Quản lý tài khoản → Báo cáo chưa xác định mã lĩnh vực. Không tự gắn bốn bản thiếu kỳ vào tuần hiện tại.
+
+### Kết quả kiểm tra
+
+| Hạng mục | Trạng thái | Expected / Actual và bằng chứng |
+| --- | --- | --- |
+| Backend build | PASS | `npm run build`; TypeScript không lỗi. |
+| Frontend typecheck/bundle | PASS | `tsc -b` và Vite build sang `dist-weekly-summary-qa`; có warning kích thước bundle, không chặn build. |
+| Transaction và tranh chấp thật | PASS | `npm run test:fields` dùng database QA tên mới, tách khỏi DB ứng dụng. Hai người cùng nhận một LV chỉ một người thành công; admin chuyển giao đồng thời, phân công thất bại được rollback. QA DB được dọn sau test, không để tài khoản/báo cáo giả trong DB ứng dụng. |
+| Tạo/sửa/kích hoạt/xóa tài khoản | PASS | QA DB thật: staff thiếu mã bị từ chối, tạo người nhận LV thành công, tạo trùng rollback không để tài khoản rác, khóa giải phóng LV, mở lại khi trùng bị chặn, đổi mã rồi mở lại được, đổi role admin bỏ lĩnh vực; response xóa không chứa hash. |
+| Báo cáo nhiều lĩnh vực và snapshot | PASS | QA DB thật: một báo cáo hai bộ bốn mục, lưu rồi nộp/đọc lại; thiếu mã được phân công bị từ chối; đổi phân công sau nộp không đổi snapshot. |
+| Nguồn và mapping theo tuần | PASS | QA DB thật + HTTP fixture: LV2 vào Giáo dục, LV6 vào CCHC; một người hai lĩnh vực vẫn counted một người; nguồn tuần khác/draft/monthly bị loại; thiếu/trùng mã chặn generate. |
+| Quyền API | PASS | HTTP thật trong QA: thiếu token 401, staff không gọi được batch admin/đối soát, admin không gọi chọn lĩnh vực dành cho staff; API trả phân công hiện tại từ DB. |
+| Đối soát nguồn | PASS | QA DB thật: staff bị chặn, revision cũ bị từ chối, admin chọn mã và giữ nguyên nội dung; nguồn sau sửa hết lỗi mapping. Báo cáo kỳ archived không cho sửa. |
+| Word/PDF sau mapping | PASS | Chạy `RUN_PDF_TESTS=1` với `npm run test:fields`: tạo DOCX/PDF thật từ bản tổng hợp đã lưu; đọc XML xác nhận Education 692/536 nằm sau mục 2, Administration 168 sau mục 6; đọc PDF xác nhận có đúng nội dung và không lẫn OTHER_WEEK. |
+| Browser chuyên viên/admin | PASS | `scripts/test_field_mapping_ui.py`: chuyên viên một LV có bốn textarea, hai LV có tám; không có ô gõ lĩnh vực tự do; lưu/reload đúng từng nội dung; cảnh báo trùng đúng câu; gửi batch chuyển giao và đối soát mã; desktop/mobile không tràn ngang. API mock, tách biệt phép thử DB thật. |
+| Regression editor admin | PASS | `scripts/test_weekly_summary_ui.py`: vẫn đúng 16 ô, không trở lại form cũ; lưu/reload, tải hai định dạng, archived và readiness đạt. |
+| Đọc DB/API/giao diện ứng dụng thật | PASS | Sau migration đăng nhập Trọng và `linh` bằng mật khẩu hiện hữu; API trả Trọng admin/Phó phòng, `linh` LV1/LV6; catalog đúng tám mã, mỗi mã một owner. Mở web thật: `linh` có tám textarea, Trọng có bảng tám lựa chọn owner. Không lưu/nộp nội dung kiểm thử vào DB ứng dụng. |
+| Regression lỗi/login/readiness | PASS | `test-login-failures.cjs`, `test-error-handling.cjs`, `test-readiness-http.cjs` tiếp tục đạt. |
+| Xác nhận nghiệp vụ 13 nguồn cũ | BLOCKED — cần admin đối soát | Không đủ căn cứ tự xác định mã. Bốn nguồn thiếu kỳ cũng chưa thể tổng hợp theo tuần; đã có cảnh báo rõ. Không chặn báo cáo mới đã có mã hợp lệ. |
+| Linux PDF / commit / push / deploy | NOT TESTED / N/A | PDF kiểm tra bằng Word trên Windows. Không triển khai server hoặc commit/push trong tác vụ này. |
+
+Ảnh QA ngoài repo:
+
+- `C:/Users/Public/weekly-summary-qa/field-mapping-ui/`: form chuyên viên, cảnh báo trùng, bảng admin và mobile.
+- `C:/Users/Public/weekly-summary-qa/field-mapping-live/`: giao diện local với tài khoản thật sau migration, chỉ đọc.
+
+### Cách chạy lại và vận hành
+
+- Test DB thật nhưng tách biệt dữ liệu ứng dụng: `npm run test:fields` trong backend. Cần MongoDB hỗ trợ transaction và quyền tạo/xóa database QA riêng.
+- Kiểm kê migration: `npm run mapping:dry-run`; không chạy `--apply` tự động khi startup.
+- Admin đối soát nguồn chỉ sửa mã của nội dung đã xem; snapshot lịch sử không lấy lại từ phân công tài khoản hiện tại.
+- Không đưa mật khẩu vào log hoặc backup vào Git. Tài khoản đang mở trình duyệt nên tải lại trang để nhận role/phân công vừa thay đổi.

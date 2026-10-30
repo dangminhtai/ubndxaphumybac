@@ -4,6 +4,10 @@ import path from 'path';
 import { runPythonScript } from '../utils/pythonRunner';
 import Report from '../models/Report';
 import ReportPeriod from '../models/ReportPeriod';
+import User from '../models/User';
+import { FIELDS, domainError, type FieldReport } from '../domain/fields';
+import { withAssignmentLock } from './field-assignment.service';
+import { snapshotFieldReports, projectFieldReports } from './report-fields';
 import type { AuthUser } from '../middleware/auth.middleware';
 import { createNotification, notifyUsersByRole } from './notification.service';
 
@@ -15,6 +19,7 @@ export interface WeeklyReportInput {
   endDate?: string;
   nextPeriod?: string;
   field: string;
+  fieldReports?: FieldReport[];
   sender: string;
   department: string;
   content: string;
@@ -114,90 +119,112 @@ async function resolveWeeklyPeriod(periodId?: string) {
 export async function getCurrentWeeklyReport(user: AuthUser, periodId?: string) {
   const period = await resolveWeeklyPeriod(periodId);
   const report = await Report.findOne({ ownerId: user.id, periodId: period.id, reportType: 'weekly' });
-  return { period, report };
+  const account = await User.findById(user.id).select('fieldCodes role').lean();
+  return { period, report, fields: FIELDS, assignedFieldCodes: account?.fieldCodes || [] };
 }
 
 export async function createWeeklyReport(input: WeeklyReportInput, user: AuthUser) {
-  validateWeeklyReportInput(input);
+  if (!['draft', 'pending'].includes(input.status)) throw domainError('Trạng thái báo cáo không hợp lệ.');
+  if (user.role !== 'staff') throw domainError('Chỉ chuyên viên có phân công được nộp báo cáo tuần.', 403);
   const period = await resolveWeeklyPeriod(input.periodId);
+  if (period.type !== 'weekly') throw domainError('Kỳ báo cáo không phải kỳ tuần.');
+  return withAssignmentLock(async (session) => {
+    const currentPeriod = await ReportPeriod.findById(period._id).session(session);
+    if (currentPeriod?.status !== 'open') throw domainError('Kỳ báo cáo không còn mở.', 409);
+    const account = await User.findById(user.id).session(session);
+    if (!account || account.role !== 'staff' || !account.isActive) throw domainError('Tài khoản không còn là chuyên viên đang hoạt động.', 403);
+    const fields = snapshotFieldReports(input.fieldReports, account.fieldCodes, input.status);
+    // Touch the period inside the transaction so a concurrent close/archive
+    // conflicts and retries instead of accepting a report after closure.
+    const periodWrite = await ReportPeriod.updateOne({ _id: period._id, type: 'weekly', status: 'open' }, { $inc: { __v: 1 } }, { session });
+    if (!periodWrite.modifiedCount) throw domainError('Kỳ báo cáo không còn mở.', 409);
 
-  const title = input.reportTitle;
-  if (!title) {
-    const error = new Error('Thiếu tiêu đề báo cáo tuần');
-    Object.assign(error, { statusCode: 400 });
-    throw error;
-  }
-  const existing = await Report.findOne({ ownerId: user.id, periodId: period.id, reportType: 'weekly' });
+    const title = input.reportTitle;
+    if (!title) {
+      const error = new Error('Thiếu tiêu đề báo cáo tuần');
+      Object.assign(error, { statusCode: 400 });
+      throw error;
+    }
+    const existing = await Report.findOne({ ownerId: user.id, periodId: period.id, reportType: 'weekly' }).session(session);
 
-  if (existing && existing.status !== 'draft') {
-    const error = new Error('Báo cáo kỳ này đã nộp, không thể ghi đè');
-    Object.assign(error, { statusCode: 409 });
-    throw error;
-  }
+    if (existing && existing.status !== 'draft') {
+      const error = new Error('Báo cáo kỳ này đã nộp, không thể ghi đè');
+      Object.assign(error, { statusCode: 409 });
+      throw error;
+    }
+    if (existing && !existing.fieldReports?.length) throw domainError('Bản nháp cần được admin đối soát mã lĩnh vực trước khi lưu lại.', 409, 'REPORT_LEGACY_MAPPING_REQUIRED');
 
-  const data = {
-    title,
-    reportType: 'weekly',
-    ownerId: user.id,
-    periodId: period.id,
-    period: input.period,
-    reportTitle: title,
-    startDate: input.startDate ? new Date(input.startDate) : undefined,
-    endDate: input.endDate ? new Date(input.endDate) : undefined,
-    field: input.field,
-    department: user.department,
-    sender: user.fullName,
-    status: input.status,
-    content: input.content,
-    administrativeReform: input.administrativeReform,
-    digitalTransformation: input.digitalTransformation,
-    nextTasks: input.nextTasks,
-    difficulties: input.difficulties,
-    proposals: input.proposals,
-    dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
-    submittedAt: input.status === 'pending' ? new Date() : undefined,
-  };
+    const data = {
+      title,
+      reportType: 'weekly',
+      ownerId: user.id,
+      periodId: period.id,
+      period: input.period,
+      reportTitle: title,
+      startDate: input.startDate ? new Date(input.startDate) : undefined,
+      endDate: input.endDate ? new Date(input.endDate) : undefined,
+      fieldReports: fields,
+      ...projectFieldReports(fields),
+      department: user.department,
+      sender: user.fullName,
+      status: input.status,
+      dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
+      submittedAt: input.status === 'pending' ? new Date() : undefined,
+    };
 
-  if (existing) {
-    Object.assign(existing, data);
-    return existing.save();
-  }
+    if (existing) {
+      Object.assign(existing, data);
+      return existing.save({ session });
+    }
 
-  return Report.create(data);
+    const report = new Report(data);
+    return report.save({ session });
+  });
 }
 
 export async function submitWeeklyReport(reportId: string, user: AuthUser) {
-  const report = await Report.findById(reportId).populate('periodId');
+  const submitted = await withAssignmentLock(async (session) => {
+    const report = await Report.findById(reportId).session(session).populate('periodId');
 
-  if (!report || report.reportType !== 'weekly') {
-    const error = new Error('Không tìm thấy báo cáo tuần');
-    Object.assign(error, { statusCode: 404 });
-    throw error;
-  }
+    if (!report || report.reportType !== 'weekly') {
+      const error = new Error('Không tìm thấy báo cáo tuần');
+      Object.assign(error, { statusCode: 404 });
+      throw error;
+    }
 
-  const period: any = report.periodId;
-  if (period && period.status === 'archived') {
-    const error = new Error('Kỳ báo cáo đã được lưu trữ, không thể thay đổi');
-    Object.assign(error, { statusCode: 403 });
-    throw error;
-  }
+    const period: any = report.periodId;
+    if (!period || period.type !== 'weekly' || period.status !== 'open') {
+      const error = new Error('Kỳ báo cáo đã được lưu trữ, không thể thay đổi');
+      Object.assign(error, { statusCode: 403 });
+      throw error;
+    }
 
-  if (user.role !== 'admin' && report.ownerId?.toString() !== user.id) {
-    const error = new Error('Bạn không có quyền nộp báo cáo này');
-    Object.assign(error, { statusCode: 403 });
-    throw error;
-  }
+    if (user.role !== 'admin' && report.ownerId?.toString() !== user.id) {
+      const error = new Error('Bạn không có quyền nộp báo cáo này');
+      Object.assign(error, { statusCode: 403 });
+      throw error;
+    }
 
-  if (report.status !== 'draft') {
-    const error = new Error('Báo cáo đã nộp trước đó');
-    Object.assign(error, { statusCode: 409 });
-    throw error;
-  }
+    if (report.status !== 'draft') {
+      const error = new Error('Báo cáo đã nộp trước đó');
+      Object.assign(error, { statusCode: 409 });
+      throw error;
+    }
 
-  report.status = 'pending';
-  report.submittedAt = new Date();
-  await report.save();
+    const owner = await User.findById(report.ownerId).session(session);
+    if (!owner || owner.role !== 'staff' || !owner.isActive) throw domainError('Chủ báo cáo không còn là chuyên viên đang hoạt động.', 409);
+    const fields = snapshotFieldReports(report.fieldReports?.map(({ fieldCode, content, difficulties, proposals, nextTasks }) => ({ fieldCode, content, difficulties, proposals, nextTasks })), owner.fieldCodes, 'pending');
+    const periodWrite = await ReportPeriod.updateOne({ _id: period._id, type: 'weekly', status: 'open' }, { $inc: { __v: 1 } }, { session });
+    if (!periodWrite.modifiedCount) throw domainError('Kỳ báo cáo không còn mở.', 409);
+    report.fieldReports = fields;
+    Object.assign(report, projectFieldReports(fields));
 
+    report.status = 'pending';
+    report.submittedAt = new Date();
+    await report.save({ session });
+
+    return report;
+  });
   void notifyUsersByRole({
     roles: ['admin', 'office_clerk'],
     title: 'Có báo cáo tuần mới',
@@ -206,7 +233,7 @@ export async function submitWeeklyReport(reportId: string, user: AuthUser) {
     link: '/archive',
   });
 
-  return report;
+  return submitted;
 }
 
 export async function returnReport(reportId: string, reason: string, adminUser: AuthUser) {

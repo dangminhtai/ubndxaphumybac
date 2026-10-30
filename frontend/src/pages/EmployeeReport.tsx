@@ -1,489 +1,130 @@
-import { useEffect, useMemo, useState } from 'react';
-import {
-  CheckCircle2,
-  Download,
-  Eye,
-  Loader2,
-  Save,
-  Send,
-  Undo2,
-} from 'lucide-react';
+import { useEffect, useState } from 'react';
 import AppLayout from '../components/layout/AppLayout';
-import { createWeeklyReport, exportWeeklyReportDocxById, getCurrentWeeklyReport, submitWeeklyReport, recallReport } from '../api/reportApi';
-import type { ReportPeriod, WeeklyReportPayload } from '../types/report';
-import type { User } from '../types/user';
-import ConfirmModal from '../components/ui/ConfirmModal';
+import { createWeeklyReport, exportWeeklyReportDocxById, getCurrentWeeklyReport, recallReport } from '../api/reportApi';
+import { getFields, saveMyFields, type FieldDefinition, type FieldReport } from '../api/fieldsApi';
 import { formatApiError } from '../utils/apiError';
+import { weeklyLabel } from '../utils/weeklyLabel';
+import type { Report, ReportPeriod, WeeklyReportPayload } from '../types/report';
 
-function readUser() {
-  const rawUser = localStorage.getItem('user');
-  if (!rawUser) {
-    throw new Error('Thiếu thông tin người dùng trong phiên đăng nhập');
-  }
-  return JSON.parse(rawUser) as Partial<User>;
-}
-
-function requireText(value: string | undefined, message: string) {
-  if (!value) {
-    throw new Error(message);
-  }
-  return value;
-}
-
-function getVietnamPlainDate(now = new Date()) {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Ho_Chi_Minh',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(now);
-
-  const year = Number(parts.find((part) => part.type === 'year')?.value);
-  const month = Number(parts.find((part) => part.type === 'month')?.value);
-  const day = Number(parts.find((part) => part.type === 'day')?.value);
-
-  return new Date(Date.UTC(year, month - 1, day));
-}
-
-function addDays(date: Date, days: number) {
-  const result = new Date(date);
-  result.setUTCDate(result.getUTCDate() + days);
-  return result;
-}
-
-function toIsoDate(date: Date) {
-  return date.toISOString().slice(0, 10);
-}
-
-function formatSlashDate(date: Date) {
-  return `${date.getUTCDate()}/${date.getUTCMonth() + 1}/${date.getUTCFullYear()}`;
-}
-
-function formatVietnamDate(date: Date) {
-  return `ngày ${date.getUTCDate()} tháng ${date.getUTCMonth() + 1} năm ${date.getUTCFullYear()}`;
-}
-
-function getWeekLabelFromThursday(thursday: Date) {
-  const weekNumber = Math.floor((thursday.getUTCDate() - 1) / 7) + 1;
-  return `Tuần ${String(weekNumber).padStart(2, '0')} tháng ${thursday.getUTCMonth() + 1} năm ${thursday.getUTCFullYear()}`;
-}
-
-function getWeekLabelNoYearFromDate(date: Date) {
-  const weekNumber = Math.floor((date.getUTCDate() - 1) / 7) + 1;
-  return `Tuần ${String(weekNumber).padStart(2, '0')} tháng ${date.getUTCMonth() + 1}`;
-}
-
-function getCurrentReportWindow() {
-  const today = getVietnamPlainDate();
-  const dayOfWeek = today.getUTCDay();
-  const daysSinceMonday = (dayOfWeek + 6) % 7;
-  const monday = addDays(today, -daysSinceMonday);
-  const thursday = addDays(monday, 3);
-  const nextThursday = addDays(thursday, 7);
-  const period = getWeekLabelFromThursday(thursday);
-  const nextPeriod = getWeekLabelFromThursday(nextThursday);
-
-  return {
-    period,
-    nextPeriod,
-    activityPeriod: getWeekLabelNoYearFromDate(thursday),
-    reportTitle: `BÁO CÁO CÔNG TÁC ${period.toUpperCase()}`,
-    startDate: toIsoDate(monday),
-    endDate: toIsoDate(thursday),
-    dueDate: toIsoDate(thursday),
-    dateRange: `(Từ ngày ${formatSlashDate(monday)} đến ngày ${formatSlashDate(thursday)})`,
-    dueDateLabel: formatVietnamDate(thursday),
-  };
-}
-
-const initialForm = {
-  field: '',
-  content: '',
-  difficulties: '',
-  proposals: '',
-  nextTasks: '',
-};
+const blank = (fieldCode: string): FieldReport => ({ fieldCode, content: '', difficulties: '', proposals: '', nextTasks: '' });
+const sections = [ ['content', '1. Kết quả thực hiện'], ['nextTasks', '2. Phương hướng, nhiệm vụ tuần tới'] ] as const;
 
 export default function EmployeeReport() {
-  const user = readUser();
-  const reportWindow = useMemo(() => getCurrentReportWindow(), []);
-  const [form, setForm] = useState(initialForm);
   const [period, setPeriod] = useState<ReportPeriod | null>(null);
-
-  const dynamicReportWindow = useMemo(() => {
-    if (!period) return reportWindow;
-
-    const start = new Date(period.startDate);
-    const currentThursday = addDays(start, 3);
-    const nextThursday = addDays(currentThursday, 7);
-
-    const currentPeriodLabel = getWeekLabelFromThursday(currentThursday);
-    const nextPeriodLabel = getWeekLabelFromThursday(nextThursday);
-
-    const today = getVietnamPlainDate();
-
-    return {
-      period: currentPeriodLabel,
-      nextPeriod: nextPeriodLabel,
-      activityPeriod: getWeekLabelNoYearFromDate(currentThursday),
-      reportTitle: `BÁO CÁO CÔNG TÁC ${currentPeriodLabel.toUpperCase()}`,
-      startDate: period.startDate.slice(0, 10),
-      endDate: toIsoDate(currentThursday),
-      dueDate: period.dueDate.slice(0, 10),
-      dateRange: `(Từ ngày ${formatSlashDate(start)} đến ngày ${formatSlashDate(currentThursday)})`,
-      dueDateLabel: formatVietnamDate(today),
-    };
-  }, [period, reportWindow]);
-
-  const [reportId, setReportId] = useState('');
-  const [reportStatus, setReportStatus] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [fields, setFields] = useState<FieldDefinition[]>([]);
+  const [assigned, setAssigned] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [report, setReport] = useState<Report | null>(null);
+  const [values, setValues] = useState<FieldReport[]>([]);
+  const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [exporting, setExporting] = useState(false);
-  const [message, setMessage] = useState('Bản nháp chưa lưu');
+  const [showAssignment, setShowAssignment] = useState(false);
   const [error, setError] = useState('');
-  const [isRecallOpen, setIsRecallOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  const readOnly = Boolean(report && report.status !== 'draft');
+  const legacy = Boolean(report && !report.fieldReports?.length);
+  const changedAssignment = !readOnly && (values.length !== assigned.length || values.some((row) => !assigned.includes(row.fieldCode)));
+  const disabled = busy || loading || readOnly || legacy || changedAssignment || !assigned.length;
+  const title = period ? weeklyLabel(period.startDate) : 'Báo cáo tuần';
 
-  const handleRecallReport = async () => {
-    if (!reportId) return;
-    setSaving(true);
-    setError('');
+  async function load() {
+    setLoading(true);
     try {
-      const recalled = await recallReport(reportId);
-      setReportStatus(recalled.status);
-      setMessage('Đã thu hồi báo cáo. Trạng thái hiện tại: Nháp.');
-      setIsRecallOpen(false);
-    } catch (err) {
-      setError(formatApiError(err, 'Không thu hồi được báo cáo'));
-    } finally {
-      setSaving(false);
-    }
-  };
+      const [data, directory] = await Promise.all([getCurrentWeeklyReport(), getFields()]);
+      setPeriod(data.period); setFields(directory); setAssigned(data.assignedFieldCodes); setSelected(data.assignedFieldCodes);
+      setReport(data.report);
+      setValues(data.report?.fieldReports?.length ? data.report.fieldReports : data.assignedFieldCodes.map(blank));
+    } catch (err) { setError(formatApiError(err, 'Không tải được báo cáo.')); }
+    finally { setLoading(false); }
+  }
+  useEffect(() => { void load(); }, []);
 
-  const sender = requireText(user.fullName, 'Thiếu họ tên người dùng trong phiên đăng nhập');
-  const department = requireText(user.department, 'Thiếu đơn vị người dùng trong phiên đăng nhập');
-
-  useEffect(() => {
-    const loadCurrentReport = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const data = await getCurrentWeeklyReport();
-        setPeriod(data.period);
-        if (data.report) {
-          setReportId(data.report._id);
-          setReportStatus(data.report.status);
-          setForm({
-            field: data.report.field || '',
-            content: data.report.content || '',
-            difficulties: data.report.difficulties || '',
-            proposals: data.report.proposals || '',
-            nextTasks: data.report.nextTasks || '',
-          });
-          setMessage(data.report.status === 'draft' ? 'Đã tải bản nháp từ MongoDB' : 'Báo cáo kỳ này đã nộp');
-        }
-      } catch (err) {
-        setError(formatApiError(err, 'Không tải được kỳ báo cáo tuần'));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void loadCurrentReport();
-  }, []);
-
-  const updateField = (fieldName: keyof typeof form, value: string) => {
-    setForm((current) => ({ ...current, [fieldName]: value }));
-  };
-
-  const buildPayload = (status: WeeklyReportPayload['status']): WeeklyReportPayload => ({
-    periodId: period?._id,
-    period: dynamicReportWindow.period,
-    nextPeriod: dynamicReportWindow.nextPeriod,
-    reportTitle: dynamicReportWindow.reportTitle,
-    startDate: dynamicReportWindow.startDate,
-    endDate: dynamicReportWindow.endDate,
-    sender,
-    department,
-    field: form.field.trim(),
-    content: form.content.trim(),
-    difficulties: form.difficulties.trim(),
-    proposals: form.proposals.trim(),
-    nextTasks: form.nextTasks.trim(),
-    dueDate: dynamicReportWindow.dueDate,
-    status,
-  });
-
-  const submitReport = async (status: WeeklyReportPayload['status']) => {
-    setSaving(true);
-    setError('');
-
+  async function save(status: 'draft' | 'pending') {
+    if (!period || disabled) return null;
+    setBusy(true); setError('');
     try {
-      const savedReport = await createWeeklyReport(buildPayload(status));
-      setReportId(savedReport._id);
-      setReportStatus(savedReport.status);
-      setMessage(status === 'draft' ? 'Đã lưu nháp vào MongoDB' : 'Đã nộp báo cáo vào MongoDB');
-    } catch (err) {
-      setError(formatApiError(err, status === 'draft' ? 'Không lưu được bản nháp' : 'Không nộp được báo cáo'));
-      console.error(err);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const exportDocx = async () => {
-    setExporting(true);
-    setError('');
-
+      const payload: WeeklyReportPayload = {
+        periodId: period._id, period: title, reportTitle: `BÁO CÁO CÔNG TÁC ${title.toUpperCase()}`,
+        startDate: period.startDate.slice(0, 10), endDate: period.dueDate.slice(0, 10), dueDate: period.dueDate,
+        nextPeriod: weeklyLabel(period.startDate, 1), sender: '', department: '', field: '', content: '', fieldReports: values, status,
+      };
+      const saved = await createWeeklyReport(payload);
+      setReport(saved); setValues(saved.fieldReports || values);
+      setMessage(status === 'draft' ? 'Đã lưu nháp' : 'Đã nộp báo cáo');
+      return saved;
+    } catch (err) { setError(formatApiError(err, 'Không lưu được báo cáo.')); return null; }
+    finally { setBusy(false); }
+  }
+  async function exportWord() {
+    const saved = readOnly ? report : await save('draft');
+    if (!saved) return;
+    setBusy(true); setError('');
     try {
-      const savedReportId = reportId || (await createWeeklyReport(buildPayload('draft')))._id;
-      setReportId(savedReportId);
-      const blob = await exportWeeklyReportDocxById(savedReportId);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      const fileTitle = dynamicReportWindow.reportTitle;
-      link.href = url;
-      link.download = `${fileTitle.toLowerCase().replace(/\s+/g, '-')}.docx`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-      setMessage('Đã xuất file DOCX');
-    } catch (err: any) {
-      let errorMessage = 'Không xuất được file DOCX';
-      if (err.response?.data instanceof Blob) {
-        try {
-          const text = await err.response.data.text();
-          const json = JSON.parse(text);
-          if (json.error) errorMessage = json.error;
-        } catch { /* ignore */ }
-      } else if (err.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      }
-      setError(errorMessage);
-      console.error(err);
-    } finally {
-      setExporting(false);
-    }
-  };
+      const blob = await exportWeeklyReportDocxById(saved._id);
+      const url = URL.createObjectURL(blob); const link = document.createElement('a');
+      link.href = url; link.download = `bao-cao-${title.replace(/\s/g, '-')}.docx`; link.click(); URL.revokeObjectURL(url);
+    } catch (err) { setError(formatApiError(err, 'Không xuất được Word.')); }
+    finally { setBusy(false); }
+  }
+  async function changeFields() {
+    setBusy(true); setError('');
+    try {
+      await saveMyFields(selected);
+      setMessage('Đã cập nhật lĩnh vực.'); setShowAssignment(false);
+      // Keep current unsaved report text; synchronize explicitly if the assignment changed.
+      const directory = await getFields(); setFields(directory); setAssigned([...selected]);
+    } catch (err) { setError(formatApiError(err, 'Không đổi được lĩnh vực.')); }
+    finally { setBusy(false); }
+  }
 
-  const submitSavedReport = async () => {
-    if (reportId && reportStatus === 'draft') {
-      setSaving(true);
-      setError('');
-      try {
-        const report = await submitWeeklyReport(reportId);
-        setReportStatus(report.status);
-        setMessage('Đã nộp báo cáo vào MongoDB');
-      } catch (err) {
-        setError(formatApiError(err, 'Không nộp được báo cáo'));
-      } finally {
-        setSaving(false);
-      }
-      return;
-    }
-
-    await submitReport('pending');
-  };
-
-  return (
-    <AppLayout
-      title="Nhập báo cáo cho nhân viên"
-      subtitle="Biểu mẫu web bám theo cấu trúc template Word chính."
-      actions={
-        <div className="flex flex-wrap gap-2 md:gap-3">
-          <button
-            className="inline-flex items-center gap-1.5 rounded-lg border border-outline-variant px-3 py-2 text-xs font-semibold text-on-surface transition-colors hover:bg-surface-container-low disabled:opacity-60 md:gap-2 md:px-4 md:text-sm"
-            type="button"
-            disabled={saving || loading || reportStatus !== '' && reportStatus !== 'draft'}
-            onClick={() => void submitReport('draft')}
-          >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Lưu nháp
-          </button>
-          <button
-            className="inline-flex items-center gap-1.5 rounded-lg bg-surface-container-high px-3 py-2 text-xs font-semibold text-primary transition-colors hover:bg-surface-container-highest md:gap-2 md:px-4 md:text-sm"
-            type="button"
-          >
-            <Eye className="h-4 w-4" />
-            Xem trước
-          </button>
-          <button
-            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-primary-container disabled:opacity-60 md:gap-2 md:px-4 md:text-sm"
-            type="button"
-            disabled={exporting || loading}
-            onClick={() => void exportDocx()}
-          >
-            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            Xuất DOCX
-          </button>
-        </div>
-      }
-      bottomStatus={
-        <span className="hidden items-center gap-2 text-sm text-on-surface-variant sm:flex">
-          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-          {message}
-        </span>
-      }
-      bottomBar={
-        <>
-          <button
-            className="rounded-lg border border-outline-variant px-5 py-2.5 font-semibold text-on-surface transition-colors hover:bg-surface-container-low"
-            type="button"
-          >
-            Hủy
-          </button>
-          {reportStatus === 'pending' && period?.status === 'open' && (
-            <button
-              className="inline-flex items-center gap-2 rounded-lg bg-error px-5 py-2.5 font-semibold text-white shadow-level-1 transition-colors hover:bg-error/95 disabled:opacity-60"
-              type="button"
-              disabled={saving}
-              onClick={() => setIsRecallOpen(true)}
-            >
-              {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Undo2 className="h-5 w-5" />}
-              Thu hồi báo cáo
-            </button>
-          )}
-          <button
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 font-semibold text-white shadow-level-1 transition-colors hover:bg-primary-container disabled:opacity-60"
-            type="button"
-            disabled={saving || loading || reportStatus !== '' && reportStatus !== 'draft'}
-            onClick={() => void submitSavedReport()}
-          >
-            {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-            Nộp báo cáo
-          </button>
-        </>
-      }
-    >
-      <div className="mx-auto max-w-4xl">
-        {error && (
-          <div className="mb-4 rounded-lg border border-error-container bg-error-container px-4 py-3 text-sm text-error">
-            {error}
-          </div>
-        )}
-        {loading && (
-          <div className="mb-4 rounded-lg border border-outline-variant bg-white px-4 py-3 text-sm text-on-surface-variant">
-            Đang tải kỳ báo cáo và bản nháp...
-          </div>
-        )}
-
-        <form className="space-y-6 pb-8">
-          <section className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-6">
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div className="text-center">
-                <p className="font-semibold uppercase">{department}</p>
-                <input
-                  type="text"
-                  placeholder="Nhập lĩnh vực phụ trách (Ví dụ: Y TẾ, VĂN HÓA...)"
-                  className="mt-1 w-full text-center text-sm font-semibold uppercase text-primary outline-none border-b border-dashed border-outline-variant bg-transparent placeholder:text-outline-variant focus:border-primary md:text-base disabled:opacity-75"
-                  value={form.field}
-                  onChange={(e) => updateField('field', e.target.value)}
-                  disabled={loading || saving || (reportStatus !== '' && reportStatus !== 'draft')}
-                />
-              </div>
-              <div className="text-center text-sm md:text-base">
-                <p className="font-semibold uppercase">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
-                <p className="font-semibold">Độc lập - Tự do - Hạnh phúc</p>
-              </div>
-            </div>
-
-            <p className="mt-6 text-right italic">Phù Mỹ Bắc, {dynamicReportWindow.dueDateLabel}</p>
-
-            <div className="mt-6 text-center">
-              <h3 className="text-base font-bold uppercase text-on-surface md:text-xl">
-                {dynamicReportWindow.reportTitle}
-              </h3>
-              <p className="mt-1 font-semibold">
-                {dynamicReportWindow.dateRange}
-              </p>
-            </div>
-          </section>
-
-          <section className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-6">
-            <h3 className="mb-4 border-b border-outline-variant pb-2 font-headline-sm text-base font-bold uppercase text-primary">
-              I. Tình hình hoạt động {dynamicReportWindow.activityPeriod}
-            </h3>
-
-            <div className="space-y-5">
-              <div>
-                <label className="mb-2 block font-semibold text-on-surface">Kết quả thực hiện</label>
-                <textarea
-                  className="min-h-[120px] w-full resize-y rounded-md border border-outline-variant bg-surface p-3 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary md:min-h-[160px] md:p-4 disabled:opacity-75"
-                  placeholder="Nhập các nội dung theo từng dòng. Khi xuất Word, mỗi dòng sẽ thành một gạch đầu dòng."
-                  value={form.content}
-                  onChange={(event) => updateField('content', event.target.value)}
-                  disabled={loading || saving || (reportStatus !== '' && reportStatus !== 'draft')}
-                />
-              </div>
-            </div>
-          </section>
-
-          <section className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-6">
-            <h3 className="mb-3 border-b border-outline-variant pb-2 font-headline-sm text-base font-bold uppercase text-primary">
-              II. Phương hướng, nhiệm vụ {dynamicReportWindow.nextPeriod}
-            </h3>
-            <p className="mb-3 text-sm text-on-surface-variant">
-              Trong {dynamicReportWindow.nextPeriod.toLowerCase()}, sẽ tập trung vào các nhiệm vụ cụ thể như sau:
-            </p>
-            <textarea
-              className="min-h-[100px] w-full resize-y rounded-md border border-outline-variant bg-surface p-3 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary md:min-h-[150px] md:p-4 disabled:opacity-75"
-              placeholder="Nhập nhiệm vụ tuần sau theo từng dòng."
-              value={form.nextTasks}
-              onChange={(event) => updateField('nextTasks', event.target.value)}
-              disabled={loading || saving || (reportStatus !== '' && reportStatus !== 'draft')}
-            />
-          </section>
-
-          <section className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-6">
-            <h3 className="mb-3 border-b border-outline-variant pb-2 font-headline-sm text-base font-bold uppercase text-primary">
-              III. TỒN TẠI, HẠN CHẾ
-            </h3>
-            <textarea
-              className="min-h-[80px] w-full resize-y rounded-md border border-outline-variant bg-surface p-3 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary md:min-h-[120px] md:p-4 disabled:opacity-75"
-              placeholder="Nhập các tồn tại, hạn chế (nếu có)."
-              value={form.difficulties}
-              onChange={(event) => updateField('difficulties', event.target.value)}
-              disabled={loading || saving || (reportStatus !== '' && reportStatus !== 'draft')}
-            />
-          </section>
-
-          <section className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-6">
-            <h3 className="mb-3 border-b border-outline-variant pb-2 font-headline-sm text-base font-bold uppercase text-primary">
-              IV. KIẾN NGHỊ ĐỀ XUẤT
-            </h3>
-            <textarea
-              className="min-h-[120px] w-full resize-y rounded-md border border-outline-variant bg-surface p-4 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary disabled:opacity-75"
-              placeholder="Nhập kiến nghị đề xuất (nếu có)."
-              value={form.proposals}
-              onChange={(event) => updateField('proposals', event.target.value)}
-              disabled={loading || saving || (reportStatus !== '' && reportStatus !== 'draft')}
-            />
-          </section>
-
-          <section className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-6">
-            <p>
-              Trên đây là báo cáo tình hình hoạt động lĩnh vực {form.field} được thực hiện vào {dynamicReportWindow.activityPeriod.toLowerCase()} và
-              Phương hướng hoạt động {dynamicReportWindow.nextPeriod.toLowerCase()} của chuyên viên phụ trách.
-            </p>
-            <p className="mt-2">Kính báo cáo lãnh đạo Phòng biết và chỉ đạo.</p>
-            <div className="mt-8 text-right">
-              <p className="font-semibold">Người báo cáo</p>
-              <p className="mt-12 font-semibold">{sender}</p>
-            </div>
-          </section>
-        </form>
-      </div>
-      <ConfirmModal
-        isOpen={isRecallOpen}
-        onClose={() => setIsRecallOpen(false)}
-        onConfirm={handleRecallReport}
-        title="Thu hồi báo cáo"
-        message="Bạn có chắc chắn muốn thu hồi báo cáo đã nộp? Trạng thái sẽ quay về Nháp để bạn chỉnh sửa."
-        confirmText="Thu hồi"
-        cancelText="Hủy"
-        isLoading={saving}
-      />
-    </AppLayout>
-  );
+  return <AppLayout title={`Nhập báo cáo - ${title}`} subtitle="Kết quả thực hiện và phương hướng, nhiệm vụ tuần tới cho từng lĩnh vực được phân công."
+    actions={<div className="flex flex-wrap gap-2">
+      <button type="button" disabled={disabled} onClick={() => void save('draft')} className="rounded-lg border border-outline-variant px-4 py-2 disabled:opacity-50">Lưu nháp</button>
+      <button type="button" disabled={busy || loading || (!readOnly && disabled)} onClick={() => void exportWord()} className="rounded-lg border border-outline-variant px-4 py-2 disabled:opacity-50">Xuất Word</button>
+      <button type="button" disabled={disabled} onClick={() => { if (window.confirm('Nộp báo cáo tuần cho tất cả lĩnh vực đang hiển thị?')) void save('pending'); }} className="rounded-lg bg-primary px-4 py-2 text-white disabled:opacity-50">Nộp báo cáo</button>
+    </div>}>
+    <div className="mx-auto max-w-4xl space-y-5 pb-8">
+      {error && <div role="alert" className="rounded-lg bg-error-container p-4 text-error">{error}</div>}
+      {message && <p role="status" className="text-emerald-700">{message}</p>}
+      {loading && <p>Đang tải báo cáo…</p>}
+      <section className="space-y-3 rounded-xl border border-outline-variant bg-white p-4">
+        <h2 className="font-semibold">Lĩnh vực phụ trách</h2>
+        <p>{assigned.map((code) => fields.find((field) => field.code === code)?.title || code).join('; ') || 'Chưa được gán lĩnh vực. Liên hệ admin hoặc chọn lĩnh vực chưa có người đảm nhận.'}</p>
+        <button type="button" disabled={busy || loading} className="text-sm text-primary underline" onClick={() => setShowAssignment(!showAssignment)}>Thay đổi lĩnh vực</button>
+        {showAssignment && <div className="space-y-3">
+          {fields.map((field) => <label key={field.code} className="flex items-start gap-2 text-sm">
+            <input type="checkbox" checked={selected.includes(field.code)} disabled={busy} onChange={(event) => {
+              setSelected((current) => event.target.checked ? [...current, field.code] : current.filter((code) => code !== field.code));
+              setError(event.target.checked && !assigned.includes(field.code) && field.owners.length ? 'Lĩnh vực này đã có người khác đảm nhận. Vui lòng liên hệ admin để xử lý.' : '');
+            }} />
+            <span>{field.code} — {field.title}{field.owners.length > 0 && <span className="block text-xs text-on-surface-variant">Đang phụ trách: {field.owners.map((owner) => owner.fullName).join(', ')}</span>}</span>
+          </label>)}
+          <button type="button" disabled={busy} onClick={() => void changeFields()} className="rounded-lg bg-primary px-3 py-2 text-sm text-white">Lưu phân công</button>
+        </div>}
+      </section>
+      {legacy && <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm">
+        Báo cáo này chưa được xác định mã lĩnh vực. Liên hệ admin để đối soát, không ghi đè nội dung hiện có.
+        <pre className="mt-2 whitespace-pre-wrap">{report?.field}{'\n'}{report?.content}{'\n'}{report?.nextTasks}</pre>
+      </div>}
+      {changedAssignment && !legacy && <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm">
+        Phân công đã thay đổi. Sao chép nội dung thuộc lĩnh vực cũ cần giữ trước khi cập nhật bản nháp.
+        <button type="button" className="mt-2 block text-primary underline" onClick={() => {
+          if (window.confirm('Cập nhật bản nháp theo phân công mới? Nội dung lĩnh vực không còn phụ trách sẽ bỏ khỏi bản nháp khi lưu.')) setValues(assigned.map((code) => values.find((row) => row.fieldCode === code) || blank(code)));
+        }}>Cập nhật bản nháp theo phân công mới</button>
+      </div>}
+      {!legacy && values.map((row) => <section key={row.fieldCode} className="space-y-5 rounded-xl border border-outline-variant bg-white p-4 md:p-6">
+        <h2 className="font-semibold text-primary">{row.fieldName || fields.find((field) => field.code === row.fieldCode)?.title || row.fieldCode}</h2>
+        {sections.map(([key, label]) => <div key={key}>
+          <label htmlFor={`${row.fieldCode}-${key}`} className="mb-2 block text-sm font-semibold">{label}</label>
+          <textarea id={`${row.fieldCode}-${key}`} aria-label={`${row.fieldCode} - ${label}`} disabled={busy || loading || readOnly || changedAssignment} value={row[key]}
+            onChange={(event) => setValues((current) => current.map((item) => item.fieldCode === row.fieldCode ? { ...item, [key]: event.target.value } : item))}
+            className="min-h-36 w-full resize-y rounded-lg border border-outline-variant p-3 text-sm outline-none focus:border-primary disabled:opacity-70" />
+        </div>)}
+      </section>)}
+      {readOnly && report && period?.status === 'open' && <button type="button" disabled={busy} className="rounded-lg border border-outline-variant px-4 py-2" onClick={async () => {
+        if (!window.confirm('Thu hồi báo cáo về nháp để chỉnh sửa?')) return;
+        setBusy(true); try { const saved = await recallReport(report._id); setReport(saved); } catch (err) { setError(formatApiError(err, 'Không thu hồi được.')); } finally { setBusy(false); }
+      }}>Thu hồi báo cáo</button>}
+    </div>
+  </AppLayout>;
 }

@@ -80,36 +80,36 @@ export async function getUsers(_req: Request, res: Response, next: NextFunction)
   }
 }
 
-export async function postUser(req: Request, res: Response, next: NextFunction) {
+export async function postUser(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
-    const user = await createManagedUser(req.body);
+    const user = await createManagedUser(req.body, req.user);
     res.status(201).json(user);
   } catch (err) {
     next(err);
   }
 }
 
-export async function patchUser(req: Request, res: Response, next: NextFunction) {
+export async function patchUser(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
-    const user = await updateManagedUser(String(req.params.id), req.body);
+    const user = await updateManagedUser(String(req.params.id), req.body, req.user);
     res.json(user);
   } catch (err) {
     next(err);
   }
 }
 
-export async function disableUser(req: Request, res: Response, next: NextFunction) {
+export async function disableUser(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
-    const user = await disableManagedUser(String(req.params.id));
+    const user = await disableManagedUser(String(req.params.id), req.user);
     res.json(user);
   } catch (err) {
     next(err);
   }
 }
 
-export async function deleteUser(req: Request, res: Response, next: NextFunction) {
+export async function deleteUser(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
-    const user = await deleteManagedUser(String(req.params.id));
+    const user = await deleteManagedUser(String(req.params.id), req.user);
     res.json(user);
   } catch (err) {
     next(err);

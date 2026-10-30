@@ -4,6 +4,8 @@ import User from '../models/User';
 import { env } from '../config/env';
 import { writeAuditLog } from './audit.service';
 import { generateOnboardingNotifications } from './notification.service';
+import { withAssignmentLock, parseFieldCodes, assertFieldsAvailable, assignmentAudit } from './field-assignment.service';
+import type { AuthUser } from '../middleware/auth.middleware';
 
 const SALT_ROUNDS = 10;
 
@@ -14,6 +16,7 @@ export interface RegisterInput {
   department: string;
   role?: string;
   position?: string;
+  fieldCodes?: string[];
 }
 
 export interface LoginInput {
@@ -33,6 +36,7 @@ function buildAuthResponse(user: {
   role: string;
   department: string;
   position?: string;
+  fieldCodes?: string[];
   isActive?: boolean;
   mustChangePassword?: boolean;
 }) {
@@ -51,6 +55,7 @@ function buildAuthResponse(user: {
       role: user.role,
       department: user.department,
       position: user.position,
+      fieldCodes: user.fieldCodes || [],
       isActive: user.isActive,
       mustChangePassword: user.mustChangePassword,
     },
@@ -62,7 +67,7 @@ function normalizeRole(role?: string) {
   return role && allowed.includes(role) ? role : 'staff';
 }
 
-export async function createUser(input: RegisterInput, options: { mustChangePassword?: boolean } = {}) {
+export async function createUser(input: RegisterInput, options: { mustChangePassword?: boolean; actor?: AuthUser } = {}) {
   const { username, password, fullName, department, role, position } = input;
 
   if (!username || !password || !fullName || !department) {
@@ -85,18 +90,27 @@ export async function createUser(input: RegisterInput, options: { mustChangePass
   }
 
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-  const user = await User.create({
-    username,
-    passwordHash,
-    fullName,
-    department,
-    position,
-    role: normalizeRole(role),
-    mustChangePassword: Boolean(options.mustChangePassword),
+  const codes = parseFieldCodes(input.fieldCodes || [], normalizeRole(role));
+  const user = await withAssignmentLock(async (session) => {
+    const candidate = new User({
+      username,
+      passwordHash,
+      fullName,
+      department,
+      position,
+      role: normalizeRole(role),
+      fieldCodes: codes,
+      mustChangePassword: Boolean(options.mustChangePassword),
+    });
+    await assertFieldsAvailable(String(candidate._id), candidate.role, true, codes, session);
+    await candidate.save({ session });
+    await assignmentAudit(session, options.actor, String(candidate._id), null, { role: candidate.role, fieldCodes: codes });
+    return candidate;
   });
   void writeAuditLog({
     action: 'ADD',
     category: 'user',
+    user: options.actor,
     targetType: 'User',
     targetId: String(user._id),
     details: `Tạo tài khoản: ${username} (${normalizeRole(role)})`,
@@ -178,12 +192,12 @@ export async function listUsers() {
   return User.find().select('-passwordHash').sort({ createdAt: -1 });
 }
 
-export async function createManagedUser(input: RegisterInput) {
-  const result = await createUser(input, { mustChangePassword: false });
+export async function createManagedUser(input: RegisterInput, actor?: AuthUser) {
+  const result = await createUser(input, { mustChangePassword: false, actor });
   return result.user;
 }
 
-export async function updateManagedUser(userId: string, input: Partial<RegisterInput> & { isActive?: boolean }) {
+export async function updateManagedUser(userId: string, input: Partial<RegisterInput> & { isActive?: boolean }, actor?: AuthUser) {
   const update: Record<string, unknown> = {};
 
   // Cho phép admin đổi tên đăng nhập (username)
@@ -214,22 +228,29 @@ export async function updateManagedUser(userId: string, input: Partial<RegisterI
     update.passwordHash = await bcrypt.hash(input.password, SALT_ROUNDS);
   }
 
-  const user = await User.findByIdAndUpdate(userId, update, { new: true }).select('-passwordHash');
-  if (!user) {
-    const error = new Error('Không tìm thấy tài khoản');
-    Object.assign(error, { statusCode: 404 });
-    throw error;
-  }
-
-  return user;
+  return withAssignmentLock(async (session) => {
+    const user = await User.findById(userId).session(session);
+    if (!user) throw Object.assign(new Error('Không tìm thấy tài khoản'), { statusCode: 404 });
+    const before = { role: user.role, isActive: user.isActive, fieldCodes: [...user.fieldCodes] };
+    const role = typeof update.role === 'string' ? update.role : user.role;
+    const active = typeof update.isActive === 'boolean' ? update.isActive : user.isActive;
+    const codes = parseFieldCodes(input.fieldCodes === undefined ? user.fieldCodes : input.fieldCodes, role, active);
+    await assertFieldsAvailable(userId, role, active, codes, session);
+    user.set({ ...update, fieldCodes: codes });
+    await user.save({ session });
+    await assignmentAudit(session, actor, userId, before, { role, isActive: active, fieldCodes: codes });
+    const result = user.toObject();
+    delete (result as { passwordHash?: string }).passwordHash;
+    return result;
+  });
 }
 
-export async function disableManagedUser(userId: string, actor?: { id: string; username: string; fullName: string }) {
-  const result = await updateManagedUser(userId, { isActive: false });
+export async function disableManagedUser(userId: string, actor?: AuthUser) {
+  const result = await updateManagedUser(userId, { isActive: false }, actor);
   void writeAuditLog({
     action: 'DISABLE',
     category: 'user',
-    user: actor ? { ...actor, role: '', department: '', mustChangePassword: false } : undefined,
+    user: actor,
     targetType: 'User',
     targetId: userId,
     details: `Khóa tài khoản: ${result.username}`,
@@ -237,8 +258,8 @@ export async function disableManagedUser(userId: string, actor?: { id: string; u
   return result;
 }
 
-export async function deleteManagedUser(userId: string) {
-  const user = await User.findByIdAndDelete(userId);
+export async function deleteManagedUser(userId: string, actor?: AuthUser) {
+  const user = await withAssignmentLock((session) => User.findByIdAndDelete(userId).session(session).exec());
   if (!user) {
     const error = new Error('Không tìm thấy tài khoản');
     Object.assign(error, { statusCode: 404 });
@@ -248,12 +269,15 @@ export async function deleteManagedUser(userId: string) {
   void writeAuditLog({
     action: 'DELETE',
     category: 'user',
+    user: actor,
     targetType: 'User',
     targetId: userId,
     details: `Xóa vĩnh viễn tài khoản: ${user.username}`,
   });
   
-  return user;
+  const result = user.toObject();
+  delete (result as { passwordHash?: string }).passwordHash;
+  return result;
 }
 
 export async function resetManagedUserPassword(userId: string, password?: string) {

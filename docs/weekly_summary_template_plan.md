@@ -1,5 +1,7 @@
 # Plan nâng cấp tổng hợp tuần theo mẫu hành chính
 
+Cập nhật tiếp theo: mapping LV1–LV8 đã triển khai và áp dụng database theo `docs/field_mapping_plan.md`. Các ghi chú “chờ mapping” trong lịch sử tài liệu này đã được thay thế bởi plan đó.
+
 **USER CONFIRMED — giao diện cuối cùng:** hai phần I/II, mỗi phần đúng 8 lĩnh vực cố định và mỗi lĩnh vực đúng một textarea luôn có sẵn. Bỏ dropdown nhóm/phần, metadata nguồn và các nút thêm/xóa/tách đoạn. Mapping sẽ do người dùng hướng dẫn sau; lần này chỉ chỉnh editor, chưa đổi thêm logic mapping. Tiêu đề phần dùng “TUẦN {xx}” tự tính.
 
 Trạng thái: ĐÃ TRIỂN KHAI TRONG WORKSPACE — build và kiểm thử fixture/browser đạt; chưa kiểm tra MongoDB thật hoặc runtime Linux/server. Không commit/push/deploy.

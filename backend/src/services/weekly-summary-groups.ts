@@ -1,15 +1,16 @@
 import { z } from 'zod';
+import { FIELDS, type FieldReport } from '../domain/fields';
 
-export const WEEKLY_GROUPS = [
-  { id: 'personnel', title: 'Lĩnh vực Nội vụ và công tác cán bộ', aliases: ['Nội vụ', 'Công tác cán bộ', 'Nội vụ và công tác cán bộ', 'Nội vụ - Công tác cán bộ'] },
-  { id: 'education', title: 'Giáo dục và đào tạo', aliases: ['Giáo dục', 'Giáo dục đào tạo'] },
-  { id: 'social', title: 'Bảo trợ xã hội và bảo hiểm y tế', aliases: ['Bảo trợ xã hội', 'Bảo hiểm y tế', 'BHYT', 'An sinh xã hội'] },
-  { id: 'health', title: 'Y tế và an toàn thực phẩm', aliases: ['Y tế', 'An toàn thực phẩm'] },
-  { id: 'veterans', title: 'Người có công', aliases: [] },
-  { id: 'administration', title: 'Tổ chức bộ máy, công tác cán bộ và cải cách hành chính', aliases: ['Cải cách hành chính', 'Tổ chức bộ máy'] },
-  { id: 'digital', title: 'Khoa học, công nghệ và chuyển đổi số', aliases: ['Chuyển đổi số', 'Khoa học công nghệ', 'Khoa học và công nghệ'] },
-  { id: 'culture', title: 'Văn hóa và các lĩnh vực liên quan', aliases: ['Văn hóa', 'Văn hóa thông tin', 'Tín ngưỡng tôn giáo'] },
-] as const;
+const LEGACY_ALIASES: Record<string, readonly string[]> = {
+  LV1: ['Nội vụ', 'Công tác cán bộ', 'Nội vụ và công tác cán bộ', 'Nội vụ - Công tác cán bộ'],
+  LV2: ['Giáo dục', 'Giáo dục đào tạo'],
+  LV3: ['Bảo trợ xã hội', 'Bảo hiểm y tế', 'BHYT', 'An sinh xã hội'],
+  LV4: ['Y tế', 'An toàn thực phẩm'], LV5: [],
+  LV6: ['Cải cách hành chính', 'Tổ chức bộ máy'],
+  LV7: ['Chuyển đổi số', 'Khoa học công nghệ', 'Khoa học và công nghệ'],
+  LV8: ['Văn hóa', 'Văn hóa thông tin', 'Tín ngưỡng tôn giáo'],
+};
+export const WEEKLY_GROUPS = FIELDS.map((field) => ({ id: field.groupId, title: field.title, aliases: LEGACY_ALIASES[field.code] || [] }));
 
 const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
@@ -43,15 +44,32 @@ export function combineWeeklyEntries(entries: SummaryEntry[], section: SummaryEn
 export function buildWeeklyEntries(reports: Array<{
   _id: { toString(): string }; field?: string; content: string; nextTasks?: string;
   administrativeReform?: string; digitalTransformation?: string;
+  fieldReports?: FieldReport[];
 }>): SummaryEntry[] {
   return reports.flatMap((report) => {
     const sourceReportId = report._id.toString();
-    const groupId = resolveWeeklyGroup(report.field || '');
-    return [
-      { id: `${sourceReportId}-results`, sourceReportId, groupId, section: 'results' as const, text: report.content },
-      { id: `${sourceReportId}-nextTasks`, sourceReportId, groupId, section: 'nextTasks' as const, text: report.nextTasks || '' },
-      { id: `${sourceReportId}-administration`, sourceReportId, groupId: 'administration', section: 'results' as const, text: report.administrativeReform || '' },
-      { id: `${sourceReportId}-digital`, sourceReportId, groupId: 'digital', section: 'results' as const, text: report.digitalTransformation || '' },
-    ].filter((entry) => entry.text.trim());
+    return (report.fieldReports || []).flatMap((field) => {
+      const group = FIELDS.find((item) => item.code === field.fieldCode);
+      if (!group) return [];
+      return [
+        { id: `${sourceReportId}-${field.fieldCode}-results`, sourceReportId, groupId: group.groupId, section: 'results' as const, text: field.content },
+        { id: `${sourceReportId}-${field.fieldCode}-nextTasks`, sourceReportId, groupId: group.groupId, section: 'nextTasks' as const, text: field.nextTasks || '' },
+      ].filter((entry) => entry.text.trim());
+    });
   });
+}
+
+export function inspectWeeklyFieldSources(reports: Array<{ _id: { toString(): string }; fieldReports?: FieldReport[] }>) {
+  const issues: Array<{ reportId: string; code: string; fieldCode?: string }> = [];
+  const owners = new Map<string, string>();
+  for (const report of reports) {
+    const reportId = String(report._id);
+    if (!report.fieldReports?.length) { issues.push({ reportId, code: 'MISSING_FIELD_CODE' }); continue; }
+    for (const field of report.fieldReports) {
+      if (!FIELDS.some((item) => item.code === field.fieldCode)) { issues.push({ reportId, code: 'INVALID_FIELD_CODE' }); continue; }
+      if (owners.has(field.fieldCode)) issues.push({ reportId, fieldCode: field.fieldCode, code: 'DUPLICATE_FIELD_SOURCE' });
+      owners.set(field.fieldCode, reportId);
+    }
+  }
+  return issues;
 }

@@ -9,7 +9,8 @@ import Report from '../models/Report';
 import User from '../models/User';
 import WeeklySummary from '../models/WeeklySummary';
 import { getDocumentConfig } from '../config/document';
-import { WEEKLY_GROUPS, buildWeeklyEntries, combineWeeklyEntries, summaryEntriesSchema, type SummaryEntry } from './weekly-summary-groups';
+import { WEEKLY_GROUPS, buildWeeklyEntries, combineWeeklyEntries, inspectWeeklyFieldSources, summaryEntriesSchema, type SummaryEntry } from './weekly-summary-groups';
+import type { FieldReport } from '../domain/fields';
 import type { AuthUser } from '../middleware/auth.middleware';
 
 interface ReportOwner {
@@ -26,6 +27,7 @@ export interface WeeklySourceReport {
   department: string;
   sender: string;
   content: string;
+  fieldReports?: FieldReport[];
   administrativeReform?: string;
   digitalTransformation?: string;
   difficulties?: string;
@@ -36,6 +38,7 @@ export interface WeeklySourceReport {
 }
 
 export interface WeeklySummaryUpdate {
+  sourceReportIds?: string[];
   entries?: SummaryEntry[];
   status?: 'draft' | 'published';
 }
@@ -101,7 +104,7 @@ async function resolveWeeklyPeriod(periodId: string) {
 
 async function ensureExpectedReporters(period: IReportPeriod) {
   if (period.expectedReporterIds?.length) return period.expectedReporterIds;
-  const reporters = await User.find({ role: 'staff', isActive: true }).select('_id').lean();
+  const reporters = await User.find({ role: 'staff', isActive: true, 'fieldCodes.0': { $exists: true } }).select('_id').lean();
   period.expectedReporterIds = reporters.map((user) => user._id);
   await period.save();
   return period.expectedReporterIds;
@@ -161,26 +164,39 @@ export async function getEligibleWeeklyReports(periodId: string) {
   };
 }
 
+function canAutoFill(summary: { entries?: SummaryEntry[]; content?: string; nextTasks?: string; status: string; sourceGeneratedAt?: Date; manuallyEditedAt?: Date; autoUpdateFromSources?: boolean } | null) {
+  return !summary || (summary.status === 'draft' && !summary.manuallyEditedAt && (summary.autoUpdateFromSources === true || (!summary.sourceGeneratedAt && !summary.entries?.some((entry) => entry.text.trim()) && !summary.content?.trim() && !summary.nextTasks?.trim())));
+}
+
 export async function getWeeklySummaryByPeriod(periodId: string) {
   const source = await getEligibleWeeklyReports(periodId);
   const summary = await WeeklySummary.findOne({ periodId });
+  const sourceIssues = inspectWeeklyFieldSources(source.reports);
+  const autoFilled = source.period.status !== 'archived' && canAutoFill(summary) && !sourceIssues.length && !source.submissionStats.duplicateReports;
+  const previewEntries = autoFilled ? buildWeeklyEntries(source.reports) : undefined;
   return {
+    autoFilled,
     summary: summary ? {
       _id: summary._id, periodId: summary.periodId,
       periodTitle: weeklyLabel(source.period.startDate).title,
-      entries: summary.entries || [], sourceReportIds: summary.sourceReportIds,
+      entries: previewEntries || summary.entries || [], sourceReportIds: autoFilled ? source.reports.map((report) => report._id) : summary.sourceReportIds,
       sourceGeneratedAt: summary.sourceGeneratedAt, status: summary.status,
     } : {
       periodId: source.period.id,
       periodTitle: weeklyLabel(source.period.startDate).title,
-      sourceReportIds: [],
-      entries: [],
+      sourceReportIds: autoFilled ? source.reports.map((report) => report._id) : [],
+      entries: previewEntries || [],
       status: 'draft',
     },
     period: { ...source.period.toObject(), title: weeklyLabel(source.period.startDate).title },
     nextPeriodTitle: weeklyLabel(source.period.startDate, 1).title,
     submissionStats: source.submissionStats,
     groups: WEEKLY_GROUPS.map(({ id, title }) => ({ id, title })),
+    sourceIssues,
+    fieldCoverage: {
+      expected: 8,
+      submitted: new Set(source.reports.flatMap((report) => (report.fieldReports || []).map((field) => field.fieldCode))).size,
+    },
     employeeReports: source.reports,
     missingEmployees: source.missingEmployees,
   };
@@ -199,6 +215,7 @@ export async function generateWeeklySummary(periodId: string, user: AuthUser) {
   }
 
   const entries = buildWeeklyEntries(source.reports);
+  if (inspectWeeklyFieldSources(source.reports).length) throw appError('Nguồn báo cáo thiếu mã hoặc trùng lĩnh vực. Admin cần đối soát nguồn trước khi tổng hợp.', 409, 'WEEKLY_SOURCE_FIELD_CONFLICT');
 
   await WeeklySummary.findOneAndUpdate(
     { periodId: source.period._id },
@@ -207,13 +224,14 @@ export async function generateWeeklySummary(periodId: string, user: AuthUser) {
         periodTitle: weeklyLabel(source.period.startDate).title,
         sourceReportIds: source.reports.map((report) => report._id),
         sourceGeneratedAt: new Date(),
+        autoUpdateFromSources: true,
         entries,
         content: combineWeeklyEntries(entries, 'results'),
         nextTasks: combineWeeklyEntries(entries, 'nextTasks'),
         authorId: user.id,
       },
       $setOnInsert: { status: 'draft' },
-      $unset: { difficulties: '', proposals: '' },
+      $unset: { difficulties: '', proposals: '', manuallyEditedAt: '' },
     },
     { upsert: true, new: true, runValidators: true, strict: false },
   );
@@ -226,11 +244,23 @@ export async function updateWeeklySummary(periodId: string, data: WeeklySummaryU
     throw appError('Kỳ báo cáo đã lưu trữ, không thể cập nhật', 409, 'WEEKLY_PERIOD_ARCHIVED');
   }
   const allowed: WeeklySummaryUpdate = {};
+  let previewSourceIds: mongoose.Types.ObjectId[] | undefined;
   if (data.entries !== undefined) {
     const parsed = summaryEntriesSchema.safeParse(data.entries);
     if (!parsed.success) throw appError('Nội dung phân nhóm không hợp lệ', 400, 'WEEKLY_SUMMARY_INVALID_ENTRIES');
     const existing = await WeeklySummary.findOne({ periodId });
     const sources = new Set(existing?.sourceReportIds.map(String) || []);
+    if (canAutoFill(existing)) {
+      const eligible = await getEligibleWeeklyReports(periodId);
+      if (!inspectWeeklyFieldSources(eligible.reports).length && !eligible.submissionStats.duplicateReports) {
+        const ids = eligible.reports.map((report) => report._id);
+        const submittedIds = data.sourceReportIds;
+        if (Array.isArray(submittedIds) && submittedIds.length === ids.length && ids.every((id) => submittedIds.includes(String(id)))) {
+          previewSourceIds = ids;
+          ids.forEach((id) => sources.add(String(id)));
+        }
+      }
+    }
     if (parsed.data.some((entry) => entry.sourceReportId && !sources.has(entry.sourceReportId))) {
       throw appError('Nguồn nội dung không thuộc bản tổng hợp đã lưu', 400, 'WEEKLY_SUMMARY_INVALID_SOURCE');
     }
@@ -243,6 +273,9 @@ export async function updateWeeklySummary(periodId: string, data: WeeklySummaryU
     {
       $set: {
         ...allowed, periodTitle: weeklyLabel(period.startDate).title, authorId: user.id,
+        manuallyEditedAt: new Date(),
+        autoUpdateFromSources: false,
+        ...(previewSourceIds ? { sourceReportIds: previewSourceIds, sourceGeneratedAt: new Date() } : {}),
         ...(allowed.entries ? { content: combineWeeklyEntries(allowed.entries, 'results'), nextTasks: combineWeeklyEntries(allowed.entries, 'nextTasks') } : {}),
       },
       $unset: { difficulties: '', proposals: '' },

@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import type { FieldReport } from '../domain/fields';
 
 export interface IReport extends Document {
   title: string;
@@ -10,6 +11,7 @@ export interface IReport extends Document {
   startDate?: Date;
   endDate?: Date;
   field?: string;
+  fieldReports?: FieldReport[];
   department: string;
   sender: string;
   status: string; // 'draft', 'pending', 'approved', 'rejected'
@@ -33,10 +35,16 @@ const ReportSchema: Schema = new Schema({
   startDate: { type: Date },
   endDate: { type: Date },
   field: { type: String },
+  fieldReports: { type: [new Schema({
+    fieldCode: { type: String, enum: ['LV1', 'LV2', 'LV3', 'LV4', 'LV5', 'LV6', 'LV7', 'LV8'], required: true },
+    fieldName: { type: String, required: true },
+    content: { type: String, default: '' }, difficulties: { type: String, default: '' },
+    proposals: { type: String, default: '' }, nextTasks: { type: String, default: '' },
+  }, { _id: false })], default: undefined },
   department: { type: String, required: true },
   sender: { type: String, required: true },
   status: { type: String, required: true, default: 'draft' },
-  content: { type: String, required: true },
+  content: { type: String, required: function(this: { reportType?: string; status?: string }) { return !(this.reportType === 'weekly' && this.status === 'draft'); } },
   administrativeReform: { type: String },
   digitalTransformation: { type: String },
   nextTasks: { type: String },

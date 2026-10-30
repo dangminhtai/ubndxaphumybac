@@ -2,6 +2,7 @@ import { apiClient } from './client';
 import type { ReportPeriod } from '../types/report';
 
 export interface WeeklySummary {
+  sourceReportIds?: string[];
   entries?: SummaryEntry[];
   _id?: string;
   periodId: string;
@@ -40,6 +41,9 @@ export interface MissingEmployee {
 }
 
 export interface WeeklySummaryResponse {
+  autoFilled?: boolean;
+  sourceIssues?: Array<{ reportId: string; code: string; fieldCode?: string }>;
+  fieldCoverage?: { expected: number; submitted: number };
   groups: SummaryGroup[];
   nextPeriodTitle: string;
   summary: WeeklySummary;

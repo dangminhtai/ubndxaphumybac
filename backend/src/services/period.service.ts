@@ -5,7 +5,7 @@ import { notifyAllUsers } from './notification.service';
 import User from '../models/User';
 
 async function getExpectedWeeklyReporterIds() {
-  const users = await User.find({ role: 'staff', isActive: true }).select('_id').lean();
+  const users = await User.find({ role: 'staff', isActive: true, 'fieldCodes.0': { $exists: true } }).select('_id').lean();
   return users.map((user) => user._id);
 }
 

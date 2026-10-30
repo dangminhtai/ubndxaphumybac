@@ -216,8 +216,6 @@ def build_document_xml(payload, template_path):
     administrative_reform = payload.get("administrativeReform") or ""
     digital_transformation = payload.get("digitalTransformation") or ""
     next_tasks = payload.get("nextTasks") or ""
-    difficulties = payload.get("difficulties") or ""
-    proposals = payload.get("proposals") or ""
     submission_date = date.today()
 
     sect_pr = get_section_properties(template_path)
@@ -238,14 +236,6 @@ def build_document_xml(payload, template_path):
 
     body.append(section_heading(f"II. PHƯƠNG HƯỚNG, NHIỆM VỤ {next_period.upper()}"))
     body.append(multiline_block(next_tasks))
-
-    if difficulties.strip():
-        body.append(section_heading("III. TỒN TẠI, HẠN CHẾ"))
-        body.append(multiline_block(difficulties))
-
-    if proposals.strip():
-        body.append(section_heading("IV. KIẾN NGHỊ ĐỀ XUẤT"))
-        body.append(multiline_block(proposals))
 
     body.append(paragraph(
         f"Trên đây là báo cáo tình hình hoạt động lĩnh vực {field} được thực hiện vào {strict_activity_period.lower()} và Phương hướng hoạt động {next_period.lower()} của chuyên viên phụ trách.",

@@ -10,6 +10,8 @@ export interface AuthUser {
   fullName: string;
   department: string;
   mustChangePassword: boolean;
+  fieldCodes?: string[];
+  position?: string;
 }
 
 export type AuthenticatedRequest = Request & { user?: AuthUser };
@@ -45,6 +47,8 @@ export async function requireAuth(req: AuthenticatedRequest, _res: Response, nex
       role: user.role,
       fullName: user.fullName,
       department: user.department,
+      fieldCodes: user.fieldCodes,
+      position: user.position,
       mustChangePassword: user.mustChangePassword,
     };
 

@@ -11,7 +11,9 @@
     "catalog:evaluate": "python scripts/evaluate-document-catalog.py --offline",
     "install:all": "npm install --include=dev && cd frontend && npm install --include=dev && cd ../backend && npm install --include=dev",
     "build": "cd frontend && npm run build && cd ../backend && npm run build",
-    "start": "cd backend && npm start"
+    "start": "cd backend && npm start",
+    "demo:weekly:seed": "npm --prefix backend run build && node backend/scripts/seed-weekly-demo.cjs",
+    "demo:weekly:reset": "node backend/scripts/reset-weekly-demo.cjs"
   },
   "keywords": [],
   "author": "",

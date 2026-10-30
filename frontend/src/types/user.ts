@@ -5,6 +5,7 @@ export interface User {
   role: string;
   department: string;
   position?: string;
+  fieldCodes?: string[];
   isActive?: boolean;
   mustChangePassword?: boolean;
 }
@@ -26,6 +27,7 @@ export interface ManagedUser extends User {
 }
 
 export interface CreateUserPayload {
+  fieldCodes?: string[];
   username: string;
   password: string;
   fullName: string;

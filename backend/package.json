@@ -9,7 +9,10 @@
     "test:database": "npm run build && node scripts/test-database-reconnect.cjs && node scripts/test-readiness-http.cjs",
     "test:errors": "npm run build && node scripts/test-error-handling.cjs",
     "test:catalog": "npm run build && node scripts/test-document-catalog.cjs",
-    "test:weekly-summary": "npm run build && node scripts/test-weekly-summary.cjs"
+    "test:weekly-summary": "npm run build && node scripts/test-weekly-summary.cjs",
+    "test:fields": "npm run build && node scripts/test-field-mapping-integration.cjs",
+    "mapping:dry-run": "npm run build && node scripts/migrate-field-mapping.cjs",
+    "test:weekly-demo": "npm run build && node scripts/test-weekly-demo.cjs"
   },
   "dependencies": {
     "@google/genai": "^2.11.0",

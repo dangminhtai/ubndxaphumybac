@@ -1,4 +1,5 @@
 export interface Report {
+  fieldReports?: import('../api/fieldsApi').FieldReport[];
   _id: string;
   title: string;
   ownerId?: string;
@@ -24,6 +25,7 @@ export interface Report {
 }
 
 export interface WeeklyReportPayload {
+  fieldReports?: import('../api/fieldsApi').FieldReport[];
   periodId?: string;
   period: string;
   reportTitle: string;
@@ -68,6 +70,8 @@ export interface ReportPeriod {
 }
 
 export interface WeeklyCurrentResponse {
+  fields: Array<Pick<import('../api/fieldsApi').FieldDefinition, 'code' | 'title' | 'groupId'>>;
+  assignedFieldCodes: string[];
   period: ReportPeriod;
   report: Report | null;
 }

@@ -47,6 +47,7 @@ def main():
     server = ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(Handler, directory=str(DIST)))
     threading.Thread(target=server.serve_forever, daemon=True).start()
     state = copy.deepcopy(FIXTURE)
+    state['autoFilled'] = True
     state['summary']['entries'] = [
         {'id': 'one', 'groupId': 'health', 'section': 'results', 'text': 'Nguồn 1'},
         {'id': 'two', 'groupId': 'health', 'section': 'results', 'text': 'Nguồn 2'},
@@ -78,6 +79,7 @@ def main():
                 patch = route.request.post_data_json
                 saved.append(copy.deepcopy(patch))
                 state['summary'].update(patch)
+                state['autoFilled'] = False
             result = state
         else:
             route.fulfill(status=404, json={'error': path})
@@ -106,7 +108,12 @@ def main():
             assert page.get_by_role('button', name='Tách tại vị trí con trỏ', exact=True).count() == 0
             result = page.get_by_role('textbox', name='Kết quả - Y tế và an toàn thực phẩm', exact=True)
             assert result.input_value() == 'Nguồn 1\n\nNguồn 2'
+            state['summary']['entries'][0]['text'] = 'Nguồn vừa cập nhật'
+            page.wait_for_function("document.querySelector('#summary-results-health').value.includes('Nguồn vừa cập nhật')")
             result.fill('Nội dung đã sửa: 168 lượt')
+            state['summary']['entries'][0]['text'] = 'Nguồn mới không được ghi đè admin'
+            page.wait_for_timeout(5500)
+            assert result.input_value() == 'Nội dung đã sửa: 168 lượt'
             page.get_by_role('textbox', name='Nhiệm vụ - Giáo dục và đào tạo', exact=True).fill('Nhiệm vụ giáo dục tuần tới')
             availability['ready'] = False
             page.get_by_text('Hệ thống chưa sẵn sàng', exact=True).wait_for()
