@@ -26,10 +26,12 @@ export const logger = winston.createLogger({
   ],
 });
 
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(
-    new winston.transports.Console({
-      format: combine(colorize(), timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), myFormat),
-    })
-  );
-}
+// Hosted services collect stdout/stderr in production as well.
+logger.add(
+  new winston.transports.Console({
+    stderrLevels: ['error'],
+    format: process.env.NODE_ENV === 'production'
+      ? combine(timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), myFormat)
+      : combine(colorize(), timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), myFormat),
+  })
+);
