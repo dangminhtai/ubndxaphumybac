@@ -2,6 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 import type { SummaryEntry } from '../services/weekly-summary-groups';
 
 export interface IWeeklySummary extends Document {
+  contentFormat?: 'html-v1';
   periodId: mongoose.Types.ObjectId;
   periodTitle: string;
   sourceReportIds: mongoose.Types.ObjectId[];
@@ -18,6 +19,7 @@ export interface IWeeklySummary extends Document {
 }
 
 const weeklySummarySchema = new Schema<IWeeklySummary>({
+  contentFormat: { type: String, enum: ['html-v1'] },
   periodId: { type: Schema.Types.ObjectId, ref: 'ReportPeriod', required: true, unique: true },
   periodTitle: { type: String, required: true },
   sourceReportIds: [{ type: Schema.Types.ObjectId, ref: 'Report' }],
@@ -25,6 +27,7 @@ const weeklySummarySchema = new Schema<IWeeklySummary>({
   manuallyEditedAt: { type: Date },
   autoUpdateFromSources: { type: Boolean },
   entries: { type: [new Schema({
+    contentFormat: { type: String, enum: ['html-v1'] },
     id: { type: String, required: true },
     sourceReportId: { type: String },
     groupId: { type: String, default: null },

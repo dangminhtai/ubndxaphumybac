@@ -8,10 +8,12 @@ import User from '../models/User';
 import { FIELDS, domainError, type FieldReport } from '../domain/fields';
 import { withAssignmentLock } from './field-assignment.service';
 import { snapshotFieldReports, projectFieldReports } from './report-fields';
+import { normalizeReportText } from './report-rich-text';
 import type { AuthUser } from '../middleware/auth.middleware';
 import { createNotification, notifyUsersByRole } from './notification.service';
 
 export interface WeeklyReportInput {
+  contentFormat?: 'html-v1';
   periodId?: string;
   period: string;
   reportTitle: string;
@@ -33,6 +35,7 @@ export interface WeeklyReportInput {
 }
 
 export interface MonthlyStaffInput {
+  contentFormat?: 'html-v1';
   periodId?: string;
   period: string;
   sender: string;
@@ -213,7 +216,7 @@ export async function submitWeeklyReport(reportId: string, user: AuthUser) {
 
     const owner = await User.findById(report.ownerId).session(session);
     if (!owner || owner.role !== 'staff' || !owner.isActive) throw domainError('Chủ báo cáo không còn là chuyên viên đang hoạt động.', 409);
-    const fields = snapshotFieldReports(report.fieldReports?.map(({ fieldCode, content, difficulties, proposals, nextTasks }) => ({ fieldCode, content, difficulties, proposals, nextTasks })), owner.fieldCodes, 'pending');
+    const fields = snapshotFieldReports(report.fieldReports?.map(({ fieldCode, content, difficulties, proposals, nextTasks, contentFormat }) => ({ fieldCode, content, difficulties, proposals, nextTasks, contentFormat })), owner.fieldCodes, 'pending');
     const periodWrite = await ReportPeriod.updateOne({ _id: period._id, type: 'weekly', status: 'open' }, { $inc: { __v: 1 } }, { session });
     if (!periodWrite.modifiedCount) throw domainError('Kỳ báo cáo không còn mở.', 409);
     report.fieldReports = fields;
@@ -346,6 +349,8 @@ export async function getCurrentMonthlyStaffReport(user: AuthUser, periodId?: st
 }
 
 export async function createMonthlyStaffReport(input: MonthlyStaffInput, user: AuthUser) {
+  input = { ...input };
+  for (const key of ['content', 'difficulties', 'proposals', 'nextTasks'] as const) input[key] = normalizeReportText(input[key] || '', input.contentFormat);
   if (!input.period || !input.content) {
     const error = new Error('Vui lòng nhập kết quả thực hiện');
     Object.assign(error, { statusCode: 400 });
@@ -363,6 +368,7 @@ export async function createMonthlyStaffReport(input: MonthlyStaffInput, user: A
 
   const data = {
     title: `BÁO CÁO CHUYÊN VIÊN ${input.period.toUpperCase()}`,
+    contentFormat: input.contentFormat,
     reportType: 'monthly_staff',
     ownerId: user.id,
     periodId: period.id,
@@ -478,11 +484,13 @@ export async function exportWeeklyReportDocxById(reportId: string, user: AuthUse
   }
 
   const projected = report.fieldReports?.length ? projectFieldReports(report.fieldReports.map((field) => ({
+    contentFormat: field.contentFormat,
     fieldCode: field.fieldCode,
     fieldName: FIELDS.find((definition) => definition.code === field.fieldCode)?.title || field.fieldName,
     content: field.content, difficulties: field.difficulties, proposals: field.proposals, nextTasks: field.nextTasks,
   }))) : report;
   return exportWeeklyReportDocx({
+    contentFormat: projected.contentFormat,
     period: requireReportValue(report.period, 'Báo cáo thiếu kỳ báo cáo'),
     reportTitle: requireReportValue(report.reportTitle, 'Báo cáo thiếu tiêu đề theo template DOCX'),
     startDate: report.startDate?.toISOString(),

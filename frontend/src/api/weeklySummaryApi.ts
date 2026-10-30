@@ -11,6 +11,7 @@ export interface WeeklySummary {
 }
 
 export interface SummaryEntry {
+  contentFormat?: 'html-v1';
   id: string;
   sourceReportId?: string;
   groupId: string | null;
@@ -21,6 +22,7 @@ export interface SummaryEntry {
 export interface SummaryGroup { id: string; title: string }
 
 export interface WeeklyEmployeeReport {
+  contentFormat?: 'html-v1';
   _id: string;
   sender: string;
   department: string;

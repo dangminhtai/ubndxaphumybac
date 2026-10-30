@@ -1,4 +1,5 @@
 export interface Report {
+  contentFormat?: 'html-v1';
   fieldReports?: import('../api/fieldsApi').FieldReport[];
   _id: string;
   title: string;
@@ -25,6 +26,7 @@ export interface Report {
 }
 
 export interface WeeklyReportPayload {
+  contentFormat?: 'html-v1';
   fieldReports?: import('../api/fieldsApi').FieldReport[];
   periodId?: string;
   period: string;
@@ -46,6 +48,7 @@ export interface WeeklyReportPayload {
 }
 
 export interface MonthlyStaffPayload {
+  contentFormat?: 'html-v1';
   periodId?: string;
   period: string;
   sender: string;

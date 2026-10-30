@@ -1,0 +1,20 @@
+.report-editor { border: 1px solid #c4c7dd; border-radius: 10px; overflow: hidden; background: #f8f9ff; min-width: 0; }
+.report-editor:focus-within { border-color: #003399; box-shadow: 0 0 0 1px #003399; }
+.report-editor-toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid #c4c7dd; background: #eff2ff; }
+.report-editor-toolbar button { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 5px; color: #4c5060; }
+.report-editor-toolbar button:hover, .report-editor-toolbar button[aria-pressed=true] { color: #003399; background: #dfe6ff; }
+.report-editor-toolbar button:focus-visible { outline: 2px solid #003399; }
+.report-editor-toolbar button:disabled { opacity: .45; cursor: default; }
+.report-editor-toolbar .report-editor-list-tool { margin-left: 14px; position: relative; }
+.report-editor-list-tool::before { content: ''; width: 1px; height: 24px; background: #c4c7dd; position: absolute; left: -12px; }
+.report-editor .tiptap, .report-rich-text-view { font-family: 'Times New Roman', Times, serif; font-size: 18px; line-height: 1.5; overflow-wrap: anywhere; }
+.report-editor .tiptap { padding: 16px 18px; min-height: 180px; outline: none; resize: vertical; overflow: auto; }
+.report-editor .tiptap p, .report-rich-text-view p { margin: 0 0 .5em; }
+.report-editor .tiptap p:last-child, .report-rich-text-view p:last-child { margin-bottom: 0; }
+.report-editor .tiptap ul, .report-rich-text-view ul { list-style-type: disc; padding-left: 1.5em; margin: .4em 0; }
+.report-editor .tiptap ol, .report-rich-text-view ol { list-style-type: decimal; padding-left: 1.5em; margin: .4em 0; }
+.report-editor .tiptap li, .report-rich-text-view li { padding-left: .15em; }
+.report-editor .tiptap li p, .report-rich-text-view li p { margin-bottom: .2em; }
+.report-editor .tiptap p.is-editor-empty:first-child::before { color: #949aaa; content: attr(data-placeholder); float: left; height: 0; pointer-events: none; }
+.report-editor[aria-disabled=true] { opacity: .65; }
+.report-editor-readonly { background: #fff; }

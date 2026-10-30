@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { FIELDS, type FieldReport } from '../domain/fields';
+import { reportAsHtml, escapeReportText } from './report-rich-text';
 
 const LEGACY_ALIASES: Record<string, readonly string[]> = {
   LV1: ['Nội vụ', 'Công tác cán bộ', 'Nội vụ và công tác cán bộ', 'Nội vụ - Công tác cán bộ'],
@@ -21,6 +22,7 @@ export function resolveWeeklyGroup(field: string) {
 }
 
 export const summaryEntrySchema = z.object({
+  contentFormat: z.literal('html-v1').optional(),
   id: z.string().min(1).max(120),
   sourceReportId: z.string().regex(/^[a-f\d]{24}$/i).optional(),
   groupId: z.string().refine((id) => WEEKLY_GROUPS.some((group) => group.id === id)).nullable(),
@@ -32,13 +34,16 @@ export type SummaryEntry = z.infer<typeof summaryEntrySchema>;
 
 /** Keep the text fields used by archive/legacy readers in sync with the editor. */
 export function combineWeeklyEntries(entries: SummaryEntry[], section: SummaryEntry['section']) {
+  const html = entries.some((entry) => entry.contentFormat === 'html-v1');
   const blocks = WEEKLY_GROUPS.map((group, index) => {
     const items = entries.filter((entry) => entry.section === section && entry.groupId === group.id && entry.text.trim());
-    return items.length ? `**${index + 1}. ${group.title}**\n${items.map((entry) => entry.text).join('\n\n')}` : '';
+    return items.length ? html
+      ? `<p><strong>${index + 1}. ${escapeReportText(group.title)}</strong></p>${items.map((entry) => reportAsHtml(entry.text, entry.contentFormat)).join('')}`
+      : `**${index + 1}. ${group.title}**\n${items.map((entry) => entry.text).join('\n\n')}` : '';
   });
   const unassigned = entries.filter((entry) => entry.section === section && !entry.groupId && entry.text.trim());
-  if (unassigned.length) blocks.push(`**Chưa phân nhóm**\n${unassigned.map((entry) => entry.text).join('\n\n')}`);
-  return blocks.filter(Boolean).join('\n\n');
+  if (unassigned.length) blocks.push(html ? `<p><strong>Chưa phân nhóm</strong></p>${unassigned.map((entry) => reportAsHtml(entry.text, entry.contentFormat)).join('')}` : `**Chưa phân nhóm**\n${unassigned.map((entry) => entry.text).join('\n\n')}`);
+  return blocks.filter(Boolean).join(html ? '' : '\n\n');
 }
 
 export function buildWeeklyEntries(reports: Array<{
@@ -52,8 +57,8 @@ export function buildWeeklyEntries(reports: Array<{
       const group = FIELDS.find((item) => item.code === field.fieldCode);
       if (!group) return [];
       return [
-        { id: `${sourceReportId}-${field.fieldCode}-results`, sourceReportId, groupId: group.groupId, section: 'results' as const, text: field.content },
-        { id: `${sourceReportId}-${field.fieldCode}-nextTasks`, sourceReportId, groupId: group.groupId, section: 'nextTasks' as const, text: field.nextTasks || '' },
+        { id: `${sourceReportId}-${field.fieldCode}-results`, sourceReportId, groupId: group.groupId, section: 'results' as const, text: field.content, ...(field.contentFormat ? { contentFormat: field.contentFormat } : {}) },
+        { id: `${sourceReportId}-${field.fieldCode}-nextTasks`, sourceReportId, groupId: group.groupId, section: 'nextTasks' as const, text: field.nextTasks || '', ...(field.contentFormat ? { contentFormat: field.contentFormat } : {}) },
       ].filter((entry) => entry.text.trim());
     });
   });

@@ -4,6 +4,7 @@ import path from 'path';
 import mongoose from 'mongoose';
 import { weeklyLabel } from '../utils/weeklyLabel';
 import { runPythonScript } from '../utils/pythonRunner';
+import { normalizeReportText } from './report-rich-text';
 import ReportPeriod, { type IReportPeriod } from '../models/ReportPeriod';
 import Report from '../models/Report';
 import User from '../models/User';
@@ -226,12 +227,13 @@ export async function generateWeeklySummary(periodId: string, user: AuthUser) {
         sourceGeneratedAt: new Date(),
         autoUpdateFromSources: true,
         entries,
+        ...(entries.some((entry) => entry.contentFormat === 'html-v1') ? { contentFormat: 'html-v1' } : {}),
         content: combineWeeklyEntries(entries, 'results'),
         nextTasks: combineWeeklyEntries(entries, 'nextTasks'),
         authorId: user.id,
       },
       $setOnInsert: { status: 'draft' },
-      $unset: { difficulties: '', proposals: '', manuallyEditedAt: '' },
+      $unset: { difficulties: '', proposals: '', manuallyEditedAt: '', ...(!entries.some((entry) => entry.contentFormat === 'html-v1') ? { contentFormat: '' } : {}) },
     },
     { upsert: true, new: true, runValidators: true, strict: false },
   );
@@ -264,7 +266,7 @@ export async function updateWeeklySummary(periodId: string, data: WeeklySummaryU
     if (parsed.data.some((entry) => entry.sourceReportId && !sources.has(entry.sourceReportId))) {
       throw appError('Nguồn nội dung không thuộc bản tổng hợp đã lưu', 400, 'WEEKLY_SUMMARY_INVALID_SOURCE');
     }
-    allowed.entries = parsed.data;
+    allowed.entries = parsed.data.map((entry) => ({ ...entry, text: normalizeReportText(entry.text, entry.contentFormat) }));
   }
   if (data.status === 'draft' || data.status === 'published') allowed.status = data.status;
 
@@ -276,9 +278,9 @@ export async function updateWeeklySummary(periodId: string, data: WeeklySummaryU
         manuallyEditedAt: new Date(),
         autoUpdateFromSources: false,
         ...(previewSourceIds ? { sourceReportIds: previewSourceIds, sourceGeneratedAt: new Date() } : {}),
-        ...(allowed.entries ? { content: combineWeeklyEntries(allowed.entries, 'results'), nextTasks: combineWeeklyEntries(allowed.entries, 'nextTasks') } : {}),
+        ...(allowed.entries ? { ...(allowed.entries.some((entry) => entry.contentFormat === 'html-v1') ? { contentFormat: 'html-v1' } : {}), content: combineWeeklyEntries(allowed.entries, 'results'), nextTasks: combineWeeklyEntries(allowed.entries, 'nextTasks') } : {}),
       },
-      $unset: { difficulties: '', proposals: '' },
+      $unset: { difficulties: '', proposals: '', ...(allowed.entries && !allowed.entries.some((entry) => entry.contentFormat === 'html-v1') ? { contentFormat: '' } : {}) },
     },
     { upsert: true, new: true, runValidators: true, strict: false },
   );

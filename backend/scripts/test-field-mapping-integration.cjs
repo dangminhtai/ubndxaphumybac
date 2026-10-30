@@ -149,6 +149,39 @@ async function main() {
     const deleted = await deleteManagedUser(createdId, actor(admin));
     assert.ok(!('passwordHash' in deleted));
     assert.equal(await User.countDocuments({ _id: createdId }), 0);
+    // Rich text round trip in the isolated QA database: HTML sanitization,
+    // submission, mixed old/new source aggregation, manual save and mapping.
+    const richPeriod = await Period.create({ type: 'weekly', year: 2026, month: 12, weekNumber: 50, title: 'Rich text QA', startDate: new Date('2026-12-07T00:00:00Z'), dueDate: new Date('2026-12-10T16:59:59Z'), status: 'open', expectedReporterIds: [b._id] });
+    const richFields = ['LV2', 'LV4'].map((code) => ({ ...body(code, '<p><strong>Rich result</strong> **literal** &lt; 10</p><ol><li><p>First</p></li><li><p>Second</p></li></ol><script>BAD()</script><img src=x onerror=BAD()>'), contentFormat: 'html-v1', nextTasks: '<p><u>Next</u></p>' }));
+    const richInput = { ...input, periodId: String(richPeriod._id), fieldReports: richFields };
+    const richDraft = await createWeeklyReport(richInput, actor(b));
+    let storedRich = await Report.findById(richDraft._id).lean();
+    assert.equal(storedRich.fieldReports[0].contentFormat, 'html-v1');
+    assert.ok(storedRich.fieldReports[0].content.includes('<strong>Rich result</strong>'));
+    assert.ok(!/script|onerror|<img|BAD/.test(storedRich.fieldReports[0].content));
+    assert.equal(storedRich.contentFormat, 'html-v1');
+    const emptyFields = richFields.map((field) => ({ ...field, content: '<p> &nbsp;<br></p>' }));
+    await assert.rejects(createWeeklyReport({ ...richInput, status: 'pending', fieldReports: emptyFields }, actor(b)), (e) => e.statusCode === 400);
+    await submitWeeklyReport(String(richDraft._id), actor(b));
+    storedRich = await Report.findById(richDraft._id).lean();
+    assert.equal(storedRich.fieldReports[0].contentFormat, 'html-v1');
+    const richSummary = await generateWeeklySummary(String(richPeriod._id), actor(admin));
+    assert.ok(richSummary.summary.entries.every((entry) => entry.contentFormat === 'html-v1'));
+    const richEntries = richSummary.summary.entries.map((entry) => ({ ...entry, text: entry.text + '<style>BAD</style><p onclick=BAD()>Admin</p>' }));
+    await updateWeeklySummary(String(richPeriod._id), { entries: richEntries }, actor(admin));
+    const richSaved = await Summary.findOne({ periodId: richPeriod._id }).lean();
+    assert.ok(!/style|onclick|BAD/.test(richSaved.entries[0].text));
+    assert.equal(richSaved.entries[0].contentFormat, 'html-v1');
+    assert.ok(richSaved.content.includes('<strong>2.'));
+    const richMapping = await getReportMapping(String(richDraft._id));
+    await updateReportMapping(String(richDraft._id), ['LV2', 'LV4'], actor(admin), richMapping.revision);
+    assert.equal((await Report.findById(richDraft._id)).fieldReports[0].contentFormat, 'html-v1');
+    const monthly = await Period.create({ type: 'monthly', year: 2026, month: 12, title: 'Monthly rich QA', startDate: richPeriod.startDate, dueDate: richPeriod.dueDate, status: 'open' });
+    const { createMonthlyStaffReport } = require('../dist/services/report.service');
+    const monthlyReport = await createMonthlyStaffReport({ periodId: String(monthly._id), period: monthly.title, status: 'draft', contentFormat: 'html-v1', content: '<p><em>Monthly</em></p><script>BAD()</script>' }, actor(b));
+    assert.equal((await Report.findById(monthlyReport._id)).content, '<p><em>Monthly</em></p>');
+    await assert.rejects(createMonthlyStaffReport({ periodId: String(monthly._id), period: monthly.title, status: 'pending', contentFormat: 'html-v1', content: '<p><br></p>' }, actor(b)), (e) => e.statusCode === 400);
+    console.log('PASS: rich text save/read/submit, sanitized HTML and empty checks, summary and source mapping, monthly DB round trip.');
     // Exercise the actual auth/field/report routes with signed QA-only identities.
     const express = require('express');
     const jwt = require('jsonwebtoken');

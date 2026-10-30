@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 import zipfile
+import subprocess
 from datetime import date
 from pathlib import Path
 from xml.etree import ElementTree as ET
@@ -39,6 +40,56 @@ def fixture():
 
 
 class DocumentTests(unittest.TestCase):
+    def test_staff_and_monthly_html_template_exports(self):
+        from docx import Document
+        payload = dict(period='Tháng 10/2026', reportTitle='BÁO CÁO', department='QA', sender='QA', field='Y tế',
+                       startDate='2026-10-19T00:00:00Z', endDate='2026-10-22T00:00:00Z', dueDate='2026-10-22T00:00:00Z',
+                       contentFormat='html-v1', content='<p><strong>Rich template</strong> **literal** &lt; 10</p><ol><li><p>First</p></li><li><p>Second</p></li></ol>',
+                       nextTasks='<p><u>Next task</u></p>')
+        with tempfile.TemporaryDirectory() as folder:
+            for script, template in [('generate_weekly_docx.py', 'weekly_template.docx'), ('docx_summary_generator.py', 'monthly_template.docx')]:
+                output = Path(folder) / f'{script}.docx'
+                result = subprocess.run([sys.executable, str(ROOT / 'src/scripts' / script), str(ROOT / 'src/templates' / template), str(output)], input=json.dumps(payload).encode('utf-8'), capture_output=True, timeout=30)
+                self.assertEqual(result.returncode, 0, result.stderr.decode('utf-8', errors='replace'))
+                actual = Document(output)
+                text = '\n'.join(p.text for p in actual.paragraphs)
+                self.assertIn('**literal** < 10', text)
+                self.assertTrue(any(run.bold and run.text == 'Rich template' for p in actual.paragraphs for run in p.runs))
+                self.assertTrue(any(run.underline and run.text == 'Next task' for p in actual.paragraphs for run in p.runs))
+                self.assertTrue(any(p._p.pPr is not None and p._p.pPr.numPr is not None for p in actual.paragraphs))
+                self.assertIn(b'9000', actual.part.numbering_part.blob)
+
+    def test_html_marks_lists_and_literals(self):
+        from docx import Document
+        payload = fixture()
+        payload['entries'] = [{ 'id': 'rich', 'groupId': 'health', 'section': 'results', 'contentFormat': 'html-v1',
+            'text': '<p><strong>Bold <em>both</em></strong> <u>Underline</u> **literal** &lt; 10 &amp; 20</p><ol start="3"><li><p>First</p><ul><li><p>Nested</p></li></ul></li><li><p>Second</p></li></ol><p>End<br>Next line</p>' }]
+        with tempfile.TemporaryDirectory() as folder:
+            output = Path(folder) / 'report.docx'
+            generator.build_document(payload, output)
+            document = Document(output)
+            text = '\n'.join(p.text for p in document.paragraphs)
+            self.assertIn('**literal** < 10 & 20', text)
+            self.assertIn('End\nNext line', text)
+            self.assertTrue(any(run.bold and run.italic and run.text == 'both' for p in document.paragraphs for run in p.runs))
+            self.assertTrue(any(run.underline and run.text == 'Underline' for p in document.paragraphs for run in p.runs))
+            ns = {'w': generator.qn('w:p').split('}')[0][1:]}
+            with zipfile.ZipFile(output) as package:
+                root = ET.fromstring(package.read('word/document.xml'))
+                self.assertEqual(len(root.findall('.//w:numPr', ns)), 3)
+                numbering = ET.fromstring(package.read('word/numbering.xml'))
+                self.assertTrue(any(node.get(generator.qn('w:val')) == '3' for node in numbering.findall('.//w:start', ns)))
+            if os.environ.get('RUN_PDF_TESTS') == '1':
+                import pymupdf
+                pdf = output.with_suffix('.pdf')
+                generator.convert_pdf(output, pdf)
+                with pymupdf.open(pdf) as actual:
+                    extracted = '\n'.join(page.get_text() for page in actual)
+                self.assertIn('**literal** < 10 & 20', extracted)
+                self.assertRegex(extracted, r'3\.\s+First')
+                self.assertRegex(extracted, r'4\.\s+Second')
+                self.assertIn('Nested', extracted)
+
     def test_year_boundaries(self):
         for value, label in [('2026-10-19', 'tuần 43 năm 2026'), ('2027-01-01', 'tuần 53 năm 2026'), ('2027-01-04', 'tuần 1 năm 2027'), ('2024-12-30', 'tuần 1 năm 2025')]:
             self.assertEqual(generator.week_label(date.fromisoformat(value)), label)

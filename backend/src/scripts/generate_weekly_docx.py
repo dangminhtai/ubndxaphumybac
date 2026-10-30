@@ -1,3 +1,4 @@
+from report_rich_text import html_word_xml, merge_numbering, XML_NUMBERING
 import html
 import json
 import shutil
@@ -232,10 +233,10 @@ def build_document_xml(payload, template_path):
 
     strict_activity_period = week_label_no_year(end_date)
     body.append(section_heading(f"I. TÌNH HÌNH HOẠT ĐỘNG {strict_activity_period.upper()}"))
-    body.append(multiline_block(content))
+    body.append(html_word_xml(content) if payload.get('contentFormat') == 'html-v1' else multiline_block(content))
 
     body.append(section_heading(f"II. PHƯƠNG HƯỚNG, NHIỆM VỤ {next_period.upper()}"))
-    body.append(multiline_block(next_tasks))
+    body.append(html_word_xml(next_tasks) if payload.get('contentFormat') == 'html-v1' else multiline_block(next_tasks))
 
     body.append(paragraph(
         f"Trên đây là báo cáo tình hình hoạt động lĩnh vực {field} được thực hiện vào {strict_activity_period.lower()} và Phương hướng hoạt động {next_period.lower()} của chuyên viên phụ trách.",
@@ -278,6 +279,8 @@ def main():
         for item in zin.infolist():
             if item.filename == "word/document.xml":
                 zout.writestr(item, document_xml.encode("utf-8"))
+            elif item.filename == 'word/numbering.xml' and XML_NUMBERING:
+                zout.writestr(item, merge_numbering(zin.read(item.filename)))
             else:
                 zout.writestr(item, zin.read(item.filename))
 

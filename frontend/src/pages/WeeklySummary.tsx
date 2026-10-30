@@ -1,3 +1,4 @@
+import { ReportRichTextView } from '../components/ReportRichTextEditor';
 import { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -472,26 +473,26 @@ export default function WeeklySummaryPage() {
                       {expandedReportId === r._id && (
                         <div className="mt-3 border-t border-outline-variant pt-3 text-sm text-on-surface whitespace-pre-wrap">
                           <div className="font-semibold mb-1">Kết quả thực hiện:</div>
-                          <div className="mb-3">{r.content || 'Không có'}</div>
+                          <div className="mb-3"><ReportRichTextView value={r.content} format={r.contentFormat} /></div>
                           
                           {r.difficulties && (
                             <>
                               <div className="font-semibold mb-1">Khó khăn:</div>
-                              <div className="mb-3">{r.difficulties}</div>
+                              <div className="mb-3"><ReportRichTextView value={r.difficulties} format={r.contentFormat} /></div>
                             </>
                           )}
                           
                           {r.proposals && (
                             <>
                               <div className="font-semibold mb-1">Đề xuất:</div>
-                              <div className="mb-3">{r.proposals}</div>
+                              <div className="mb-3"><ReportRichTextView value={r.proposals} format={r.contentFormat} /></div>
                             </>
                           )}
                           
                           {r.nextTasks && (
                             <>
                               <div className="font-semibold mb-1">Nhiệm vụ tới:</div>
-                              <div className="mb-3">{r.nextTasks}</div>
+                              <div className="mb-3"><ReportRichTextView value={r.nextTasks} format={r.contentFormat} /></div>
                             </>
                           )}
                           <SourceFieldMapping reportId={r._id} readOnly={Boolean(readOnly)} onSaved={async () => {

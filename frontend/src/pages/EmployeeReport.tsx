@@ -1,3 +1,5 @@
+import ReportRichTextEditor, { ReportRichTextView } from '../components/ReportRichTextEditor';
+import { reportHtml } from '../utils/reportRichText';
 import { useEffect, useState } from 'react';
 import AppLayout from '../components/layout/AppLayout';
 import { createWeeklyReport, exportWeeklyReportDocxById, getCurrentWeeklyReport, recallReport } from '../api/reportApi';
@@ -6,7 +8,7 @@ import { formatApiError } from '../utils/apiError';
 import { weeklyLabel } from '../utils/weeklyLabel';
 import type { Report, ReportPeriod, WeeklyReportPayload } from '../types/report';
 
-const blank = (fieldCode: string): FieldReport => ({ fieldCode, content: '', difficulties: '', proposals: '', nextTasks: '' });
+const blank = (fieldCode: string): FieldReport => ({ fieldCode, contentFormat: 'html-v1', content: '', difficulties: '', proposals: '', nextTasks: '' });
 const sections = [ ['content', '1. Kết quả thực hiện'], ['nextTasks', '2. Phương hướng, nhiệm vụ tuần tới'] ] as const;
 
 export default function EmployeeReport() {
@@ -33,7 +35,7 @@ export default function EmployeeReport() {
       const [data, directory] = await Promise.all([getCurrentWeeklyReport(), getFields()]);
       setPeriod(data.period); setFields(directory); setAssigned(data.assignedFieldCodes); setSelected(data.assignedFieldCodes);
       setReport(data.report);
-      setValues(data.report?.fieldReports?.length ? data.report.fieldReports : data.assignedFieldCodes.map(blank));
+      setValues(data.report?.fieldReports?.length ? data.report.fieldReports.map((row) => ({ ...row, contentFormat: 'html-v1' as const, content: reportHtml(row.content, row.contentFormat), nextTasks: reportHtml(row.nextTasks, row.contentFormat), difficulties: reportHtml(row.difficulties, row.contentFormat), proposals: reportHtml(row.proposals, row.contentFormat) })) : data.assignedFieldCodes.map(blank));
     } catch (err) { setError(formatApiError(err, 'Không tải được báo cáo.')); }
     finally { setLoading(false); }
   }
@@ -104,7 +106,9 @@ export default function EmployeeReport() {
       </section>
       {legacy && <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm">
         Báo cáo này chưa được xác định mã lĩnh vực. Liên hệ admin để đối soát, không ghi đè nội dung hiện có.
-        <pre className="mt-2 whitespace-pre-wrap">{report?.field}{'\n'}{report?.content}{'\n'}{report?.nextTasks}</pre>
+        <p className="mt-2">{report?.field}</p>
+        <ReportRichTextView value={report?.content} format={report?.contentFormat} />
+        <ReportRichTextView value={report?.nextTasks} format={report?.contentFormat} />
       </div>}
       {changedAssignment && !legacy && <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm">
         Phân công đã thay đổi. Sao chép nội dung thuộc lĩnh vực cũ cần giữ trước khi cập nhật bản nháp.
@@ -116,9 +120,8 @@ export default function EmployeeReport() {
         <h2 className="font-semibold text-primary">{fields.find((field) => field.code === row.fieldCode)?.title || row.fieldName || row.fieldCode}</h2>
         {sections.map(([key, label]) => <div key={key}>
           <label htmlFor={`${row.fieldCode}-${key}`} className="mb-2 block text-sm font-semibold">{label}</label>
-          <textarea id={`${row.fieldCode}-${key}`} aria-label={`${row.fieldCode} - ${label}`} disabled={busy || loading || readOnly || changedAssignment} value={row[key]}
-            onChange={(event) => setValues((current) => current.map((item) => item.fieldCode === row.fieldCode ? { ...item, [key]: event.target.value } : item))}
-            className="min-h-36 w-full resize-y rounded-lg border border-outline-variant p-3 text-sm outline-none focus:border-primary disabled:opacity-70" />
+          <ReportRichTextEditor id={`${row.fieldCode}-${key}`} ariaLabel={`${row.fieldCode} - ${label}`} value={row[key]} format={row.contentFormat}
+            disabled={busy || loading || changedAssignment} readOnly={readOnly} onChange={(html) => setValues((current) => current.map((item) => item.fieldCode === row.fieldCode ? { ...item, contentFormat: 'html-v1', [key]: html } : item))} />
         </div>)}
       </section>)}
       {readOnly && report && period?.status === 'open' && <button type="button" disabled={busy} className="rounded-lg border border-outline-variant px-4 py-2" onClick={async () => {

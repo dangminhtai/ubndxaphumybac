@@ -1,3 +1,4 @@
+from report_rich_text import html_word_xml, merge_numbering, XML_NUMBERING
 import html
 import json
 import shutil
@@ -209,16 +210,16 @@ def build_document_xml(payload, template_path):
     ))
 
     body.append(section_heading(f"I. TÌNH HÌNH HOẠT ĐỘNG {period.upper()}"))
-    body.append(multiline_block(content))
+    body.append(html_word_xml(content) if payload.get('contentFormat') == 'html-v1' else multiline_block(content))
 
     body.append(section_heading("II. KHÓ KHĂN, VƯỚNG MẮC"))
-    body.append(multiline_block(difficulties))
+    body.append(html_word_xml(difficulties) if payload.get('contentFormat') == 'html-v1' else multiline_block(difficulties))
 
     body.append(section_heading("III. ĐỀ XUẤT, KIẾN NGHỊ"))
-    body.append(multiline_block(proposals))
+    body.append(html_word_xml(proposals) if payload.get('contentFormat') == 'html-v1' else multiline_block(proposals))
 
     body.append(section_heading("IV. PHƯƠNG HƯỚNG, NHIỆM VỤ TỚI"))
-    body.append(multiline_block(next_tasks))
+    body.append(html_word_xml(next_tasks) if payload.get('contentFormat') == 'html-v1' else multiline_block(next_tasks))
 
     body.append(paragraph("Kính báo cáo lãnh đạo Phòng biết và chỉ đạo.", size=28, spacing_after=320))
     body.append(paragraph("Trưởng phòng", bold=True, align="right", size=28, spacing_after=360))
@@ -256,6 +257,8 @@ def main():
         for item in zin.infolist():
             if item.filename == "word/document.xml":
                 zout.writestr(item, document_xml.encode("utf-8"))
+            elif item.filename == 'word/numbering.xml' and XML_NUMBERING:
+                zout.writestr(item, merge_numbering(zin.read(item.filename)))
             else:
                 zout.writestr(item, zin.read(item.filename))
 

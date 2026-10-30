@@ -1,3 +1,5 @@
+import ReportRichTextEditor from './ReportRichTextEditor';
+import { reportHtml } from '../utils/reportRichText';
 import type { SummaryEntry, SummaryGroup } from '../api/weeklySummaryApi';
 
 export default function GroupedSummaryEditor({ entries, groups, currentTitle, nextTitle, readOnly, onChange }: {
@@ -13,8 +15,8 @@ export default function GroupedSummaryEditor({ entries, groups, currentTitle, ne
   function updateGroup(section: SummaryEntry['section'], groupId: string, text: string) {
     const matching = entries.filter((entry) => entry.section === section && entry.groupId === groupId);
     const replacement: SummaryEntry = matching.length === 1
-      ? { ...matching[0], text }
-      : { id: matching[0]?.id || `manual-${section}-${groupId}`, section, groupId, text };
+      ? { ...matching[0], text, contentFormat: 'html-v1' }
+      : { id: matching[0]?.id || `manual-${section}-${groupId}`, section, groupId, text, contentFormat: 'html-v1' };
     if (!matching.length) {
       onChange([...entries, replacement]);
       return;
@@ -37,17 +39,11 @@ export default function GroupedSummaryEditor({ entries, groups, currentTitle, ne
       </h3>
       {groups.map((group, index) => {
         const inputId = `summary-${section}-${group.id}`;
-        const value = entries.filter((entry) => entry.section === section && entry.groupId === group.id).map((entry) => entry.text).join('\n\n');
+        const value = entries.filter((entry) => entry.section === section && entry.groupId === group.id).map((entry) => reportHtml(entry.text, entry.contentFormat)).join('');
         return <div key={group.id} className="space-y-2">
           <h4 className="text-sm font-semibold text-on-surface"><label htmlFor={inputId}>{index + 1}. {group.title}</label></h4>
-          <textarea
-            id={inputId}
-            aria-label={`${section === 'results' ? 'Kết quả' : 'Nhiệm vụ'} - ${group.title}`}
-            className="min-h-40 w-full resize-y rounded-lg border border-outline-variant bg-white p-3 text-sm leading-relaxed text-on-surface outline-none focus:border-primary disabled:opacity-75"
-            disabled={readOnly}
-            value={value}
-            onChange={(event) => updateGroup(section, group.id, event.target.value)}
-          />
+          <ReportRichTextEditor id={inputId} ariaLabel={`${section === 'results' ? 'Kết quả' : 'Nhiệm vụ'} - ${group.title}`} value={value} format="html-v1" readOnly={readOnly}
+            onChange={(html) => updateGroup(section, group.id, html)} />
         </div>;
       })}
     </section>)}

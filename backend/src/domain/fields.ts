@@ -14,6 +14,7 @@ export const fieldCodeSchema = z.enum(['LV1', 'LV2', 'LV3', 'LV4', 'LV5', 'LV6',
 export type FieldCode = z.infer<typeof fieldCodeSchema>;
 export const fieldCodesSchema = z.array(fieldCodeSchema).max(8).refine((codes) => new Set(codes).size === codes.length);
 export const fieldReportSchema = z.object({
+  contentFormat: z.literal('html-v1').optional(),
   fieldCode: fieldCodeSchema,
   content: z.string().max(200000), difficulties: z.string().max(200000),
   proposals: z.string().max(200000), nextTasks: z.string().max(200000),

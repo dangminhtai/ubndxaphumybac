@@ -14,6 +14,7 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt
 from docx_summary_generator import VIETNAM_TZ, markdown_to_html, parse_html_to_lines, parse_runs
+from report_rich_text import add_html
 
 
 def local_date(value):
@@ -129,7 +130,10 @@ def build_document(payload, output):
             group_entries = [entry for entry in entries if entry['section'] == key and entry['groupId'] == group['id'] and entry['text'].strip()]
             paragraph(doc, f"{index}. {group['title']}", bold=True, keep=bool(group_entries), indent=True)
             for entry in group_entries:
-                body_text(doc, entry['text'])
+                if entry.get('contentFormat') == 'html-v1':
+                    add_html(doc, entry['text'], paragraph)
+                else:
+                    body_text(doc, entry['text'])
     closing_current = f'tuần {start.isocalendar().week}' if start.isocalendar().year == (start + timedelta(days=7)).isocalendar().year else current
     paragraph(doc, f"Trên đây là báo cáo kết quả công tác {closing_current} và phương hướng, nhiệm vụ {following} của {config['agencyDisplayName']}, kính báo cáo {config.get('closingAddressee', config['addressee'])} xem xét, chỉ đạo./.", indent=True, keep=True)
     left, right = two_columns(doc, 8.35, 8.15)

@@ -1,5 +1,10 @@
 """Mocked browser QA for field assignments and a specialist's multi-field report."""
 import copy
+import re
+import html
+def plain(value):
+    return html.unescape(re.sub(r'<[^>]+>', '', value))
+
 import functools
 import json
 import os
@@ -79,7 +84,7 @@ def main():
             staff = new_page(users[0])
             staff.goto(f'http://127.0.0.1:{server.server_port}/employee-report')
             staff.get_by_role('textbox', name='LV1 - 1. Kết quả thực hiện', exact=True).wait_for()
-            assert staff.locator('textarea').count() == 4
+            assert staff.locator('[role=textbox][contenteditable]').count() == 4
             assert staff.get_by_text('2. Khó khăn, vướng mắc', exact=True).count() == 0
             assert staff.get_by_text('3. Kiến nghị, đề xuất', exact=True).count() == 0
             assert staff.get_by_placeholder('Nhập lĩnh vực phụ trách', exact=False).count() == 0
@@ -88,25 +93,25 @@ def main():
             staff.get_by_role('textbox', name='LV6 - 2. Phương hướng, nhiệm vụ tuần tới', exact=True).fill('Nhiệm vụ giữ riêng LV6')
             staff.get_by_role('button', name='Lưu nháp', exact=True).click()
             staff.get_by_text('Đã lưu nháp', exact=True).wait_for()
-            assert state['saved']['fieldReports'][0]['content'] == 'Nội vụ nguyên văn 692'
-            assert state['saved']['fieldReports'][1]['content'] == 'CCHC nguyên văn 168'
-            assert state['saved']['fieldReports'][1]['nextTasks'] == 'Nhiệm vụ giữ riêng LV6'
+            assert plain(state['saved']['fieldReports'][0]['content']) == 'Nội vụ nguyên văn 692'
+            assert plain(state['saved']['fieldReports'][1]['content']) == 'CCHC nguyên văn 168'
+            assert plain(state['saved']['fieldReports'][1]['nextTasks']) == 'Nhiệm vụ giữ riêng LV6'
             staff.reload()
             staff.get_by_role('textbox', name='LV6 - 1. Kết quả thực hiện', exact=True).wait_for()
-            assert staff.get_by_role('textbox', name='LV6 - 2. Phương hướng, nhiệm vụ tuần tới', exact=True).input_value() == 'Nhiệm vụ giữ riêng LV6'
+            assert staff.get_by_role('textbox', name='LV6 - 2. Phương hướng, nhiệm vụ tuần tới', exact=True).inner_text() == 'Nhiệm vụ giữ riêng LV6'
             staff.screenshot(path=str(OUTPUT / 'staff-two-fields.png'), full_page=True)
             staff.get_by_role('button', name='Thay đổi lĩnh vực', exact=True).click()
             staff.get_by_role('checkbox', name='LV2 — Giáo dục và đào tạo', exact=False).check()
             staff.get_by_role('button', name='Lưu phân công', exact=True).click()
             staff.get_by_role('alert').filter(has_text='Lĩnh vực này đã có người khác đảm nhận.').wait_for()
-            assert staff.get_by_role('textbox', name='LV1 - 1. Kết quả thực hiện', exact=True).input_value() == 'Nội vụ nguyên văn 692'
+            assert staff.get_by_role('textbox', name='LV1 - 1. Kết quả thực hiện', exact=True).inner_text() == 'Nội vụ nguyên văn 692'
             staff.screenshot(path=str(OUTPUT / 'staff-conflict.png'), full_page=True)
             staff.set_viewport_size({'width': 390, 'height': 844})
             assert staff.evaluate('document.documentElement.scrollWidth <= innerWidth')
             staff.screenshot(path=str(OUTPUT / 'staff-mobile.png'), full_page=True)
             single = new_page(users[1]); single.goto(f'http://127.0.0.1:{server.server_port}/employee-report')
             single.get_by_role('textbox', name='LV2 - 1. Kết quả thực hiện', exact=True).wait_for()
-            assert single.locator('textarea').count() == 2
+            assert single.locator('[role=textbox][contenteditable]').count() == 2
             single.close()
             admin = new_page(users[2]); admin.goto(f'http://127.0.0.1:{server.server_port}/admin/users')
             admin.get_by_role('combobox', name='Phụ trách LV1', exact=True).wait_for()
@@ -128,7 +133,7 @@ def main():
             admin.screenshot(path=str(OUTPUT / 'admin-mobile.png'), full_page=True)
             assert not errors, errors
             browser.close()
-        print(f'PASS: browser 2-field/4-textarea specialist form, save/reload, exact conflict message, atomic admin assignment request, source review, desktop/mobile. Screenshots: {OUTPUT}')
+        print(f'PASS: browser 2-field/4-editor specialist form, save/reload, exact conflict message, atomic admin assignment request, source review, desktop/mobile. Screenshots: {OUTPUT}')
     finally:
         server.shutdown(); server.server_close()
 

@@ -1,20 +1,17 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  Bold,
   CheckCircle2,
   CloudUpload,
   FileText,
-  Italic,
-  List,
-  ListOrdered,
   Loader2,
   Save,
   Send,
-  Underline,
   Undo2,
 } from 'lucide-react';
+import ReportRichTextEditor from '../components/ReportRichTextEditor';
+import { reportHtml } from '../utils/reportRichText';
 import AppLayout from '../components/layout/AppLayout';
-import { createMonthlyStaffReport, getMonthlyStaffCurrent, submitMonthlyStaffReport, recallReport } from '../api/reportApi';
+import { createMonthlyStaffReport, getMonthlyStaffCurrent, recallReport } from '../api/reportApi';
 import type { ReportPeriod, MonthlyStaffPayload } from '../types/report';
 import type { User } from '../types/user';
 import ConfirmModal from '../components/ui/ConfirmModal';
@@ -65,9 +62,6 @@ interface EditorSection {
   number: number;
   title: string;
   placeholder: string;
-  heightClass: string;
-  description?: string;
-  orderedList: boolean;
   fieldKey: 'content' | 'difficulties' | 'proposals' | 'nextTasks';
 }
 
@@ -75,185 +69,28 @@ const SECTIONS: EditorSection[] = [
   {
     number: 1,
     title: 'Kết quả thực hiện',
-    description: 'Nhập các nội dung kết quả thực hiện theo từng dòng. Khi xuất Word, mỗi dòng sẽ thành một gạch đầu dòng.',
     placeholder: 'Kết quả công tác nổi bật trong tháng...',
-    heightClass: 'min-h-[160px]',
-    orderedList: true,
     fieldKey: 'content',
   },
   {
     number: 2,
     title: 'Khó khăn, vướng mắc',
     placeholder: 'Nêu rõ những khó khăn gặp phải trong quá trình thực hiện nhiệm vụ...',
-    heightClass: 'min-h-[120px]',
-    orderedList: true,
     fieldKey: 'difficulties',
   },
   {
     number: 3,
     title: 'Kiến nghị, đề xuất',
     placeholder: 'Các đề xuất giải quyết vướng mắc (nếu có)...',
-    heightClass: 'min-h-[120px]',
-    orderedList: true,
     fieldKey: 'proposals',
   },
   {
     number: 4,
     title: 'Nhiệm vụ trọng tâm thời gian tới',
     placeholder: 'Kế hoạch công tác cho tháng tiếp theo...',
-    heightClass: 'min-h-[120px]',
-    orderedList: true,
     fieldKey: 'nextTasks',
   },
 ];
-
-function Toolbar({
-  textareaRef,
-  onChange,
-  orderedList = false,
-  disabled = false,
-}: {
-  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
-  onChange: (val: string) => void;
-  orderedList?: boolean;
-  disabled?: boolean;
-}) {
-  const handleFormat = (type: 'bold' | 'italic' | 'underline' | 'list' | 'ordered-list') => {
-    if (disabled) return;
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value;
-    const selectedText = text.substring(start, end);
-
-    let replacement = '';
-    switch (type) {
-      case 'bold':
-        replacement = `**${selectedText || 'in đậm'}**`;
-        break;
-      case 'italic':
-        replacement = `*${selectedText || 'in nghiêng'}*`;
-        break;
-      case 'underline':
-        replacement = `<u>${selectedText || 'gạch chân'}</u>`;
-        break;
-      case 'list': {
-        const lines = selectedText.split('\n');
-        replacement = lines.map(line => line.startsWith('- ') ? line : `- ${line}`).join('\n');
-        if (!selectedText) replacement = '- ';
-        break;
-      }
-      case 'ordered-list': {
-        const lines = selectedText.split('\n');
-        replacement = lines.map((line, idx) => {
-          const prefix = `${idx + 1}. `;
-          return line.startsWith(prefix) ? line : `${prefix}${line}`;
-        }).join('\n');
-        if (!selectedText) replacement = '1. ';
-        break;
-      }
-    }
-
-    const newValue = text.substring(0, start) + replacement + text.substring(end);
-    onChange(newValue);
-
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start, start + replacement.length);
-    }, 0);
-  };
-
-  return (
-    <div className="flex items-center gap-2 rounded-t-lg border-b border-outline-variant bg-surface-container-low p-2">
-      <button
-        className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-50"
-        type="button"
-        title="In đậm (Bold)"
-        disabled={disabled}
-        onClick={() => handleFormat('bold')}
-      >
-        <Bold className="h-4 w-4" />
-      </button>
-      <button
-        className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-50"
-        type="button"
-        title="In nghiêng (Italic)"
-        disabled={disabled}
-        onClick={() => handleFormat('italic')}
-      >
-        <Italic className="h-4 w-4" />
-      </button>
-      <button
-        className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-50"
-        type="button"
-        title="Gạch chân (Underline)"
-        disabled={disabled}
-        onClick={() => handleFormat('underline')}
-      >
-        <Underline className="h-4 w-4" />
-      </button>
-      <div className="mx-1 h-5 w-px bg-outline-variant" />
-      <button
-        className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-50"
-        type="button"
-        title="Danh sách gạch đầu dòng"
-        disabled={disabled}
-        onClick={() => handleFormat('list')}
-      >
-        <List className="h-4 w-4" />
-      </button>
-      {orderedList && (
-        <button
-          className="rounded p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-50"
-          type="button"
-          title="Danh sách đánh số"
-          disabled={disabled}
-          onClick={() => handleFormat('ordered-list')}
-        >
-          <ListOrdered className="h-4 w-4" />
-        </button>
-      )}
-    </div>
-  );
-}
-
-function ReportEditor({
-  section,
-  value,
-  onChange,
-  disabled = false,
-}: {
-  section: EditorSection;
-  value: string;
-  onChange: (val: string) => void;
-  disabled?: boolean;
-}) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  return (
-    <section>
-      <div className="mb-stack-sm flex items-center gap-2">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
-          {section.number}
-        </span>
-        <h3 className="font-headline-sm text-base text-on-surface">{section.title}</h3>
-      </div>
-      {section.description && <p className="mb-stack-md text-sm text-on-surface-variant">{section.description}</p>}
-      <div className="overflow-hidden rounded-lg border border-outline-variant bg-surface focus-within:border-primary">
-        <Toolbar textareaRef={textareaRef} onChange={onChange} orderedList={section.orderedList} disabled={disabled} />
-        <textarea
-          ref={textareaRef}
-          className={`${section.heightClass} w-full resize-y border-none bg-transparent p-4 font-doc-preview text-doc-preview text-on-surface outline-none disabled:opacity-75`}
-          placeholder={section.placeholder}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          disabled={disabled}
-        />
-      </div>
-    </section>
-  );
-}
 
 const initialForm = {
   content: '',
@@ -305,10 +142,10 @@ export default function MonthlyReport() {
           setReportId(data.report._id);
           setReportStatus(data.report.status);
           setForm({
-            content: data.report.content || '',
-            difficulties: data.report.difficulties || '',
-            proposals: data.report.proposals || '',
-            nextTasks: data.report.nextTasks || '',
+            content: reportHtml(data.report.content, data.report.contentFormat),
+            difficulties: reportHtml(data.report.difficulties, data.report.contentFormat),
+            proposals: reportHtml(data.report.proposals, data.report.contentFormat),
+            nextTasks: reportHtml(data.report.nextTasks, data.report.contentFormat),
           });
           setMessage(data.report.status === 'draft' ? 'Đã tải bản nháp từ MongoDB' : 'Báo cáo kỳ này đã nộp');
         }
@@ -327,6 +164,7 @@ export default function MonthlyReport() {
   };
 
   const buildPayload = (status: MonthlyStaffPayload['status']): MonthlyStaffPayload => ({
+    contentFormat: 'html-v1',
     periodId: period?._id,
     period: period?.title || reportWindow.period,
     sender,
@@ -356,28 +194,13 @@ export default function MonthlyReport() {
   };
 
   const submitSavedReport = async () => {
-    if (reportId && reportStatus === 'draft') {
-      setSaving(true);
-      setError('');
-      try {
-        const report = await submitMonthlyStaffReport(reportId);
-        setReportStatus(report.status);
-        setMessage('Đã nộp báo cáo vào MongoDB');
-      } catch (err) {
-        setError(formatApiError(err, 'Không nộp được báo cáo'));
-      } finally {
-        setSaving(false);
-      }
-      return;
-    }
-
     await submitReport('pending');
   };
 
   return (
     <AppLayout
       title={`Nhập liệu báo cáo ${period?.title || reportWindow.period} - ${department}`}
-      subtitle="Vui lòng điền đầy đủ các thông tin dưới đây. Dữ liệu sẽ tự động lưu nháp sau mỗi 2 phút."
+      subtitle="Soạn nội dung và lưu nháp trước khi gửi báo cáo."
       bottomStatus={
         <span className="hidden items-center gap-2 text-sm text-on-surface-variant md:flex">
           <CheckCircle2 className="h-4 w-4 text-emerald-600" />
@@ -406,7 +229,7 @@ export default function MonthlyReport() {
           <button
             className="inline-flex items-center gap-1.5 md:gap-2 rounded-lg bg-surface-container-high px-4 py-2 text-sm md:text-base md:px-6 md:py-2.5 font-semibold text-primary transition-colors hover:bg-surface-container-highest disabled:opacity-60"
             type="button"
-            disabled={saving || loading || (reportStatus !== '' && reportStatus !== 'draft')}
+            disabled={saving || loading || ((reportStatus !== '' && reportStatus !== 'draft') || period?.status !== 'open')}
             onClick={() => void submitReport('draft')}
           >
             {saving ? <Loader2 className="h-4 w-4 md:h-5 md:w-5 animate-spin" /> : <Save className="h-4 w-4 md:h-5 md:w-5" />}
@@ -415,7 +238,7 @@ export default function MonthlyReport() {
           <button
             className="inline-flex items-center gap-1.5 md:gap-2 rounded-lg bg-primary px-4 py-2 text-sm md:text-base md:px-6 md:py-2.5 font-semibold text-white shadow-level-1 transition-colors hover:bg-primary-container disabled:opacity-60"
             type="button"
-            disabled={saving || loading || (reportStatus !== '' && reportStatus !== 'draft')}
+            disabled={saving || loading || ((reportStatus !== '' && reportStatus !== 'draft') || period?.status !== 'open')}
             onClick={() => void submitSavedReport()}
           >
             {saving ? <Loader2 className="h-4 w-4 md:h-5 md:w-5 animate-spin" /> : <Send className="h-4 w-4 md:h-5 md:w-5" />}
@@ -447,13 +270,12 @@ export default function MonthlyReport() {
           <div className="rounded-xl border border-outline-variant bg-white p-4 shadow-level-1 md:p-stack-lg">
             <div className="flex flex-col gap-stack-lg">
               {SECTIONS.map((section) => (
-                <ReportEditor
-                  key={section.number}
-                  section={section}
-                  value={form[section.fieldKey as keyof typeof form] || ''}
-                  onChange={(val) => updateField(section.fieldKey as keyof typeof form, val)}
-                  disabled={loading || saving || (reportStatus !== '' && reportStatus !== 'draft')}
-                />
+                <section key={section.number}>
+                  <h3 className="mb-2 font-semibold">{section.number}. {section.title}</h3>
+                  <ReportRichTextEditor id={`monthly-${section.fieldKey}`} ariaLabel={section.title} value={form[section.fieldKey]} format="html-v1"
+                    placeholder={section.placeholder} onChange={(value) => updateField(section.fieldKey, value)}
+                    disabled={loading || saving} readOnly={(reportStatus !== '' && reportStatus !== 'draft') || period?.status !== 'open'} />
+                </section>
               ))}
             </div>
           </div>

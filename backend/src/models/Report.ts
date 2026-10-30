@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 import type { FieldReport } from '../domain/fields';
 
 export interface IReport extends Document {
+  contentFormat?: 'html-v1';
   title: string;
   ownerId?: mongoose.Types.ObjectId;
   periodId?: mongoose.Types.ObjectId;
@@ -26,6 +27,7 @@ export interface IReport extends Document {
 }
 
 const ReportSchema: Schema = new Schema({
+  contentFormat: { type: String, enum: ['html-v1'] },
   title: { type: String, required: true },
   ownerId: { type: Schema.Types.ObjectId, ref: 'User' },
   periodId: { type: Schema.Types.ObjectId, ref: 'ReportPeriod' },
@@ -36,6 +38,7 @@ const ReportSchema: Schema = new Schema({
   endDate: { type: Date },
   field: { type: String },
   fieldReports: { type: [new Schema({
+    contentFormat: { type: String, enum: ['html-v1'] },
     fieldCode: { type: String, enum: ['LV1', 'LV2', 'LV3', 'LV4', 'LV5', 'LV6', 'LV7', 'LV8'], required: true },
     fieldName: { type: String, required: true },
     content: { type: String, default: '' }, difficulties: { type: String, default: '' },

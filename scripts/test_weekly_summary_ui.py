@@ -7,6 +7,11 @@ Requires playwright and a local Chrome installation, plus a frontend build:
   python scripts/test_weekly_summary_ui.py
 """
 import copy
+import re
+import html
+def plain(value):
+    return html.unescape(re.sub(r'<[^>]+>', '', value))
+
 import functools
 import json
 import os
@@ -102,35 +107,35 @@ def main():
             availability['ready'] = True
             page.get_by_role('heading', name='I. KẾT QUẢ THỰC HIỆN NHIỆM VỤ TUẦN 43', exact=True).wait_for()
             assert page.get_by_role('combobox', name='Chọn kỳ báo cáo tuần').inner_text().startswith('Tuần 43 năm 2026')
-            assert page.locator('form textarea').count() == 16
+            assert page.locator('form [role=textbox][contenteditable]').count() == 16
             assert page.locator('form select').count() == 0
             assert page.get_by_role('button', name='Thêm nội dung', exact=True).count() == 0
             assert page.get_by_role('button', name='Tách tại vị trí con trỏ', exact=True).count() == 0
             result = page.get_by_role('textbox', name='Kết quả - Y tế', exact=True)
-            assert result.input_value() == 'Nguồn 1\n\nNguồn 2'
+            assert result.inner_text() == 'Nguồn 1\n\nNguồn 2'
             state['summary']['entries'][0]['text'] = 'Nguồn vừa cập nhật'
-            page.wait_for_function("document.querySelector('#summary-results-health').value.includes('Nguồn vừa cập nhật')")
+            page.wait_for_function("document.querySelector('#summary-results-health').innerText.includes('Nguồn vừa cập nhật')")
             result.fill('Nội dung đã sửa: 168 lượt')
             state['summary']['entries'][0]['text'] = 'Nguồn mới không được ghi đè admin'
             page.wait_for_timeout(5500)
-            assert result.input_value() == 'Nội dung đã sửa: 168 lượt'
+            assert result.inner_text() == 'Nội dung đã sửa: 168 lượt'
             page.get_by_role('textbox', name='Nhiệm vụ - Giáo dục và đào tạo', exact=True).fill('Nhiệm vụ giáo dục tuần tới')
             availability['ready'] = False
             page.get_by_text('Hệ thống chưa sẵn sàng', exact=True).wait_for()
-            assert page.locator('form textarea').count() == 16
+            assert page.locator('form [role=textbox][contenteditable]').count() == 16
             assert page.locator('[inert]').count() == 1
             availability['ready'] = True
             page.get_by_text('Hệ thống chưa sẵn sàng', exact=True).wait_for(state='hidden')
             page.get_by_role('button', name='Lưu bản tổng hợp', exact=True).click()
             page.wait_for_function("document.body.innerText.includes('Đã lưu bản tổng hợp')")
             assert len(saved[-1]['entries']) == 2
-            assert saved[-1]['entries'][0]['text'] == 'Nội dung đã sửa: 168 lượt'
-            assert saved[-1]['entries'][1]['text'] == 'Nhiệm vụ giáo dục tuần tới'
+            assert plain(saved[-1]['entries'][0]['text']) == 'Nội dung đã sửa: 168 lượt'
+            assert plain(saved[-1]['entries'][1]['text']) == 'Nhiệm vụ giáo dục tuần tới'
             page.reload()
             page.get_by_role('textbox', name='Kết quả - Y tế', exact=True).wait_for()
-            assert page.locator('form textarea').count() == 16
-            assert page.get_by_role('textbox', name='Kết quả - Y tế', exact=True).input_value() == 'Nội dung đã sửa: 168 lượt'
-            assert page.get_by_role('textbox', name='Nhiệm vụ - Giáo dục và đào tạo', exact=True).input_value() == 'Nhiệm vụ giáo dục tuần tới'
+            assert page.locator('form [role=textbox][contenteditable]').count() == 16
+            assert page.get_by_role('textbox', name='Kết quả - Y tế', exact=True).inner_text() == 'Nội dung đã sửa: 168 lượt'
+            assert page.get_by_role('textbox', name='Nhiệm vụ - Giáo dục và đào tạo', exact=True).inner_text() == 'Nhiệm vụ giáo dục tuần tới'
             with page.expect_download() as download:
                 page.get_by_role('button', name='Lưu & Xuất PDF', exact=True).click()
             assert download.value.suggested_filename.endswith('.pdf')
@@ -145,7 +150,7 @@ def main():
             page.reload()
             page.get_by_role('button', name='Xuất PDF', exact=True).wait_for()
             assert page.get_by_role('button', name='Lưu bản tổng hợp', exact=True).is_disabled()
-            assert page.locator('form textarea').first.is_disabled()
+            assert page.locator('form [role=textbox][contenteditable]').first.get_attribute('contenteditable') == 'false'
             with page.expect_download() as download:
                 page.get_by_role('button', name='Xuất PDF', exact=True).click()
             state['period']['status'] = 'open'
@@ -153,8 +158,8 @@ def main():
             page.reload()
             page.get_by_role('heading', name='I. KẾT QUẢ THỰC HIỆN NHIỆM VỤ TUẦN 43', exact=True).wait_for()
             assert page.locator('form h4').count() == 16
-            assert page.locator('form textarea').count() == 16
-            assert all(value == '' for value in page.locator('form textarea').evaluate_all('(els) => els.map(el => el.value)'))
+            assert page.locator('form [role=textbox][contenteditable]').count() == 16
+            assert all(value == '' for value in page.locator('form [role=textbox][contenteditable]').evaluate_all('(els) => els.map(el => el.innerText.trim())'))
             assert page.get_by_role('button', name='Chuyển nội dung hiện tại sang 8 nhóm').count() == 0
             assert 'Khó khăn, vướng mắc' not in page.inner_text('body')
             assert 'Kiến nghị, đề xuất' not in page.inner_text('body')
@@ -162,7 +167,7 @@ def main():
             page.screenshot(path=str(OUTPUT / 'admin-empty-new-template.png'), full_page=True)
             assert not errors, errors
             browser.close()
-        print(f'PASS: 16 fixed textareas, no group/section dropdowns or add/split controls, save/reload by field, desktop/mobile, readiness and archived. Screenshots: {OUTPUT}')
+        print(f'PASS: 16 fixed rich text editors, no group/section dropdowns or add/split controls, save/reload by field, desktop/mobile, readiness and archived. Screenshots: {OUTPUT}')
     finally:
         server.shutdown()
         server.server_close()

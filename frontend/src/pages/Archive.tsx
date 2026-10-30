@@ -1,3 +1,4 @@
+import { ReportRichTextView } from '../components/ReportRichTextEditor';
 import { useEffect, useState } from 'react';
 import {
   Archive as ArchiveIcon,
@@ -202,19 +203,19 @@ export default function Archive() {
             <div className="flex-1 overflow-y-auto p-4 space-y-6 md:p-6 md:space-y-8">
               <section>
                 <h3 className="mb-3 font-semibold text-primary">1. Kết quả thực hiện</h3>
-                <div className="prose prose-sm max-w-none text-on-surface" dangerouslySetInnerHTML={{ __html: viewingReport.content || '<p className="text-on-surface-variant italic">Không có nội dung</p>' }} />
+                <ReportRichTextView value={viewingReport.content} format={viewingReport.contentFormat} />
               </section>
               <section>
                 <h3 className="mb-3 font-semibold text-primary">2. Khó khăn, vướng mắc</h3>
-                <div className="prose prose-sm max-w-none text-on-surface" dangerouslySetInnerHTML={{ __html: viewingReport.difficulties || '<p className="text-on-surface-variant italic">Không có nội dung</p>' }} />
+                <ReportRichTextView value={viewingReport.difficulties} format={viewingReport.contentFormat} />
               </section>
               <section>
                 <h3 className="mb-3 font-semibold text-primary">3. Kiến nghị, đề xuất</h3>
-                <div className="prose prose-sm max-w-none text-on-surface" dangerouslySetInnerHTML={{ __html: viewingReport.proposals || '<p className="text-on-surface-variant italic">Không có nội dung</p>' }} />
+                <ReportRichTextView value={viewingReport.proposals} format={viewingReport.contentFormat} />
               </section>
               <section>
                 <h3 className="mb-3 font-semibold text-primary">4. Nhiệm vụ trọng tâm thời gian tới</h3>
-                <div className="prose prose-sm max-w-none text-on-surface" dangerouslySetInnerHTML={{ __html: viewingReport.nextTasks || '<p className="text-on-surface-variant italic">Không có nội dung</p>' }} />
+                <ReportRichTextView value={viewingReport.nextTasks} format={viewingReport.contentFormat} />
               </section>
             </div>
           </div>
